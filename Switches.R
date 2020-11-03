@@ -227,7 +227,7 @@ MICombEfficiency <<- 0.8
 RevCombEfficiency <<- 0.8
 CBCombEfficiency <<- 0.8
 KECombEfficiency <<- 0.8
-NoxCombEfficiency <<- 0.8
+NOXCombEfficiency <<- 0.8
 BCCombEfficiency <<- 0.8
 BDCombEfficiency <<- 0.8
 CJCombEfficiency <<- 0.8
@@ -240,7 +240,7 @@ WECombEfficiency <<- 0.8
 DWCombEfficiency <<- 0.8
 IHCombEfficiency <<- 0.8
 LGCombEfficiency <<- 0.8
-LiGCombEfficiency <<- 0.8
+LIGCombEfficiency <<- 0.8
 LMCombEfficiency <<- 0.8
 BONCombEfficiency <<- 0.8
 DACombEfficiency <<- 0.8
