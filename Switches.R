@@ -1,8 +1,23 @@
 
 ReadSwitches<<-function(){
-######## Simulate curtailment. Options: 1: curtailment on. 0: curtailment off.
-simulate_curtailment <<- 1
-# MIMinRelForDust is set to zero in the current version of ColSim
+######## Simulate curtailment
+curtail_option <<- 2
+Observe_ECC_Rules <<- 0
+Use_Storage_for_Firm <<- 1
+# Instream flow rules for the mainstem
+get_iflow <<- function(time_series, station) {
+	ifile = read.table(paste('~/Bias_correction/flow_weekly_bc/', station, '_iflow_rules', sep=""))
+	Months = as.numeric(strftime(time_series,"%m"))
+	Days = as.numeric(strftime(time_series,"%d"))
+	instream = as.numeric(matrix(nrow=length(Days), ncol=1, 0))
+	for (line in 1:length(ifile[,1])) {
+		mo = ifile[line,1]
+		first_day = ifile[line,2]
+		last_day = ifile[line,3]
+		instream[Months==mo & Days>=first_day & Days<=last_day] = ifile[line,4]
+	}
+	return(instream)
+}
 ##### InitialConditionSwitch
 #Options: 0:  Use values imported from spreadsheet. 1:  Use fixed multiplier for whole basin (fraction of full pool)
 #2:  Use historic storage value at update time step
@@ -18,57 +33,6 @@ UseInflowMult <<- 1
 # Below is a list of the VIC produced inflows associated with each category.
 # Upper Columbia Inflows:  Mica, Revelstoke, Arrow, Duncan, Libby, Corra Linn (a.k.a. BC Hydro)
 
-####### Approximated flows
-Use4trDegreeInQAppx <<- 0 #This switch activates approximations of inflow for VIC areas which are too small to simulate in 1/4 degree spatial cells.
-#The "off" position" infers that there are 1/8th degree spatial resolutions available from the VIC data.
-#The basins which are not recognized in 1/4th degree resoultions are approximated as follows.
-#Revelstoke to Arrow          1.560
-#Corra Linn to Duncan        0.134
-#Corra Linn to Libby            0.409
-#Waneta to Hungry Horse  0.103
-#Waneta to Kerr                 0.298
-#Waneta to Columbia Falls 0.360
-
-
-########## MOPControl
-#This control variable is used to track measures of performance only for specific climate conditions.
-#For example one could track measures of performance only for ENSODefinition<<-1 (El Nino).
-#If this variable <<-1 in the timestep, then measures of performance are recorded, otherwise they are ignored.
-#The definitions for the climate parameters remain constant for each water year.
-
-#This variable can be overridden using the slider, and care must be exercised to ensure that the slider is set to "equation on" when intending to use
-#the logical expressions in MOPControl.
-
-MOPControl <<- 1
-
-######### SensitivityFraction
-#Energy shortfall based on SEPA weekly contracts.  Units MWhr.
-
-#IF MOPControl<<-1 THEN MAX(0,ColFallsFlowTarget*(1-SensitivityFraction)-ColFallsFlow_cfs)
-#ELSE 0
-
-SensitivityFraction <<- 0.001
-
-######### CORToDU
-#
-CORToDU <<- 0.134
-######## MidColMult
-MidColMult <<- function() { # check to see if the values are changing during a year
-	return(1)
-}
-UpperColMult <<- function() {
-	UpperColMult_o = 1 #week_counter_in_year()*UseInflowMult
-	return(UpperColMult_o)
-}
-######### SnakeMult
-#This forces expected changes in the hydrology to occur.  The four areas are the Upper Columbia, the Snake, and the Lower Columbia.
-#Below is a list of the VIC produced inflows associated with each category.
-#Snake: Dworshak, Oxbow, Ice Harbor
-#7.17.01
-SnakeMult <<- function() { # check # weekly time-series of one
-	SnakeMult_o = 1
-	return(SnakeMult_o)
-}
 week_counter_in_year <<- function() {
 	if (week_counter %% 52==0){week_counter_in_year_o= 52} else {week_counter_in_year_o=week_counter %% 52}
 	return(week_counter_in_year_o)
@@ -81,9 +45,17 @@ year_from_weekly <<- function() {
 	return(year_from_weekly_o)
 }
 
-##### MarketHydrgy
-MarketHydrgy <<- 0
+########## MOPControl
+#This control variable is used to track measures of performance only for specific climate conditions.
+#For example one could track measures of performance only for ENSODefinition<<-1 (El Nino).
+#If this variable <<-1 in the timestep, then measures of performance are recorded, otherwise they are ignored.
+#The definitions for the climate parameters remain constant for each water year.
 
+#This variable can be overridden using the slider, and care must be exercised to ensure that the slider is set to "equation on" when intending to use
+#the logical expressions in MOPControl.
+
+MOPControl <<- 1
+SensitivityFraction <<- 0.001
 ###### RefillMinSw
 # Switch to select alternate minimum release for generating inflow estimates at Grand Coulee and Arrow.
 #These flow estimates are used to compute refill curves at Grand Coulee and Arrow.  Options:
@@ -91,7 +63,11 @@ MarketHydrgy <<- 0
 # 1--Special minimum requirements for estimating inflows for refill curves.
 
 RefillMinSw <<- function(){
-	if(Normal_minQ==1) {RefillMinSw_o=0} else if (Developed_minQ==1) {RefillMinSw_o=1}
+	if(Normal_minQ==1) {
+		RefillMinSw_o <- 0
+	} else if (Developed_minQ==1) {
+		RefillMinSw_o <- 1
+	}
 	return (RefillMinSw_o)
 }
 
@@ -99,11 +75,13 @@ RefillMinSw <<- function(){
 
 ResetStorage <<- function() {
 	if(ResetStorageSwitch()==1 && month==ResetStorageMonth()) {
-		ResetStorage_o = 1
+		ResetStorage_o <- 1
 	} else if (ResetStorageSwitch() == 2 && TimeserStorReset() ==1) {
-		ResetStorage_o = 1
-	} else {ResetStorage_o=0}
-		return(ResetStorage_o)
+		ResetStorage_o <- 1
+	} else {
+		ResetStorage_o <- 0
+	}
+	return(ResetStorage_o)
 }
 
 ####### ResetStorageSwitch
@@ -115,7 +93,7 @@ ResetStorage <<- function() {
 #2- reset the storage according to a timeseries
 
 ResetStorageSwitch <<- function() {
-	ResetStorageSwitch_o = 0
+	ResetStorageSwitch_o <- 0
 	return(ResetStorageSwitch_o)
 }
 
@@ -124,36 +102,19 @@ ResetStorageSwitch <<- function() {
 #If this icon is set to 6, for example, the storage at the end of January  will be the value set in the INIT<dam name> icon.
 
 ResetStorageMonth <<- function() {
-	ResetStorageMonth_o = 12
+	ResetStorageMonth_o <- 12
 	return(ResetStorageMonth_o)
 }
 
 ####### TimeserStorReset   #check
 #this is a time-series of values (mostly zero), which has not been implemented in this version
 
-TimeserStorReset = function() {
-	TimeserStorReset_o = 0
+TimeserStorReset <<- function() {
+	TimeserStorReset_o <- 0
 	return(TimeserStorReset_o)
 }
 
-###### UseRegFlowAtBR
-#Options:
-#0--Inflow to Brownlee is modeled explicitly from natural flow input at Milner.  Use this setting when using VIC data to drive the model.
-#1--Inflow to Brownlee is regulated flow at the 1989 level of development from Id Dept of Water Resources model.
-#Use this setting when making runs using observed flow data and explicit effects in the Snake do not need to be simulated.
-
-UseRegFlowAtBR <<- function() {
-	UseRegFlowAtBR_o = 0
-	return(UseRegFlowAtBR_o)
-}
-
 GlobalFloodEvacMult <<- 1
-AgON <<- 1
-SnakeAgMultiplier <<- 1
-PreMarketSF_preprocessed <<- 5
-Market_OPEN <<- 0
-Market_CLOSED <<- 1
-CDFSnke <<- 0
 NonFirmEnergySw <<- 1
 
 UseTotalEnergyContentForFirm <<- function() {
@@ -170,8 +131,7 @@ UseTotalEnergyContentForFirm <<- function() {
 	return(UseTotalEnergyContentForFirm_o)
 }
 
-Observe_ECC_Rules <<- 0
-Use_Storage_for_Firm <<- 1
+
 Estimated_Efficiency <<- 0.8 #Estimated combined efficiency for all plants.  This efficiency is used for estimating energy content only.
 MWhr_per_ftAcFt <<- 1.02246e-3 #Conversion factor to convert head times volume (ft-acre-ft) to energy (MW-hr).
 
@@ -186,7 +146,7 @@ SQuo_Refill_Targ <<- 1
 AltForecast_Refill_Targ <<- 0
 PfctForecast_Refill_Targ <<- 0
 
-RefillSwitch<<-function(){
+RefillSwitch <<- function(){
 	#This switch selects refill rule curves that are based on status quo operations (forecasts only affect Jan-July)
 	# or refill rule curves based on higher quality forecasts that specify refill lower values Aug-July.  Settings are:
 	#  1-Status Quo Operations
