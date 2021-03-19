@@ -36,3 +36,6 @@ names(energy_df) = c("ARFirmEngSupReq", "TotalEnergyContent", "TotalECCEnergyCon
 
 water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=5))
 names(water_df) = c("BRPrelim_c", "TotalFloodSpace_c", "TotalMcNarySharedWater_c", "BRIn", "GCIn")
+
+Biop = data.frame(matrix(nrow=N_of_TimeSteps, ncol=2))
+names(Biop) = c("MCNAR", "BONNE")

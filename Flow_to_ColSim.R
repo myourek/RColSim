@@ -1,20 +1,26 @@
-project_name = commandArgs()[6]
-LU = commandArgs()[7]
-scr_name = sub("_", "/", commandArgs()[8])
-run_type = commandArgs()[9]
+#scr_name = commandArgs()[6]
+#run_type = commandArgs()[7]
+run_type="supply_and_demand"
+scr_name="Historical_baseline"
+scr_name = sub("_", "/", scr_name)
+
 if(scr_name == "Historical/baseline") {
 	scr_name = "Historical_baseline/baseline"
 }
-if (project_name == "GCAM") {
-	landuse_scenario = paste(LU, "/", sep="")
-} else {
-	landuse_scenario = ""
-}
+gcm = strsplit(scr_name, "/")[[1]][1]
+scr = strsplit(scr_name, "/")[[1]][2]
+WD_Step_4 = "~/Step_4/"
+ListOfDams = c("ARROW", "BROWN", "DALLE", "DUNCA", "DWORS", "GCOUL", "FLASF", "LIBBY", "MICAA")
 if (run_type == "supply_and_demand") {
 	simulate_demand = 1
 } else {
 	simulate_demand = 0
 }
+pod_stns = read.table("~/Step_3/Aggregate_demand_ColSim/stn_code_name", stringsAsFactors=F)[,1]
+stn_colsim = read.table("~/Step_3/Aggregate_demand_ColSim/RColSim_stations.txt", stringsAsFactors=F)[,1]
+stn_abbreviations = read.table("~/Step_3/Aggregate_demand_ColSim/RColSim_stations.txt", stringsAsFactors=F)[,2]
+new_pod_names = pod_stns[pod_stns %in% stn_colsim]
+mainstem_names = c("CHIEF", "DALLE", "JDAYY", "MCNAR", "PRIRA", "ROCKY", "RISLA", "WANAP", "WELLS")
 get_iflow_mainstem = function(station) {
 	ifile = read.table(paste('~/Bias_correction/flow_weekly_bc/', station, '_iflow_rules', sep=""))
 	Months = timeseries$Month
@@ -29,22 +35,12 @@ get_iflow_mainstem = function(station) {
 	return(instream)
 }
 
+################################ Read in supply and demand data ###################################
 
-
-pod_stns = read.table("~/Step_3/Aggregate_demand_ColSim/stn_code_name", stringsAsFactors=F)[,1]
-stn_colsim = read.table("~/Step_3/Aggregate_demand_ColSim/RColSim_stations.txt", stringsAsFactors=F)[,1]
-stn_abbreviations = read.table("~/Step_3/Aggregate_demand_ColSim/RColSim_stations.txt", stringsAsFactors=F)[,2]
-new_pod_names = pod_stns[pod_stns %in% stn_colsim]
-mainstem_names = c("CHIEF", "DALLE", "JDAYY", "MCNAR", "PRIRA", "ROCKY", "RISLA", "WANAP", "WELLS")
-
-gcm = strsplit(scr_name, "/")[[1]][1]
-scr = strsplit(scr_name, "/")[[1]][2]
-WD_Step_4 = "~/Step_4/"
-ListOfDams = c("ARROW", "BROWN", "DALLE", "DUNCA", "DWORS", "GCOUL", "FLASF", "LIBBY", "MICAA")
-Supply_Input = read.table(paste("~/Step_3/Aggregate_demand_ColSim/to_step_4/", project_name, "/", run_type, "/", landuse_scenario, gcm, "/supply_", scr, ".txt", sep=""), header=T)
+Supply_Input = read.table(paste("~/Step_3/Aggregate_demand_ColSim/to_step_4/Forecast/", run_type, "/", gcm, "/supply_", scr, ".txt", sep=""), header=T)
 N = length(Supply_Input[,1])
 if (simulate_demand == 1) {
-	Demand_Input = read.table(paste("~/Step_3/Aggregate_demand_ColSim/to_step_4/", project_name, "/", run_type, "/", landuse_scenario, gcm, "/demand_", scr, ".txt", sep=""), header=T)
+	Demand_Input = read.table(paste("~/Step_3/Aggregate_demand_ColSim/to_step_4/Forecast/", run_type, "/", gcm, "/demand_", scr, ".txt", sep=""), header=T)
 } else {
 	Demand_Input = data.frame(matrix(nrow=N, ncol=length(new_pod_names)+4, 0))
 }
@@ -64,7 +60,7 @@ if (simulate_demand == 1) {
 	supply_for_return_flow = data.frame(matrix(nrow=N, ncol=7, 0))
 }
 if (simulate_demand == 1) {
-	interruptible_demand = read.table(paste("~/Step_3/Aggregate_demand_ColSim/to_step_4/", project_name, "/", run_type, "/", landuse_scenario, gcm, "/interruptible_", scr, ".txt", sep=""), header=T)
+	interruptible_demand = read.table(paste("~/Step_3/Aggregate_demand_ColSim/to_step_4/Forecast/", run_type, "/", gcm, "/interruptible_", scr, ".txt", sep=""), header=T)
 } else {
 	interruptible_demand = data.frame(matrix(nrow=N, ncol=length(new_pod_names)+4, 0))
 }
@@ -73,9 +69,11 @@ Number_of_ts = length(Supply_Input[,1])
 Number_of_Years = length(unique(Supply_Input[,4])) - 1
 Forecast_coef = 0.2
 begin_year = min(timeseries$Year)
-########################## data frames
+
+########################## Build RColSim input table ###################################################################################
+
 names_Output = c("Week_Number", "month", "day", "year", "ARRefillVol1", "ARRefillVol2", "BRRunoffAprJuly", "BRRefillCurve", "DallesJanJul", "DallesRunoffAprAug", 
-"DallesRunoffAprSep", "DARunoffJanApr", "DURefillVol", "DURefillVol1", "DURunoffAprAug", "DWRefillVol1", "DWRefillVol2", "DWRunoffAprJuly", "DWSumRunoffMarJun", 
+"DallesRunoffAprSep", "ModDallesRunoffAprSep", "DARunoffJanApr", "DURefillVol", "DURefillVol1", "DURunoffAprAug", "DWRefillVol1", "DWRefillVol2", "DWRunoffAprJuly", "DWSumRunoffMarJun", 
 "GCRefillVol1", "GCRefillVol2", "GCRunoffJanApr", "HHInQAprAug", "HHRefillVol", "HHRefillVol1", "HHSumAprAug", "HHSumAprJul", "HHSumMaySept", "LBRefillVol2", "LBRefillVol1", 
 "LBSumAprAug", "LBSumMayAug", "MIRefillVol1", "MIRefillVol2", "MISumRunoffAprilAug", "MISumRunoffMayAug", "PriVICMI", "PriVICREV", "PriVICAR", "PriVICDU", "PriVICLB",
 "PriVICBONF", "PriVICCL", "PriVICCOL", "PriVICHH", "PriVICKE", "PriVICNOX", "PriVICCB", "PriVICAF", "PriVICBD", "PriVICGC", "PriVICCJ", "PriVICWE", "PriVICRR", "PriVICRI", 
@@ -90,14 +88,11 @@ names_Output = c("Week_Number", "month", "day", "year", "ARRefillVol1", "ARRefil
 Output_to_ColSim = data.frame(matrix(ncol=length(names_Output), nrow=Number_of_ts, 0))
 names(Output_to_ColSim) = names_Output
 Output_to_ColSim[,1:4] = Supply_Input[,1:4]
-
-########## cfs to acre-feet Per week
-cfsTOafw_coef = 13.8838
-Supply_Input[,5:length(Supply_Input[1,])] = Supply_Input[,5:length(Supply_Input[1,])] * cfsTOafw_coef
-Demand_Input[,5:length(Demand_Input[1,])] = Demand_Input[,5:length(Demand_Input[1,])] * cfsTOafw_coef
-supply_for_return_flow[,5:length(supply_for_return_flow[1,])] = supply_for_return_flow[,5:length(supply_for_return_flow[1,])] * cfsTOafw_coef
-interruptible_demand[,5:length(interruptible_demand[1,])] = interruptible_demand[,5:length(interruptible_demand[1,])] * cfsTOafw_coef
-
+MonthToWeek = read.table("~/Step_4/MonthToWeek.txt", header=T)
+months = data.frame(c(8:12,1:7), 1:12)
+month2 = c(1:12)
+Output_to_ColSim[,2] = MonthToWeek[match(Output_to_ColSim[,1], MonthToWeek[,1]),2]
+Output_to_ColSim[,2] = months[match(Output_to_ColSim[,2], months[,2]),1]
 dam_column = match(ListOfDams, names(Supply_Input))
 
 ########## Assumed Release
@@ -119,7 +114,6 @@ AssuredRefill = read.table("~/Step_4/AssuredRefill.txt", header=T)
 ncols = length(AssuredRefill[1,]) + 2
 weekly_AssuredRefill = data.frame(matrix(ncol=ncols, nrow=52, 0))
 names(weekly_AssuredRefill) = c("Month", "CalendarMonth", "WeekInMonth", "Arrow", "Brownlee", "Dalles", "Duncan", "Dworshak", "GrandCoulee", "HungryHorse", "Libby", "Mica")
-MonthToWeek = read.table("~/Step_4/MonthToWeek.txt", header=T)
 weekly_AssuredRefill[,1:3] = MonthToWeek[,2:4]
 for (i_ts_week in 1:52){
 	N_month = MonthToWeek[i_ts_week,2] # month start from August, therefore month 1 is August, 2 September, and so on
@@ -150,7 +144,7 @@ for(i_year in 1:(Number_of_Years)){
 		AssuredRefill_EntireTime[ind1:ind2,3:ncols] = weekly_AssuredRefill[,3:ncols]
 	} else {
 		AssuredRefill_EntireTime[ind1:(ind2-1),3:ncols] = weekly_AssuredRefill[,3:ncols]
-		AssuredRefill_EntireTime[ind2-1,3:ncols] = weekly_AssuredRefill[52,3:ncols]
+		AssuredRefill_EntireTime[ind2,3:ncols] = weekly_AssuredRefill[52,3:ncols]
 	}
 }
 
@@ -164,7 +158,7 @@ Refill_Alternative[,1:3] = AssuredRefill_EntireTime[,1:3]
 July31s = which(AssuredRefill_EntireTime[,2]==7 & AssuredRefill_EntireTime[,1]==52)
 Refill_Alternative[July31s,4:ncols] = DamMaxMin[1,1:9]
 for(i_week1 in 1:51){
-	for (i_dam in 1:9){
+	for (i_dam in 1:9) {
 		refill_alt = Refill_Alternative[July31s-i_week1+1,3+i_dam] - (Supply_Input[July31s-i_week1+1,dam_column[i_dam]] - weekly_assumedRelease[July31s-i_week1+1,3+i_dam])   
 		refill_alt[refill_alt<DamMaxMin[2,i_dam]] = DamMaxMin[2,i_dam]
 		refill_alt[refill_alt>DamMaxMin[1,i_dam]] = DamMaxMin[1,i_dam]
@@ -173,13 +167,11 @@ for(i_week1 in 1:51){
 }
 #write.table(Refill_Alternative, "~/Step_4/test_weekly_assured.txt")
 #######################################  
-# this is the RefillVol1 parameter in the excel sheet
 
 RefillStatusQuo = data.frame(matrix(ncol=ncols, nrow=Number_of_ts, 0))
 names(RefillStatusQuo) = c("WeekInYear", "Month", "Number_of_Weeks", "Arrow", "Brownlee", "Dalles", "Duncan", "Dworshak", "GrandCoulee", "HungryHorse", "Libby", "Mica")
 RefillStatusQuo[,1:3] = AssuredRefill_EntireTime[,1:3]
-RefillStatusQuo[RefillStatusQuo[,2]>=8,4:ncols] = AssuredRefill_EntireTime[RefillStatusQuo[,2]>=8,4:ncols] ### August to December
-RefillStatusQuo[RefillStatusQuo[,2]<8,4:ncols] = Refill_Alternative[RefillStatusQuo[,2]<8,4:ncols] ### January to July
+RefillStatusQuo[,4:ncols] = AssuredRefill_EntireTime[,4:ncols]
 write.table(RefillStatusQuo, "~/Step_4/test_weekly_assured.txt")
 
 ##################################################### 
@@ -192,128 +184,98 @@ write.table(RefillStatusQuo, "~/Step_4/test_weekly_assured.txt")
 
 ########################### ARRefillVol1  Column 1
 Output_to_ColSim$ARRefillVol1 = RefillStatusQuo[,4]
-
 ########################### ARRefillVol2  Column 2
 Output_to_ColSim$ARRefillVol2 = Refill_Alternative[,4]
-
 ########################### BRRunoffAprJuly # Column 3
 tmp = aggregate(Supply_Input$BROWN, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<8), sum)
 BRRunoffAprJuly = tmp[apply(tmp[,2:3],1,sum)==2,4]	# The condition, apply(tmp[,2:3],1,sum)==2, selects only the sums for which 3 < month < 8. 
 Output_to_ColSim$BRRunoffAprJuly[1:length(BRRunoffAprJuly)] = BRRunoffAprJuly 
-
 ##########  BRRefillCurve   # Column 4
 Output_to_ColSim$BRRefillCurve = RefillStatusQuo[,5]
-
 ######### DallesJanJul  # Column 5
 tmp = aggregate(Supply_Input$DALLE, list(Supply_Input$Year, Supply_Input$Month<8), sum)
 DallesJanJul = tmp[tmp[,2]==1 & tmp[,1]>begin_year,3]
 Output_to_ColSim$DallesJanJul[1:length(DallesJanJul)] = DallesJanJul 
-
 #########  DallesRunoffAprAug  # Column 6
 tmp = aggregate(Supply_Input$DALLE, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=8), sum) 
 DallesRunoffAprAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$DallesRunoffAprAug[1:length(DallesRunoffAprAug)] = DallesRunoffAprAug 
-
-######### DallesRunoffAprSep  # Column 7
+######### DallesRunoffAprSep  
 tmp = aggregate(Supply_Input$DALLE, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<10), sum)
 DallesRunoffAprSep = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$DallesRunoffAprSep[1:length(DallesRunoffAprSep)] = DallesRunoffAprSep 
-
 ######### DARunoffJanApr  # Column 8
 tmp = aggregate(Supply_Input$DALLE, list(Supply_Input$Year, Supply_Input$Month<5), sum)
 DARunoffJanApr = tmp[tmp[,2]==1 & tmp[,1]>begin_year,3]
 Output_to_ColSim$DARunoffJanApr[1:length(DARunoffJanApr)] = DARunoffJanApr 
 ########################### DURefillVol # Column 9
 Output_to_ColSim$DURefillVol = Refill_Alternative[,7]
-
 ########################### DURefillVol1  # Column 10
 Output_to_ColSim$DURefillVol1 = RefillStatusQuo[,7]
-
 ########################### DURunoffAprAug   # Column 11
 tmp = aggregate(Supply_Input$DUNCA, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=8), sum)
 DURunoffAprAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$DURunoffAprAug[1:length(DURunoffAprAug)] = DURunoffAprAug
-
 ########################### DWRefillVol1  # Column 12
 Output_to_ColSim$DWRefillVol1 = RefillStatusQuo[,8]
-
 ########################### DWRefillVol2  # Column 13
 Output_to_ColSim$DWRefillVol2 = Refill_Alternative[,8]
-
 ########################### DWRunoffAprJuly  # Column 14
 tmp = aggregate(Supply_Input$DWORS, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=7), sum)
 DWRunoffAprJuly = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$DWRunoffAprJuly[1:length(DWRunoffAprJuly)] = DWRunoffAprJuly
-
 ########################### DWSumRunoffMarJun  # Column 15
 tmp = aggregate(Supply_Input$DWORS, list(Supply_Input$Year, Supply_Input$Month>2, Supply_Input$Month<=6), sum)
 DWSumRunoffMarJun = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$DWSumRunoffMarJun[1:length(DWSumRunoffMarJun)] = DWSumRunoffMarJun
-
 ########################### GCRefillVol1  # Column 16
 Output_to_ColSim$GCRefillVol1 = RefillStatusQuo[,9]
-
 ########################### GCRefillVol2  # Column 17
 Output_to_ColSim$GCRefillVol2 = Refill_Alternative[,9]  # check
-
 ########################### GCRunoffJanApr  # Column 18
 tmp = aggregate(Supply_Input$GCOUL, list(Supply_Input$Year, Supply_Input$Month<5), sum)
 GCRunoffJanApr = tmp[tmp[,2]==1 & tmp[,1]>begin_year,3]
 Output_to_ColSim$GCRunoffJanApr[1:length(GCRunoffJanApr)] = GCRunoffJanApr 
-
 ########################### HHInQAprAug  # Column 19 ****
 tmp = aggregate(Supply_Input$FLASF, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=8), sum)
 HHInQAprAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$HHInQAprAug[1:length(HHInQAprAug)]=HHInQAprAug
-
 ########################### HHRefillVol  # Column 20
 Output_to_ColSim$HHRefillVol = Refill_Alternative[,10] 
-
 ########################### HHRefillVol1  # Column 21
-Output_to_ColSim$HHRefillVol1 = RefillStatusQuo[,10] # check
-
+Output_to_ColSim$HHRefillVol1 = RefillStatusQuo[,10] 
 ########################### HHSumAprAug  # Column 22
 tmp = aggregate(Supply_Input$FLASF, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=8), sum) 
 HHSumAprAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$HHSumAprAug[1:length(HHSumAprAug)] = HHSumAprAug
-
 ########################### HHSumAprJul  # Column 23
-HHSumAprJul = aggregate(Supply_Input$FLASF, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=7), sum)
+tmp = aggregate(Supply_Input$FLASF, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=7), sum)
 HHSumAprJul = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$HHSumAprJul[1:length(HHSumAprJul)] = HHSumAprJul
-
 ########################### HHSumMaySept  # Column 24
 tmp = aggregate(Supply_Input$FLASF, list(Supply_Input$Year, Supply_Input$Month>4, Supply_Input$Month<=9), sum)
 HHSumMaySept = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$HHSumMaySept[1:length(HHSumMaySept)] = HHSumMaySept
-
 ########################### LBRefillVol2  # Column 25
 Output_to_ColSim$LBRefillVol2 = Refill_Alternative[,11] 
-
 ########################### LBRefillVol1  # Column 26
 Output_to_ColSim$LBRefillVol1 = RefillStatusQuo[,11] 
-
 ########################### LBSumAprAug  # Column 27
 tmp = aggregate(Supply_Input$LIBBY, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=8), sum)
 LBSumAprAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$LBSumAprAug[1:length(LBSumAprAug)] = LBSumAprAug
-
 ########################### LBSumMayAug  # Column 28
 tmp = aggregate(Supply_Input$LIBBY, list(Supply_Input$Year, Supply_Input$Month>4, Supply_Input$Month<=8), sum)
 LBSumMayAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$LBSumMayAug[1:length(LBSumMayAug)] = LBSumMayAug
-
 ########################### MIRefillVol1  # Column 29
 Output_to_ColSim$MIRefillVol1 = RefillStatusQuo[,12]
-
 ########################### MIRefillVol2  # Column 30
 Output_to_ColSim$MIRefillVol2 = Refill_Alternative[,12] 
-
 ########################### MISumRunoffAprilAug  # Column 28
 tmp = aggregate(Supply_Input$MICAA, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<=8), sum) 
 MISumRunoffAprilAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
 Output_to_ColSim$MISumRunoffAprilAug[1:length(MISumRunoffAprilAug)] = MISumRunoffAprilAug
-
 ########################### MISumRunoffMayAug  # Column 28
 tmp = aggregate(Supply_Input$MICAA, list(Supply_Input$Year, Supply_Input$Month>4, Supply_Input$Month<=8), sum)
 MISumRunoffMayAug = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
@@ -322,19 +284,28 @@ Output_to_ColSim$MISumRunoffMayAug[1:length(MISumRunoffMayAug)] = MISumRunoffMay
 #------------------------------------------------- FLOW INPUTS ----------------------------------------------
 
 for (i in 1:length(stn_colsim)) {
-	#print(paste(names(Output_to_ColSim)[cols[i]], " = ", stn_colsim[i], sep=""))
 	var_supply = paste("PriVIC", stn_abbreviations[i], sep="")
 	var_demand = paste("DemVIC", stn_abbreviations[i], sep="")
 	var_interruptible = paste("CurtVIC", stn_abbreviations[i], sep="")
 	Output_to_ColSim[,which(names_Output==var_supply)] = Supply_Input[,names(Supply_Input)==stn_colsim[i]]
 	if (simulate_demand == 1) {
 		Output_to_ColSim[,which(names_Output==var_demand)] = Demand_Input[,names(Demand_Input)==stn_colsim[i]]
-		Output_to_ColSim[,which(names_Output==var_interruptible)] = interruptible_demand[,names(interruptible_demand)==stn_colsim[i]]
+		colnum = which(names(interruptible_demand)==stn_colsim[i])
+		if (length(colnum) == 0) {
+			Output_to_ColSim[,which(names_Output==var_interruptible)] = rep(0, nrow(Output_to_ColSim))
+		} else {
+			Output_to_ColSim[,which(names_Output==var_interruptible)] = interruptible_demand[,names(interruptible_demand)==stn_colsim[i]]
+		}
 	} else {
-		Output_to_ColSim[,which(names_Output==var_demand)] = rep(0, length(Output_to_ColSim[,1])) 
-		Output_to_ColSim[,which(names_Output==var_interruptible)] = rep(0, length(Output_to_ColSim[,1])) 
+		Output_to_ColSim[,which(names_Output==var_demand)] = rep(0, nrow(Output_to_ColSim)) 
+		Output_to_ColSim[,which(names_Output==var_interruptible)] = rep(0, nrow(Output_to_ColSim)) 
 	}
 }
+
+ModDA = Supply_Input$DALLE - apply(Output_to_ColSim[,grep("Dem", names_Output)], 1, sum) + Output_to_ColSim$DemVICBON
+tmp = aggregate(ModDA, list(Supply_Input$Year, Supply_Input$Month>3, Supply_Input$Month<10), sum)
+ModDallesRunoffAprSep = tmp[apply(tmp[,2:3],1,sum)==2 & tmp[,1]>begin_year,4]
+Output_to_ColSim$ModDallesRunoffAprSep[1:length(ModDallesRunoffAprSep)] = ModDallesRunoffAprSep 
 
 for (i in 1:length(mainstem_names)) {
 	#print(paste(names(Output_to_ColSim)[cols[i]], " = ", mainstem_names[i], sep=""))
@@ -342,8 +313,8 @@ for (i in 1:length(mainstem_names)) {
 	Output_to_ColSim[,which(names_Output==varname)] = get_iflow_mainstem(mainstem_names[i]) 
 }
 
-annual_return = aggregate(supply_for_return_flow[,5], list(supply_for_return_flow$Year), sum)
 if (simulate_demand == 1) {
+	annual_return = aggregate(supply_for_return_flow[,5], list(supply_for_return_flow$Year), sum)
 	Output_to_ColSim$RetVICWA = return_fractions[match(supply_for_return_flow$Week, 1:52),1] * annual_return[match(supply_for_return_flow$Year, annual_return[,1]),2]
 	Output_to_ColSim$RetVICPR = return_fractions[match(supply_for_return_flow$Week, 1:52),2] * annual_return[match(supply_for_return_flow$Year, annual_return[,1]),2]
 	Output_to_ColSim$RetVICMCN = return_fractions[match(supply_for_return_flow$Week, 1:52),3] * annual_return[match(supply_for_return_flow$Year, annual_return[,1]),2]
@@ -353,16 +324,10 @@ if (simulate_demand == 1) {
 	Output_to_ColSim$RetVICMCN = rep(0, length(Output_to_ColSim[,1])) 
 }
 
-if (!dir.exists(paste("~/Step_4/output", project_name, "/", run_type, sep="/"))) {
-	dir.create(paste("~/Step_4/output", project_name, "/", run_type, sep="/"))
+if (!dir.exists(paste("~/Step_4/output/Forecast/", run_type, "/", gcm, sep=""))) {
+	dir.create(paste("~/Step_4/output/Forecast/", run_type, "/", gcm, sep=""))
 }
-if (!dir.exists(paste("~/Step_4/output/", project_name, "/", run_type, "/", landuse_scenario, sep=""))) {
-	dir.create(paste("~/Step_4/output/", project_name, "/", run_type, "/", landuse_scenario, sep=""))
-}
-if (!dir.exists(paste("~/Step_4/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, sep=""))) {
-	dir.create(paste("~/Step_4/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, sep=""))
-}
-write.table(Output_to_ColSim, file=paste("~/Step_4/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, "/ToRColSim_scenario_", scr, ".txt", sep=""), row.names=FALSE)
+write.table(Output_to_ColSim, file=paste("~/Step_4/output/Forecast/", run_type, "/", gcm, "/ToRColSim_scenario_", scr, ".txt", sep=""), row.names=FALSE)
 
 ##################### Make Global Input File #############################################
 
@@ -378,35 +343,20 @@ if (scr_name == "Historical_baseline/baseline") {
 GIF = data.frame(matrix(nrow=4, ncol=2))
 GIF[,1] = c("RColSim_WD", "Flow_Input_File", "N_of_TimeSteps", "Output_Folder")
 GIF[1,2] = "~/Step_5/RColSim"
-GIF[2,2] = paste("~/Step_4/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, "/ToRColSim_scenario_", scr, ".txt", sep="")
+GIF[2,2] = paste("~/Step_4/output/Forecast/", run_type, "/", gcm, "/ToRColSim_scenario_", scr, ".txt", sep="")
 GIF[3,2] = length(read.table(GIF[2,2], header=T)[,1])
 if (global_input_file == "Historical_baseline") {
-	GIF[4,2] = paste("~/Step_5/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, "/", sep="")
+	GIF[4,2] = paste("~/Step_5/output/Forecast/", run_type, "/", gcm, "/", sep="")
 } else {
-	GIF[4,2] = paste("~/Step_5/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, "/", scr, "/", sep="")
+	GIF[4,2] = paste("~/Step_5/output/Forecast/", run_type, "/", gcm, "/", scr, "/", sep="")
 }
-if (!dir.exists(paste("~/Step_5/output", project_name, sep="/"))) {
-	dir.create(paste("~/Step_5/output", project_name, sep="/"))
+if (!dir.exists(paste("~/Step_5/output/Forecast/", run_type, "/", gcm, "/", sep=""))) {
+	dir.create(paste("~/Step_5/output/Forecast/", run_type, "/", gcm, "/", sep=""))
 }
-if (!dir.exists(paste("~/Step_5/output", project_name, run_type, sep="/"))) {
-	dir.create(paste("~/Step_5/output", project_name, run_type, sep="/"))
+if (!dir.exists(paste("~/Step_5/output/Forecast/", run_type, "/", gcm, "/", scr, sep=""))) {
+	dir.create(paste("~/Step_5/output/Forecast/", run_type, "/", gcm, "/", scr, sep=""))
 }
-if (!dir.exists(paste("~/Step_5/output/", project_name, "/", run_type, "/", landuse_scenario, sep=""))) {
-	dir.create(paste("~/Step_5/output/", project_name, "/", run_type, "/", landuse_scenario, sep=""))
-}
-if (!dir.exists(paste("~/Step_5/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, sep=""))) {
-	dir.create(paste("~/Step_5/output/", project_name, "/", run_type, "/", landuse_scenario, gcm, sep=""))
-}
-if (!dir.exists(paste("~/Step_5/RColSim/inputs", project_name, sep="/"))) {
-	dir.create(paste("~/Step_5/RColSim/inputs", project_name, sep="/"))
-}
-if (!dir.exists(paste("~/Step_5/RColSim/inputs", project_name, run_type, sep="/"))) {
-	dir.create(paste("~/Step_5/RColSim/inputs", project_name, run_type, sep="/"))
-}
-if (!dir.exists(paste("~/Step_5/RColSim/inputs", project_name, run_type, landuse_scenario, sep="/"))) {
-	dir.create(paste("~/Step_5/RColSim/inputs", project_name, run_type, landuse_scenario, sep="/"))
-}
-write.table(GIF, paste("~/Step_5/RColSim/inputs/", project_name, "/", run_type, "/", landuse_scenario, "GIF_", global_input_file, sep=""), col.names=FALSE, row.names=FALSE, quote=FALSE)
+write.table(GIF, paste("~/Step_5/RColSim/inputs/Forecast/", run_type, "/GIF_", global_input_file, sep=""), col.names=F, row.names=F, quote=F)
 
 
 

@@ -34,7 +34,8 @@ UseInflowMult <<- 1
 # Upper Columbia Inflows:  Mica, Revelstoke, Arrow, Duncan, Libby, Corra Linn (a.k.a. BC Hydro)
 
 week_counter_in_year <<- function() {
-	if (week_counter %% 52==0){week_counter_in_year_o= 52} else {week_counter_in_year_o=week_counter %% 52}
+	#if (week_counter %% 52==0){week_counter_in_year_o= 52} else {week_counter_in_year_o=week_counter %% 52}
+	week_counter_in_year_o = input_file$Week_Number[week_counter]
 	return(week_counter_in_year_o)
 }
 

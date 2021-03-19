@@ -24,11 +24,10 @@ landuse_scenario = commandArgs()[7]
 scr = commandArgs()[8]
 run_type = commandArgs()[9]
 
-#project_name = "GCAM"
-#landuse_scenario = "RCP_4.5_max_expansion"
-#scr = "IPSL-CM5A-MR_rcp45"
-#run_type = "supply_and_demand"
-
+#project_name="Forecast"
+#landuse_scenario="Historical_baseline"
+#scr="Historical_baseline"
+#run_type="supply_and_demand"
 
 if (project_name == "GCAM") {
 	landuse_scenario = paste(landuse_scenario, "/", sep="")
@@ -243,6 +242,7 @@ dams_in[I_Week,31] = MCNIn()
 dams_out[I_Week,31] = MCNOut()
 mainstem_curtailments[I_Week,7] = MCNCurtail()
 mainstem_shortfall[I_Week,7] = MCNInstreamShortfall()
+Biop[I_Week,1] = McNaryFlowTarget()
 
 dams_in[I_Week,32] = JDIn()
 dams_out[I_Week,32] = JDOut()
@@ -254,9 +254,10 @@ dams_out[I_Week,33] = DAOut()
 mainstem_curtailments[I_Week,9] = DACurtail()
 mainstem_shortfall[I_Week,9] = DAInstreamShortfall()
 
-dams_out[I_Week,34] = BONIn()
+dams_in[I_Week,34] = BONIn()
 dams_out[I_Week,34] = BONOut()
 other_curtailments[I_Week,25] = BONCurtail()
+Biop[I_Week,2] = BONTarget_AcFt()
 
 ######### STORAGE FOR THE SECOND TIME STEP
 reservoir_vol_df[1,1] = reservoir_vol_df[1,1] + (dams_in[1,1] - dams_out[1,1]) # MICAA RESERVOIR
@@ -271,6 +272,21 @@ reservoir_vol_df[1,9] = reservoir_vol_df[1,9] + (dams_in[1,23] - dams_out[1,23])
 reservoir_vol_df[1,10] = reservoir_vol_df[1,10] + (dams_in[1,21] - dams_out[1,21]) # UPPER SNAKE COMPOSITE RESERVOIR
 reservoir_vol_df[1,11] = reservoir_vol_df[1,11] + (dams_in[1,22] - dams_out[1,22]) # MIDDLE SNAKE COMPOSITE RESERVOIR
 
+###### MOPs Measures Of Performance
+MOP_df[I_Week,1] = shortfall() # Firm Energy Performance Metrics ==> if(shortfall()>0.001) --> does not meet target
+MOP_df[I_Week,2] = shortfall_2() # Non-Firm Energy Performance Metric ==> if(shortfall_2()>0.001) --> does not meet target
+MOP_df[I_Week,3] = shortfall_5() # Columbia Falls Flow Metrics ==> if(shortfall_5()>0.001) --> does not meet target
+MOP_df[I_Week,4] = shortfall_6() # Lower Granite Flow Metrics ==> if(shortfall_5()>0.001) --> does not meet target
+MOP_df[I_Week,5] = shortfall_7() # Vernita Bar Flow Target Metrics ==> if(shortfall_7()>0.001) --> does not meet target
+MOP_df[I_Week,6] = shortfall_8() # McNary Flow Target Metrics ==> if(shortfall_8()>0.001) --> does not meet target
+MOP_df[I_Week,7] = shortfall_9() # Grand Coulee Recreation Metrics ==> if greater than zero "0" does not meet target flow
+MOP_df[I_Week,8] = shortfall_10() # Dalles Flood Protection Metrics ==> if greater than zero "0" does not meet target flow
+MOP_df[I_Week,9] = shortfall_11() # Ice Harbor Flow Metrics ==> if(shortfall_11()>0.001) --> does not meet target
+MOP_df[I_Week,10] = ChumSF() # Bonneville Winter Chum Flow Metrics ==> if greater than zero "0" does not meet target flow
+MOP_df[I_Week,11] = BelowFCC() # Flood Pool below  curve
+MOP_df[I_Week,12] = FirmEnergySales()
+MOP_df[I_Week,13] = NonFirmSpotSales()
+MOP_df[I_Week,14] = MaxSystemEnergy()
 
 write.table(data.frame(matrix(names(dams_out), nrow=1)), paste(OutputFolder, "dams_out.txt", sep=""), row.names=F, col.names=F, quote=F)
 write.table(data.frame(matrix(names(dams_in), nrow=1)), paste(OutputFolder, "dams_in.txt", sep=""), row.names=F, col.names=F, quote=F)
@@ -281,6 +297,7 @@ write.table(data.frame(matrix(names(mainstem_curtailments), nrow=1)), paste(Outp
 write.table(data.frame(matrix(names(MOP_df), nrow=1)), paste(OutputFolder, "MOP_df.txt", sep=""), row.names=F, col.names=F, append=F)
 write.table(data.frame(matrix(names(other_curtailments), nrow=1)), paste(OutputFolder, "other_curtailment.txt", sep=""), row.names=F, col.names=F, quote=F)
 write.table(data.frame(matrix(names(mainstem_shortfall), nrow=1)), paste(OutputFolder, "mainstem_shortfall.txt", sep=""), row.names=F, col.names=F, quote=F)
+write.table(data.frame(matrix(names(Biop), nrow=1)), paste(OutputFolder, "Biop_flow.txt", sep=""), row.names=F, col.names=F, quote=F)
 
 write.table(dams_out[1,], paste(OutputFolder, "dams_out.txt", sep=""), row.names=F, col.names=F, append=T)
 write.table(dams_in[1,], paste(OutputFolder, "dams_in.txt", sep=""), row.names=F, col.names=F, append=T)
@@ -291,6 +308,7 @@ write.table(energy_df[1,], paste(OutputFolder, "energy.txt", sep = ""), row.name
 write.table(mainstem_curtailments[1,], paste(OutputFolder, "mainstem_curtailment.txt", sep=""), row.names=F, col.names=F, append=T)
 write.table(other_curtailments[1,], paste(OutputFolder, "other_curtailment.txt", sep=""), row.names=F, col.names=F, append=T)
 write.table(mainstem_shortfall[1,], paste(OutputFolder, "mainstem_shortfall.txt", sep=""), row.names=F, col.names=F, append=T)
+write.table(Biop[1,], paste(OutputFolder, "Biop_flow.txt", sep=""), row.names=F, col.names=F, append=T)
 
 ##################################################################################################################
 ##################################################################################################################
@@ -463,6 +481,7 @@ for (I_Week in 2:N_of_TimeSteps){
 	dams_out[I_Week,31] = MCNOut()
 	mainstem_curtailments[I_Week,7] = MCNCurtail()
 	mainstem_shortfall[I_Week,7] = MCNInstreamShortfall()
+	Biop[I_Week,1] = McNaryFlowTarget()
 
 	dams_in[I_Week,32] = JDIn()
 	dams_out[I_Week,32] = JDOut()
@@ -474,9 +493,10 @@ for (I_Week in 2:N_of_TimeSteps){
 	mainstem_curtailments[I_Week,9] = DACurtail()
 	mainstem_shortfall[I_Week,9] = DAInstreamShortfall()
 
-	dams_out[I_Week,34] = BONIn()
+	dams_in[I_Week,34] = BONIn()
 	dams_out[I_Week,34] = BONOut()
 	other_curtailments[I_Week,25] = BONCurtail()
+	Biop[I_Week,2] = BONTarget_AcFt()
 
 	reservoir_vol_df[I_Week,1] = reservoir_vol_df[I_Week-1,1] + (dams_in[I_Week,1] - dams_out[I_Week,1]) # MICAA RESERVOIR
 	reservoir_vol_df[I_Week,2] = reservoir_vol_df[I_Week-1,2] + (dams_in[I_Week,3] - dams_out[I_Week,3]) # ARROW RESERVOIR
@@ -489,7 +509,9 @@ for (I_Week in 2:N_of_TimeSteps){
 	reservoir_vol_df[I_Week,9] = reservoir_vol_df[I_Week-1,9] + (dams_in[I_Week,23] - dams_out[I_Week,23]) # BROWNLEE RESERVOIR
 	reservoir_vol_df[I_Week,10] = reservoir_vol_df[I_Week-1,10] + (dams_in[I_Week,21] - dams_out[I_Week,21]) # UPPER SNAKE COMPOSITE RESERVOIR
 	reservoir_vol_df[I_Week,11] = reservoir_vol_df[I_Week-1,11] + (dams_in[I_Week,22] - dams_out[I_Week,22]) # MIDDLE SNAKE COMPOSITE RESERVOIR
-
+	if (dams_out[I_Week,5]==0) {
+		stop
+	}
 	###### MOPs Measures Of Performance
 	MOP_df[I_Week,1] = shortfall() # Firm Energy Performance Metrics ==> if(shortfall()>0.001) --> does not meet target
 	MOP_df[I_Week,2] = shortfall_2() # Non-Firm Energy Performance Metric ==> if(shortfall_2()>0.001) --> does not meet target
@@ -521,5 +543,6 @@ for (I_Week in 2:N_of_TimeSteps){
 	write.table(mainstem_curtailments[I_Week,], paste(OutputFolder, "mainstem_curtailment.txt", sep=""), row.names=F, col.names=F, append=T)
 	write.table(other_curtailments[I_Week,], paste(OutputFolder, "other_curtailment.txt", sep=""), row.names=F, col.names=F, append=T)
 	write.table(mainstem_shortfall[I_Week,], paste(OutputFolder, "mainstem_shortfall.txt", sep=""), row.names=F, col.names=F, append=T)
+	write.table(Biop[I_Week,], paste(OutputFolder, "Biop_flow.txt", sep=""), row.names=F, col.names=F, append=T)
 }
 
