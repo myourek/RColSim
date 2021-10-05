@@ -1,8 +1,6 @@
 #######################
 # OUTPUT DATAFRAMES ###
 #######################
-LowerPrelimUpFlow_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=1))
-
 dams_out = data.frame(matrix(nrow=N_of_TimeSteps, ncol=34))
 names(dams_out) = c("MICAA", "REVEL", "ARROW", "DUNCA", "LIBBY", "BONFE", "CORRA", "FLASF", "FLAPO", "NOXON", "CABIN", "ALBEN", "BOUND",
 "GCOUL", "CHIEF", "WELLS", "ROCKY", "RISLA", "WANAP", "PRIRA", "UpSnake", "MdlSnake", "BROWN", "OXBOW", "HCANY", "DWORS", "LGRAN", "LGOOS", 
@@ -36,6 +34,3 @@ names(energy_df) = c("ARFirmEngSupReq", "TotalEnergyContent", "TotalECCEnergyCon
 
 water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=5))
 names(water_df) = c("BRPrelim_c", "TotalFloodSpace_c", "TotalMcNarySharedWater_c", "BRIn", "GCIn")
-
-Biop = data.frame(matrix(nrow=N_of_TimeSteps, ncol=2))
-names(Biop) = c("MCNAR", "BONNE")

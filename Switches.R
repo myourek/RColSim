@@ -1,46 +1,40 @@
 
-ReadSwitches<<-function(){
-######## Simulate curtailment
-curtail_option <<- 2
-Observe_ECC_Rules <<- 0
-Use_Storage_for_Firm <<- 1
-# Instream flow rules for the mainstem
-get_iflow <<- function(time_series, station) {
-	ifile = read.table(paste('~/Bias_correction/flow_weekly_bc/', station, '_iflow_rules', sep=""))
-	Months = as.numeric(strftime(time_series,"%m"))
-	Days = as.numeric(strftime(time_series,"%d"))
-	instream = as.numeric(matrix(nrow=length(Days), ncol=1, 0))
-	for (line in 1:length(ifile[,1])) {
-		mo = ifile[line,1]
-		first_day = ifile[line,2]
-		last_day = ifile[line,3]
-		instream[Months==mo & Days>=first_day & Days<=last_day] = ifile[line,4]
-	}
-	return(instream)
-}
+ReadSwitches <<- function() {
+
+# Factors for controlling additional flood storage space  
+  
+StorFrac <<- 0.2 # Fraction of storage in Brownlee and Dworshak dams to use for meeting fish flow target at Lower Granite Dam
+InflowFrac <<- 1 # Fraction of inflow to Brownlee and Dworshak reservoirs to use for meeting fish flow target at Lower Granite Dam
+MIFloodMult <<- 1.25 # Factor to multiply available storage space at Arrow and Mica dams for reducing high flow at The Dalles.
+LBFloodMult <<- 1.25 # Factor to multiply available storage space at Libby dam for reducing high flow at The Dalles.
+
+# Toggles the  Bonneville chum target, met by Grand Coulee
+# Options: 1--Release water from Grand Coulee to meet the Bonneville fish flow target
+#          2--Do not release
+Chum_Q_Switch <<- function() {
+  Chum_Q_Switch_o <- 1
+  return(Chum_Q_Switch_o)
+}  
+
+# Curtail option allows the user to select how mainstem curtailment should be calculated.
+# Options: 1--Calculate mainstem curtailment based on interruptible demand, 
+#          2--Calculate instream flow deficit rather than curtailment
+#          3--Do not calculate
+curtail_option <<- 3 
+track_curtailment <<- 0 # If 1, output mainstem curtailment, this slows down the code
+
 ##### InitialConditionSwitch
 #Options: 0:  Use values imported from spreadsheet. 1:  Use fixed multiplier for whole basin (fraction of full pool)
-#2:  Use historic storage value at update time step
-InitialConditionSwitch <<- 2
-unit_convert_switch <<- 1
-Observe_Draft_Limits <<- 1
-Use_Storage_for_Targets <<- 0
-UseInflowMult <<- 1
+#2:  Use historic storage value
+InitialConditionSwitch <<- 2 # Default = 2
+ResInitFractionFull <<- 0.8 # Used with option 1
 
-##############  UpperColMult
-#Fow multipliers:
-# This forces expected changes in the hydrology to occur.  The fourareas are the Upper Columbia, the Snake, and the Lower Columbia.
-# Below is a list of the VIC produced inflows associated with each category.
-# Upper Columbia Inflows:  Mica, Revelstoke, Arrow, Duncan, Libby, Corra Linn (a.k.a. BC Hydro)
-
-week_counter_in_year <<- function() {
-	#if (week_counter %% 52==0){week_counter_in_year_o= 52} else {week_counter_in_year_o=week_counter %% 52}
-	week_counter_in_year_o = input_file$Week_Number[week_counter]
+week_counter_in_year <<- function() { # Find week of year starting on August 1st
+	week_counter_in_year_o = date_hist_sim$week[week_counter]
 	return(week_counter_in_year_o)
 }
 
 ######## find which operation year we are in, from weekly data
-
 year_from_weekly <<- function() {
 	year_from_weekly_o = week_counter %/% 52 + 1  
 	return(year_from_weekly_o)
@@ -48,125 +42,94 @@ year_from_weekly <<- function() {
 
 ########## MOPControl
 #This control variable is used to track measures of performance only for specific climate conditions.
-#For example one could track measures of performance only for ENSODefinition<<-1 (El Nino).
 #If this variable <<-1 in the timestep, then measures of performance are recorded, otherwise they are ignored.
-#The definitions for the climate parameters remain constant for each water year.
-
-#This variable can be overridden using the slider, and care must be exercised to ensure that the slider is set to "equation on" when intending to use
-#the logical expressions in MOPControl.
 
 MOPControl <<- 1
-SensitivityFraction <<- 0.001
+SensitivityFraction <<- 0.001 # Factor of safety for meeting flow objectives
+
 ###### RefillMinSw
 # Switch to select alternate minimum release for generating inflow estimates at Grand Coulee and Arrow.
-#These flow estimates are used to compute refill curves at Grand Coulee and Arrow.  Options:
+# These flow estimates are used to compute refill curves at Grand Coulee and Arrow.  Options:
 # 0--Normal minimum requirements
 # 1--Special minimum requirements for estimating inflows for refill curves.
-
-RefillMinSw <<- function(){
-	if(Normal_minQ==1) {
-		RefillMinSw_o <- 0
-	} else if (Developed_minQ==1) {
-		RefillMinSw_o <- 1
-	}
+RefillMinSw <<- function(){ # Default is 0
+	RefillMinSw_o <- 0
 	return (RefillMinSw_o)
 }
 
-###### ResetStorage
-
-ResetStorage <<- function() {
-	if(ResetStorageSwitch()==1 && month==ResetStorageMonth()) {
-		ResetStorage_o <- 1
-	} else if (ResetStorageSwitch() == 2 && TimeserStorReset() ==1) {
-		ResetStorage_o <- 1
-	} else {
-		ResetStorage_o <- 0
-	}
-	return(ResetStorage_o)
+# Switch to select how to determine flood rule
+TopRuleSw <<- function() { # Default is 0
+  # Options:
+  # 0-Use flood storage prescribed by forecasts
+  # 1-Don't evacuate any flood storage
+  # 2-Use the highest flood rule curve at all times
+  TopRuleSw_1 <- 0
+  return(TopRuleSw_1)
 }
 
 ####### ResetStorageSwitch
-#This switch controls a routine that resets the storage at particular dams to preset storage values stored in the INIT<dam name> icons.
-#The month that the storage is reset is specified in the icon ResetStorageMonth.
-#Options:
-#  0--do not reset storage
-#1--reset the storage to the initial value at the end of the month specified
-#2- reset the storage according to a timeseries
+# This switch controls a routine that resets the storage at particular dams to preset storage values.
+# The month that the storage is reset is specified by ResetStorageMonth.
+# Options:
+# 0--do not reset storage
+# 1--reset the storage to the initial value at the end of the month specified
+# 2--reset the storage according to a timeseries
 
-ResetStorageSwitch <<- function() {
+ResetStorageSwitch <<- function() { # Default is 0
 	ResetStorageSwitch_o <- 0
 	return(ResetStorageSwitch_o)
 }
 
 ####### ResetStorageMonth
-#When the ResetStorageSwitch is set to 1, this icon determines the month for which the storage is reset to a preset initial value.
-#If this icon is set to 6, for example, the storage at the end of January  will be the value set in the INIT<dam name> icon.
+# When the ResetStorageSwitch is set to 1, this function determines the month for which the storage is reset to a preset initial value.
+# If this value is 6, for example, the storage at the end of January  will be used.
 
 ResetStorageMonth <<- function() {
-	ResetStorageMonth_o <- 12
-	return(ResetStorageMonth_o)
+  ResetStorageMonth_o <- 12
+  return(ResetStorageMonth_o)
+}
+ResetStorage <<- function() {
+  if(ResetStorageSwitch()==1 && month_in_year==ResetStorageMonth()) {
+    ResetStorage_o <- 1
+  } else {
+    ResetStorage_o <- 0
+  }
+  return(ResetStorage_o)
 }
 
-####### TimeserStorReset   #check
-#this is a time-series of values (mostly zero), which has not been implemented in this version
-
-TimeserStorReset <<- function() {
-	TimeserStorReset_o <- 0
-	return(TimeserStorReset_o)
-}
-
-GlobalFloodEvacMult <<- 1
-NonFirmEnergySw <<- 1
-
-UseTotalEnergyContentForFirm <<- function() {
+UseTotalEnergyContentForFirm <<- function() { # Default is 1 
 	#Options:
 	#0--Allocate based on  ECC for Firm Energy.  Reservoir may release only to ECC after allocation.
 	#1-Allocate based on volume mid point between ECC and bottom of pool for Firm Energy.  Reservoir may release to bottom of pool after allocation.
-	if (Observe_ECC_Rules==1) {
-		UseTotalEnergyContentForFirm_o = 0
-	} else if (Use_Storage_for_Firm==1) {
-		UseTotalEnergyContentForFirm_o = 1
-	} else {
-		print(paste("these values are wrong make sure the default values make sense"))
-	}
+	UseTotalEnergyContentForFirm_o = 1
 	return(UseTotalEnergyContentForFirm_o)
 }
 
+Estimated_Efficiency <<- 0.8 # Estimated combined efficiency for all plants.  This efficiency is used for estimating energy content only.
 
-Estimated_Efficiency <<- 0.8 #Estimated combined efficiency for all plants.  This efficiency is used for estimating energy content only.
-MWhr_per_ftAcFt <<- 1.02246e-3 #Conversion factor to convert head times volume (ft-acre-ft) to energy (MW-hr).
-
-########### UseUpdatedOpSystem
-#Options:
-#0--Use critical curve, assured refill curve, and flood curve to construct ECC
-#1--Use refill to least flood (with or without forecast) and flood curve to construct ECC
-UseUpdatedOpSystem <<- 0
-###### RefillSwitch
-
-SQuo_Refill_Targ <<- 1
-AltForecast_Refill_Targ <<- 0
-PfctForecast_Refill_Targ <<- 0
+# ---- Refill curve selection switches
+SQuo_Refill_Targ <<- 0 # Use 1931 assured refill curve
+PfctForecast_Refill_Targ <<- 1 # Use forecast for the refill 
 
 RefillSwitch <<- function(){
-	#This switch selects refill rule curves that are based on status quo operations (forecasts only affect Jan-July)
+	# This switch selects refill rule curves that are based on status quo operations (forecasts only affect Jan-July)
 	# or refill rule curves based on higher quality forecasts that specify refill lower values Aug-July.  Settings are:
-	#  1-Status Quo Operations
-	#  2-All year perfect  refill forecast
-	#  3-All year alternate refill forecast
-	if (SQuo_Refill_Targ==1) {
+	#  1-Refill based on status Quo Operations
+	#  2-Refill based on perfect forecast
+  
+	if (SQuo_Refill_Targ==1 | PfctForecast_Refill_Targ==0 ) {
 		RefillSwitch_o = 1
 	} else if (PfctForecast_Refill_Targ==1) {
 		RefillSwitch_o = 2
-	} else if (AltForecast_Refill_Targ==1) {
-		RefillSwitch_o = 3
-	} else {
-		print(paste("ERROR: the default values might be incorrect"))
 	}
 	return(RefillSwitch_o)
 }
 
-UseForecastRLFCurve <<- 1
-GCEngContMult <<- 0
+### Options for Flood curve
+# Options: 1--Use flood control curve year-round, 2--Use flood control curve only during flood evacuation season.
+
+FC_Option <<- 2 # Default = 2
+GlobalFloodEvacMult <<- 1 # Factor to adjust flood evacuation, default is 1.
 
 ########## EnergyAllocSafeFactor
 #Due to penstock constraints, the energy allocation algorithm may occasionally request water from an upstream dam that is already spilling water.
@@ -177,11 +140,14 @@ GCEngContMult <<- 0
 EnergyAllocSafeFactor <<- 1.01
 
 ######## UseAlternateNonFirmTarget
-#Options: 0:  Use status quo energy target and fraction
-#1:  Use alternative forecast for non-firm energy that uses climate forecast multipliers for the period from August-January.
+# Options: 0:  Use status quo energy target and fraction,
+# 1: Use alternative forecast for non-firm energy that uses climate forecast multipliers for the period from August-January.
 
 UseAlternateNonFirmTarget <<- 0
-Deviation__From_Normal_Curve <<- 1
+
+NonFirmEnergySw <<- 1 # Options: 1--Release water for non-firm hydropower generation, otherwise do not
+
+### Estimated combined efficiency of turbines
 HHCombEfficiency <<- 0.8
 LBCombEfficiency <<- 0.8
 MICombEfficiency <<- 0.8
@@ -209,6 +175,17 @@ JDCombEfficiency <<- 0.8
 MCCombEfficiency <<- 0.8
 ARCombEfficiency <<- 0.8
 DUCombEfficiency <<- 0.8
-# UseAlternateNonFirmTarget ------------------------------------------------------------------------
 DUCombEfficiency_00 <<- -999
+
+### Options for using storage to meet fish targets
+
+Fish_Pool_Alternative <<- 1 # Options: 1--Use only water above full pool volume, 2-5--Use water above varying storage levels, depending on the dam.
+UseAllStorForMCNLG <<- 0 # Options: 0--Use current draft limits for McNary and Lower Granite, 1--Use all major system storage for McNary and Lower Granite
+
+## Other controls
+
+GCEngContMult <<- 1 # Multiplier for flow from GC allocated for meeting firm energy target
+Deviation__From_Normal_Curve <<- 1 # Multiplier to adjust firm energy target, leave as 1 unless experimenting
+mainstem_rule <<- 600E6 # Sum of Apr to September runoff at Dalles that triggers mainstem curtailement (actual is 60E6), leave high to force curtailment every year
+
 } ### end of all switches
