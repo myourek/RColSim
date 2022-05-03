@@ -1,0 +1,4 @@
+RColSim_WD C:/Users/AUser/Documents/For_Keyvan/Step_5/RColSim
+Flow_Input_File C:/Users/AUser/Documents/For_Keyvan/Step_4/output/Forecast/supply_and_demand/Historical_baseline/ToRColSim_scenario_baseline_with_curtailment.txt
+N_of_TimeSteps 1887
+Output_Folder C:/Users/AUser/Documents/For_Keyvan/Step_5/output/Forecast/supply_and_demand/Historical_baseline/

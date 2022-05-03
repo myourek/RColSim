@@ -1,0 +1,6 @@
+RColSim_WD	"~/RColSimPaper/RColSim/"
+Flow_Input_File	"~/RColSimPaper/RColSim/inputs/Supply_to_RColSim/ToRColSim_scenario_baseline_with_curtailment_new_demand.txt"
+Output_Folder	"~/RColSimPaper/RColSim/output/PerfectForecast/"
+simulation_start_year	1979
+simulation_end_date	"2015-09-27"
+
