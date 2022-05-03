@@ -4087,8 +4087,7 @@ BRRuleReq <- function() {
 	return(BRRuleReq_o)
 }
 BRElev_ft <- function() {
-	BRElev_ft_o <- 4.98417182E-28 * Brownlee()^5 - 2.02560727E-21 * Brownlee()^4 + 3.05422588E-15 * Brownlee()^3 - 0.00000000215214417 * Brownlee()^2
-	+ 0.000843642399 * Brownlee() + 1827.36033
+	BRElev_ft_o <- 4.98417182E-28 * Brownlee()^5 - 2.02560727E-21 * Brownlee()^4 + 3.05422588E-15 * Brownlee()^3 - 0.00000000215214417 * Brownlee()^2 + 0.000843642399 * Brownlee() + 1827.36033
 	return(BRElev_ft_o)
 }
 BRNetHead <- function() {
@@ -5220,8 +5219,7 @@ IHEnergyProduction <- function() {
   return(IHEnergyProduction_o)
 }
 GrandCouleeGroupEnergy <- function() {
-  GrandCouleeGroupEnergy_o <- CJEnergyProduction() + GCEnergyProduction() + PREnergyProduction() + RIEnergyProduction()
-  + RREnergyProduction() + WAEnergyProduction() + WEEnergyProduction()
+  GrandCouleeGroupEnergy_o <- CJEnergyProduction() + GCEnergyProduction() + PREnergyProduction() + RIEnergyProduction() + RREnergyProduction() + WAEnergyProduction() + WEEnergyProduction()
   return(GrandCouleeGroupEnergy_o)
 }
 CJEnergyProduction <- function() {
@@ -5309,7 +5307,6 @@ RevEnergyProduction <- function() {
   return(RevEnergyProduction_o)
 }
 MaxSystemEnergy <- function() { # Hydropower production for entire CRB
-  MaxSystemEnergy_o <- AlbeniFallsGroupEnergy() + DworshakGroupEnergy() + GrandCouleeGroupEnergy()
-  + HungryHorseEnergy() + KerrGroupEnergy() + LibbyEnergy() + LowerColumbiaEnergy() + MicaGroupEnergy()
+  MaxSystemEnergy_o <- AlbeniFallsGroupEnergy() + DworshakGroupEnergy() + GrandCouleeGroupEnergy() + HungryHorseEnergy() + KerrGroupEnergy() + LibbyEnergy() + LowerColumbiaEnergy() + MicaGroupEnergy()
   return(MaxSystemEnergy_o)
 }

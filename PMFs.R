@@ -158,8 +158,7 @@ IHEnergyProduction <- function() {
 	return(IHEnergyProduction_o)
 }
 GrandCouleeGroupEnergy <- function() {
-	GrandCouleeGroupEnergy_o <- CJEnergyProduction() + GCEnergyProduction() + PREnergyProduction() + RIEnergyProduction()
-	+ RREnergyProduction() + WAEnergyProduction() + WEEnergyProduction()
+	GrandCouleeGroupEnergy_o <- CJEnergyProduction() + GCEnergyProduction() + PREnergyProduction() + RIEnergyProduction() + RREnergyProduction() + WAEnergyProduction() + WEEnergyProduction()
 	return(GrandCouleeGroupEnergy_o)
 }
 CJEnergyProduction <- function() {
@@ -247,8 +246,7 @@ RevEnergyProduction <- function() {
 	return(RevEnergyProduction_o)
 }
 MaxSystemEnergy <- function() { # Hydropower production for entire CRB
-  MaxSystemEnergy_o <- AlbeniFallsGroupEnergy() + DworshakGroupEnergy() + GrandCouleeGroupEnergy()
-  + HungryHorseEnergy() + KerrGroupEnergy() + LibbyEnergy() + LowerColumbiaEnergy() + MicaGroupEnergy()
+  MaxSystemEnergy_o <- AlbeniFallsGroupEnergy() + DworshakGroupEnergy() + GrandCouleeGroupEnergy() + HungryHorseEnergy() + KerrGroupEnergy() + LibbyEnergy() + LowerColumbiaEnergy() + MicaGroupEnergy()
   return(MaxSystemEnergy_o)
 }
 
@@ -321,8 +319,7 @@ TotalSysStorage <- function() {
 	return(TotalSysStorage_o)
 }
 SumFloodTarget <- function() { # Target storage for dams to meet flood protection objective
-	SumFloodTarget_o <- ARFloodCurve() + DUFloodCurve() + DWFloodCurve() + GCFloodCurve() + HHFloodCurve()
-	+ LibbyFloodCurve() + MIFloodCurve() + BRFloodVolume() + CLRuleVol()
+	SumFloodTarget_o <- ARFloodCurve() + DUFloodCurve() + DWFloodCurve() + GCFloodCurve() + HHFloodCurve() + LibbyFloodCurve() + MIFloodCurve() + BRFloodVolume() + CLRuleVol()
 	return(SumFloodTarget_o)
 }
 BelowFCC <- function() {
