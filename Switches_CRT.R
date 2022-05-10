@@ -18,9 +18,9 @@ Chum_Q_Switch <<- function() {
 
 # Curtail option allows the user to select how mainstem curtailment should be calculated.
 # Options: 1--Calculate mainstem curtailment based on interruptible demand, 
-#          2--Calculate the minimum of total demand and instream flow deficit 
+#          2--Calculate instream flow deficit rather than curtailment
 #          3--Do not calculate
-curtail_option <<- 1 
+curtail_option <<- 2 
 track_curtailment <<- 1 # If 1, output mainstem curtailment, this slows down the code
 
 ##### InitialConditionSwitch
@@ -109,7 +109,7 @@ Estimated_Efficiency <<- 0.8 # Estimated combined efficiency for all plants.  Th
 
 # ---- Refill curve selection switches
 SQuo_Refill_Targ <<- 0 # Use 1931 assured refill curve
-PfctForecast_Refill_Targ <<- 1 # Use forecast for the refill ## Default is 1
+PfctForecast_Refill_Targ <<- 1 # Use forecast for the refill 
 
 RefillSwitch <<- function(){
 	# This switch selects refill rule curves that are based on status quo operations (forecasts only affect Jan-July)
@@ -203,5 +203,7 @@ UseAllStorForMCNLG <<- 0 # Options: 0--Use current draft limits for McNary and L
 GCEngContMult <<- 1 # Multiplier for flow from GC allocated for meeting firm energy target
 Deviation__From_Normal_Curve <<- 1 # Multiplier to adjust firm energy target, leave as 1 unless experimenting
 mainstem_rule <<- 600E6 # Sum of Apr to September runoff at Dalles that triggers mainstem curtailement (actual is 60E6), leave high to force curtailment every year
+CRT_scenario <<- 0 # Options: 0--Status Quo, 1--Treaty scenario 3PRS-1.5-2.0 (Additional 0.5 MAF Treaty storage at MICAA) , 2--Treaty scenario 3PRS-4.4 (Additional 3.4 MAF storage at MICAA and ARROW)
+
 
 } ### end of all switches

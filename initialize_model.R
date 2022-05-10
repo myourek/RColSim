@@ -3,22 +3,22 @@
 
 
 if(NEW_SIMULATION == TRUE){
-  do.call(file.remove, list(list.files(paste(OutputFolder, "/", sep = ""), full.names = TRUE)))
+	do.call(file.remove, list(list.files(paste(OutputFolder, "/", sep = ""), full.names = TRUE)))
 }
 
 if (I_Week==1) {
-  ############################ initialize reservoirs
-  reservoir_vol_df[1,1] = MicaReservoir()
-  reservoir_vol_df[1,2] = ArrowReservoir()
-  reservoir_vol_df[1,3] = Duncan()
-  reservoir_vol_df[1,4] = CorraLinnReservoir()
-  reservoir_vol_df[1,5] = Libby()
-  reservoir_vol_df[1,6] = HungryHorse()
-  reservoir_vol_df[1,7] = GrandCoulee()
-  reservoir_vol_df[1,8] = Dworshak()
-  reservoir_vol_df[1,9] = Brownlee()
-  reservoir_vol_df[1,10] = UpSnakeComb()
-  reservoir_vol_df[1,11] = MdlSnakeComb()
+	############################ initialize reservoirs
+	reservoir_vol_df[1,1] = MicaReservoir()
+	reservoir_vol_df[1,2] = ArrowReservoir()
+	reservoir_vol_df[1,3] = Duncan()
+	reservoir_vol_df[1,4] = CorraLinnReservoir()
+	reservoir_vol_df[1,5] = Libby()
+	reservoir_vol_df[1,6] = HungryHorse()
+	reservoir_vol_df[1,7] = GrandCoulee()
+	reservoir_vol_df[1,8] = Dworshak()
+	reservoir_vol_df[1,9] = Brownlee()
+	reservoir_vol_df[1,10] = UpSnakeComb()
+	reservoir_vol_df[1,11] = MdlSnakeComb()
 }
 
 MicaRelease_c = MIRelease()
@@ -75,43 +75,43 @@ dams_out[I_Week,14] = GCOutflow()
 dams_in[I_Week,15] = CJIn()
 dams_out[I_Week,15] = CJOut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,1] = CJCurtail()
-  mainstem_shortfall[I_Week,1] = CJInstreamShortfall()
+	mainstem_curtailments[I_Week,1] = CJCurtail()
+	mainstem_shortfall[I_Week,1] = CJInstreamShortfall()
 }
 
 dams_in[I_Week,16] = WEIn()
 dams_out[I_Week,16] = WEOut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,2] = WECurtail()
-  mainstem_shortfall[I_Week,2] = WEInstreamShortfall()
+	mainstem_curtailments[I_Week,2] = WECurtail()
+	mainstem_shortfall[I_Week,2] = WEInstreamShortfall()
 }
 
 dams_in[I_Week,17] = RRIn()
 dams_out[I_Week,17] = RROut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,3] = RRCurtail()
-  mainstem_shortfall[I_Week,3] = RRInstreamShortfall()
+	mainstem_curtailments[I_Week,3] = RRCurtail()
+	mainstem_shortfall[I_Week,3] = RRInstreamShortfall()
 }
 
 dams_in[I_Week,18] = RIIn()
 dams_out[I_Week,18] = RIOut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,4] = RICurtail()
-  mainstem_shortfall[I_Week,4] = RIInstreamShortfall()
+	mainstem_curtailments[I_Week,4] = RICurtail()
+	mainstem_shortfall[I_Week,4] = RIInstreamShortfall()
 }
 
 dams_in[I_Week,19] = WAIn()
 dams_out[I_Week,19] = WAOut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,5] = WACurtail()
-  mainstem_shortfall[I_Week,5] = WAInstreamShortfall()
+	mainstem_curtailments[I_Week,5] = WACurtail()
+	mainstem_shortfall[I_Week,5] = WAInstreamShortfall()
 }
 
 dams_in[I_Week,20] = PRIn()
 dams_out[I_Week,20] = PROut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,6] = PRCurtail()
-  mainstem_shortfall[I_Week,6] = PRInstreamShortfall()
+	mainstem_curtailments[I_Week,6] = PRCurtail()
+	mainstem_shortfall[I_Week,6] = PRInstreamShortfall()
 }
 
 dams_in[I_Week,21] = USInflow()
@@ -149,26 +149,28 @@ dams_out[I_Week,30] = IHOut()
 dams_in[I_Week,31] = MCNIn()
 dams_out[I_Week,31] = MCNOut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,7] = MCNCurtail()
-  mainstem_shortfall[I_Week,7] = MCNInstreamShortfall()
+	mainstem_curtailments[I_Week,7] = MCNCurtail()
+	mainstem_shortfall[I_Week,7] = MCNInstreamShortfall()
 }
+Biop[I_Week,1] = McNaryFlowTarget()
 
 dams_in[I_Week,32] = JDIn()
 dams_out[I_Week,32] = JDOut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,8] = JDCurtail()
-  mainstem_shortfall[I_Week,8] = JDInstreamShortfall()
+	mainstem_curtailments[I_Week,8] = JDCurtail()
+	mainstem_shortfall[I_Week,8] = JDInstreamShortfall()
 }
 
 dams_in[I_Week,33] = DAIn()
 dams_out[I_Week,33] = DAOut()
 if (track_curtailment==1) {
-  mainstem_curtailments[I_Week,9] = DACurtail()
-  mainstem_shortfall[I_Week,9] = DAInstreamShortfall()
+	mainstem_curtailments[I_Week,9] = DACurtail()
+	mainstem_shortfall[I_Week,9] = DAInstreamShortfall()
 }
 
 dams_in[I_Week,34] = BONIn()
 dams_out[I_Week,34] = BONOut()
+Biop[I_Week,2] = BONTarget_AcFt()
 
 ######### STORAGE FOR THE SECOND TIME STEP
 reservoir_vol_df[1,1] = reservoir_vol_df[1,1] + (dams_in[1,1] - dams_out[1,1]) # MICAA RESERVOIR
@@ -199,15 +201,18 @@ MOP_df[I_Week,12] = FirmEnergySales()
 MOP_df[I_Week,13] = NonFirmSpotSales()
 MOP_df[I_Week,14] = MaxSystemEnergy()
 
+
 write.table(cbind(date_hist_sim[I_Week,], dams_out[1,]), paste(OutputFolder, "/dams_out.txt", sep=""), row.names=F, col.names=T, append=F)
 write.table(cbind(date_hist_sim[I_Week,], dams_in[1,]), paste(OutputFolder, "/dams_in.txt", sep=""), row.names=F, col.names=T, append=F)
 write.table(cbind(date_hist_sim[I_Week,], reservoir_vol_df[1,]), paste(OutputFolder, "/reservoir_volume.txt", sep=""), row.names=F, col.names=T, append=F)
 write.table(cbind(date_hist_sim[I_Week,], MOP_df[1,]), paste(OutputFolder, "/MOP_df.txt", sep=""), row.names=F, col.names=T, append=F)
 write.table(cbind(date_hist_sim[I_Week,], water_df[1,]), paste(OutputFolder, "/water.txt", sep = ""), row.names=F, col.names=T, append=F)
 write.table(cbind(date_hist_sim[I_Week,], energy_df[1,]), paste(OutputFolder, "/energy.txt", sep = ""), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[I_Week,], Biop[1,]), paste(OutputFolder, "/Biop_flow.txt", sep = ""), row.names=F, col.names=T, append=F)
+
 if (track_curtailment==1) {
-  write.table(cbind(date_hist_sim[I_Week,], mainstem_shortfall[1,]), paste(OutputFolder, "/mainstem_shortfall.txt", sep=""), row.names=F, col.names=T, append=F)
-  write.table(cbind(date_hist_sim[I_Week,], mainstem_curtailments[1,]), paste(OutputFolder, "/mainstem_curtailment.txt", sep=""), row.names=F, col.names=T, append=F)
+	write.table(cbind(date_hist_sim[I_Week,], mainstem_shortfall[1,]), paste(OutputFolder, "/mainstem_shortfall.txt", sep=""), row.names=F, col.names=T, append=F)
+	write.table(cbind(date_hist_sim[I_Week,], mainstem_curtailments[1,]), paste(OutputFolder, "/mainstem_curtailment.txt", sep=""), row.names=F, col.names=T, append=F)
 }
 
 ##################################################################################################################

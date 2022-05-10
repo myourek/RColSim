@@ -32,5 +32,8 @@ energy_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=7))
 names(energy_df) = c("ARFirmEngSupReq", "TotalEnergyContent", "TotalECCEnergyContent", "FirmEnergyDeficit",
 "TotalCoordPreEnergy", "TotalNFEnergyContent", "NonFirmEnergyDeficit")
 
-water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=5))
-names(water_df) = c("BRPrelim_c", "TotalFloodSpace_c", "TotalMcNarySharedWater_c", "BRIn", "GCIn")
+water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=21))
+names(water_df) = c("BRPrelim_c", "TotalFloodSpace_c", "TotalRelReducReq", "ARPrelim", "ARCombSup", "AREnergySup", "ARMcNarySup", "ARSharedWater", "ARECCSharedWater", "AR_CRT_SOA_storage", "AR_CRT_storage", "AR_CRT_release", "MI_CRT_storage", "MI_CRT_release", "MIMcNarySup", "MI_CRT_SOA_storage", "MIRelReducReq", "ARRelReducReq", "TotalMcNarySharedWater_c", "BRIn", "GCIn")
+
+Biop = data.frame(matrix(nrow=N_of_TimeSteps, ncol=2))
+names(Biop) = c("MCNAR", "BONNE")

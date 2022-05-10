@@ -1,11 +1,10 @@
-setwd("C:/Users/AUser/Documents/RColSimPaper/RColSim/")
-folder = "test"
-plot_dir = paste(getwd(), "/plots/", folder, "/", sep="")
+setwd("/data/hydro/users/Forecast_2026/ForecastProject/Forecast_data_files/RColSim/")
+plot_dir = paste(getwd(), "/plots/", sep="")
 library(xts)
 
 obs_reg = read.csv("reg_streamflow.csv", header=T)
 obs_nat = read.csv("NRNI_daily.csv", header=T) 
-sim_reg = read.table(paste("output/", folder, "/dams_out.txt", sep=""), header=T)[,-1]
+sim_reg = read.table(paste("out_RColSim/Forecast_with_CO2/supply_and_demand/Historical_baseline/dams_out.txt", sep=""), header=T)[,-1]
 sim_reg = sim_reg / 13.8843
 sim_nat = read.table("supply_baseline.txt", header=T) 
 sim_nat[,-c(1:4)] = sim_nat[,-c(1:4)] / 13.8843
@@ -33,11 +32,6 @@ end_wk = which(row.names(as.data.frame(weekly_obs_nat))=="2007-07-29")
 
 obs_reg_weekly = weekly_obs_reg[start_wk:end_wk,]
 obs_nat_weekly = weekly_obs_nat[start_wk:end_wk,]
-
-ts_historical = read.table("C:/Users/AUser/Documents/For_Keyvan/Files/ts_historical.txt")
-
-tol = 0
-
 
 start_wk = which(sim_nat$Month==8 & sim_nat$Day==5 & sim_nat$Year==1979)
 end_wk = which(sim_nat$Month==7 & sim_nat$Day==29 & sim_nat$Year==2007)

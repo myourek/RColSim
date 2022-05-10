@@ -17,8 +17,14 @@ VIC_Data <- function() {
   ####### other inputs ##########
   BRRefillCurve <<- input_file$BRRefillCurve[week_counter + num_lines_to_skip - 1]
   BRRunoffAprJuly <<- input_file$BRRunoffAprJuly[year_counter + num_years_to_skip]
+  ModBRRunoffAprJuly <<- input_file$ModBRRunoffAprJuly[year_counter + num_years_to_skip]
   DallesJanJul <<- input_file$DallesJanJul[year_counter + num_years_to_skip]
   DallesRunoffAprAug <<- input_file$DallesRunoffAprAug[year_counter + num_years_to_skip]
+  if (year_counter==1) {
+    DallesRunoffAprAug_previous <<- DallesRunoffAprAug
+  } else {
+    DallesRunoffAprAug_previous <<- input_file$DallesRunoffAprAug[year_counter + num_years_to_skip - 1]
+  }
   DallesRunoffAprSep <<- input_file$DallesRunoffAprSep[year_counter + num_years_to_skip]
   DURunoffAprAug <<- input_file$DURunoffAprAug[year_counter + num_years_to_skip]
   DWRunoffAprJuly <<- input_file$DWRunoffAprJuly[year_counter + num_years_to_skip]
