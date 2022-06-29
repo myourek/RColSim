@@ -29,19 +29,13 @@
 # -------------------------------------------------------------------------------------------------------------------------------------------
                                                             
 
-project_name = commandArgs()[6]
-scr_name = commandArgs()[7]
-run_type = commandArgs()[8]
 
-if (scr_name=="Historical_baseline") {
-	gcm = "Historical_baseline"
-} else {
-	gcm = strsplit(scr_name, "_")[[1]][1]
-}
+
+scr = "Historical_baseline"
 
 # -------- Read the global input file
-print(paste("Now doing scenario:", scr_name))
-GlobalFile = read.table(paste("/data/hydro/users/Forecast_2026/ForecastProject/Forecast_data_files/RColSim/RColSim_inputs/", project_name, "/", run_type, "/", gcm, "/GIF_", scr_name, sep=""), stringsAsFactors=F)
+print(paste("Now doing scenario:", scr))
+GlobalFile = read.table("~/RColSim/inputs/Global_Input_File_Historical_baseline.txt", stringsAsFactors=F)
 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------
