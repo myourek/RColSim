@@ -26,7 +26,7 @@ names(MOP_df) = c("shortfall_1", "shortfall_2", "shortfall_5", "shortfall_6", "s
 "shortfall_9", "shortfall_10", "shortfall_11", "NumOfLowFlowBonn", "BelowFCC", "FirmEnergySales", "NonFirmSpotSales", "MaxSystemEnergy")
 
 reservoir_vol_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=11))
-names(reservoir_vol_df) = c("MICAA", "ARROW", "DUNCA", "CORRA", "LIBBY", "FLASF", "GCOUL", "DWORS", "BROWN", "UpSnake", "MdlSnake")
+names(reservoir_vol_df) = c("MI", "AR", "DU", "CL", "LB", "HH", "GC", "DW", "BR", "US", "KE", "AF")
 
 energy_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=7))
 names(energy_df) = c("ARFirmEngSupReq", "TotalEnergyContent", "TotalECCEnergyContent", "FirmEnergyDeficit",

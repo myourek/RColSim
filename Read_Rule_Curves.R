@@ -1,4 +1,4 @@
-input_dir = "/data/hydro/users/Forecast_2026/ForecastProject/Forecast_data_files/RColSim/default_rule_curves/"
+input_dir = "~/RColSim/default_rule_curves/"
 Read_Rule_Curves <- function() {
 	###### initial ##########
 	HistStor <<- read.table(paste(input_dir, "HistStor.txt", sep=""), header=T, nrows=367)
