@@ -1,14 +1,14 @@
 #######################
 # OUTPUT DATAFRAMES ###
 #######################
-dams_out = data.frame(matrix(nrow=N_of_TimeSteps, ncol=34))
+dams_out = data.frame(matrix(nrow=N_of_TimeSteps, ncol=33))
 names(dams_out) = c("MICAA", "REVEL", "ARROW", "DUNCA", "LIBBY", "BONFE", "CORRA", "FLASF", "FLAPO", "NOXON", "CABIN", "ALBEN", "BOUND",
-"GCOUL", "CHIEF", "WELLS", "ROCKY", "RISLA", "WANAP", "PRIRA", "UpSnake", "MdlSnake", "BROWN", "OXBOW", "HCANY", "DWORS", "LGRAN", "LGOOS", 
+"GCOUL", "CHIEF", "WELLS", "ROCKY", "RISLA", "WANAP", "PRIRA", "UpSnake", "BROWN", "OXBOW", "HCANY", "DWORS", "LGRAN", "LGOOS", 
 "LMONU", "ICEHA", "MCNAR", "JDAYY", "DALLE", "BONNE")
 
-dams_in = data.frame(matrix(nrow=N_of_TimeSteps, ncol=34))
+dams_in = data.frame(matrix(nrow=N_of_TimeSteps, ncol=33))
 names(dams_in) = c("MICAA", "REVEL", "ARROW", "DUNCA", "LIBBY", "BONFE", "CORRA", "FLASF", "FLAPO", "NOXON", "CABIN", "ALBEN", "BOUND",
-"GCOUL", "CHIEF", "WELLS", "ROCKY", "RISLA", "WANAP", "PRIRA", "UpSnake", "MdlSnake", "BROWN", "OXBOW", "HCANY", "DWORS", "LGRAN", "LGOOS", 
+"GCOUL", "CHIEF", "WELLS", "ROCKY", "RISLA", "WANAP", "PRIRA", "UpSnake", "BROWN", "OXBOW", "HCANY", "DWORS", "LGRAN", "LGOOS", 
 "LMONU", "ICEHA", "MCNAR", "JDAYY", "DALLES", "BONNE")
 
 mainstem_curtailments = data.frame(matrix(nrow=N_of_TimeSteps, ncol=9))
@@ -22,10 +22,10 @@ mainstem_shortfall = data.frame(matrix(nrow=N_of_TimeSteps, ncol=9))
 names(mainstem_shortfall) = c("CHIEF", "WELLS", "ROCKY", "RISLA", "WANAP", "PRIRA", "MCNAR", "JDAYY", "DALLE") 
 
 MOP_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=14))
-names(MOP_df) = c("shortfall_1", "shortfall_2", "shortfall_5", "shortfall_6", "shortfall_7","shortfall_8",
-"shortfall_9", "shortfall_10", "shortfall_11", "NumOfLowFlowBonn", "BelowFCC", "FirmEnergySales", "NonFirmSpotSales", "MaxSystemEnergy")
+names(MOP_df) = c("FirmEnergy", "NonFirmEnergy", "ColFallsFlow", "LowerGraniteFlow", "VernitaBarFlow", "McNaryFlow",
+"GCRec", "DallesFlood", "IHNav", "BonnevillFlow", "BelowFCC", "FirmEnergySales", "NonFirmSpotSales", "TotalSysEnergy")
 
-reservoir_vol_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=11))
+reservoir_vol_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=12))
 names(reservoir_vol_df) = c("MI", "AR", "DU", "CL", "LB", "HH", "GC", "DW", "BR", "US", "KE", "AF")
 
 energy_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=7))

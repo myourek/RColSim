@@ -3,219 +3,208 @@
 
 
 if(NEW_SIMULATION == TRUE){
-	do.call(file.remove, list(list.files(paste(OutputFolder, "/", sep = ""), full.names = TRUE)))
+	do.call(file.remove, list(list.files(paste(OutputFolder, "/"), full.names=TRUE)))
 }
 
-if (I_Week==1) {
-	############################ initialize reservoirs
-	reservoir_vol_df[1,1] = MicaReservoir()
-	reservoir_vol_df[1,2] = ArrowReservoir()
-	reservoir_vol_df[1,3] = Duncan()
-	reservoir_vol_df[1,4] = CorraLinnReservoir()
-	reservoir_vol_df[1,5] = Libby()
-	reservoir_vol_df[1,6] = HungryHorse()
-	reservoir_vol_df[1,7] = GrandCoulee()
-	reservoir_vol_df[1,8] = Dworshak()
-	reservoir_vol_df[1,9] = Brownlee()
-	reservoir_vol_df[1,10] = UpSnakeComb()
-	reservoir_vol_df[1,11] = MdlSnakeComb()
+reservoir_vol_df$MI[1] <- Mica()
+reservoir_vol_df$AR[1] <- Arrow()
+reservoir_vol_df$DU[1] <- Duncan()
+reservoir_vol_df$CL[1] <- CorraLinn()
+reservoir_vol_df$LB[1] <- Libby()
+reservoir_vol_df$HH[1] <- HungryHorse()
+reservoir_vol_df$GC[1] <- GrandCoulee()
+reservoir_vol_df$DW[1] <- Dworshak()
+reservoir_vol_df$BR[1] <- Brownlee()
+reservoir_vol_df$US[1] <- UpSnakeComb()
+reservoir_vol_df$KE[1] <- Kerr()
+reservoir_vol_df$AF[1] <- AlbeniFalls()
+
+MicaRelease_c <- MIRelease()
+dams_in$MICAA[1] <- MIInflow()
+dams_out$MICAA[1] <- MIOutflow()
+
+dams_in$REVEL[1] <- REVIn()
+dams_out$REVEL[1] <- REVOut()
+
+ARRelease_c <- ARRelease()
+dams_in$ARROW[1] <- ARInflow()
+dams_out$ARROW[1] <- AROutflow()
+
+DUOutflow_c <- DURelease() 
+dams_in$DUNCA[1] <- DUInflow()
+dams_out$DUNCA[1] <- DUOutflow()
+
+dams_in$LIBBY[1] <- LBInflow()
+dams_out$LIBBY[1] <- LBOutflow()
+
+dams_in$BONFE[I_Weeek] <- BONFIn()
+dams_out$BONFE[1] <- BONFOut()
+
+CLRelease_c <- CLRelease() 
+dams_in$CORRA[1] <- CLInflow()
+dams_out$CORRA1] <- CLOutflow()
+
+HHRelease_c <- HHRelease()
+dams_in$FLASF[1] <- HHInflow()
+dams_out$FLASF[1] <- HHOutflow()
+
+KERelease_c <- KERelease()
+dams_in$FLAPO[1] <- KEInflow()
+dams_out$FLAPO[1] <- KEOutflow()
+
+dams_in$NOXON[1] <- NOXIn()
+dams_out$NOXON[1] <- NOXOut()
+
+dams_in$CABIN[1] <- CBIn()
+dams_out$CABIN[1] <- CBOut()
+
+AFRelease_c <- AFRelease()
+dams_in$ALBEN[1] <- AFInflow()
+dams_out$ALBEN[1] <- AFOutflow()
+
+dams_in$BOUND[1] <- BDIn()
+dams_out$BOUND[1] <- BDOut()
+
+GCRelease_c <- GCRelease()
+dams_in$GCOUL[1] <- GCInflow()
+dams_out$GCOUL[1] <- GCOutflow()
+
+dams_in$JDAYY[1] <- CJIn()
+dams_out$JDAYY[1] <- CJOut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$CHIEF[1] <- CJCurtail()
+	mainstem_shortfall$CHIEF[1] <- CJInstreamShortfall()
 }
 
-MicaRelease_c = MIRelease()
-dams_in[I_Week,1] = MIInflow()
-dams_out[I_Week,1] = MIOutflow()
-
-dams_in[I_Week,2] = REVIn()
-dams_out[I_Week,2] = REVOut()
-
-ARRelease_c = ARRelease()
-dams_in[I_Week,3] = ARInflow()
-dams_out[I_Week,3] = AROutflow()
-
-DUOutflow_c = DURelease() 
-dams_in[I_Week,4] = DUInflow()
-dams_out[I_Week,4] = DUOutflow_c
-
-dams_in[I_Week,5] = LBInflow()
-dams_out[I_Week,5] = LBOutflow()
-
-BonnersFerry_c = BonnersFerry() 
-dams_in[I_Week,6] = BonnersFerry_c
-dams_out[I_Week,6] = BonnersFerry_c
-
-CLRelease_c = CLRelease() 
-dams_in[I_Week,7] = CLInflow()
-dams_out[I_Week,7] = CLOutflow()
-
-HHRelease_c = HHRelease()
-dams_in[I_Week,8] = HHInflow()
-dams_out[I_Week,8] = HHOutflow()
-
-KERelease_c = KERelease()
-dams_in[I_Week,9] = KEInflow()
-dams_out[I_Week,9] = KEOutflow()
-
-dams_in[I_Week,10] = NOXIn()
-dams_out[I_Week,10] = NOXOut()
-
-dams_in[I_Week,11] = CBIn()
-dams_out[I_Week,11] = CBOut()
-
-AFRelease_c = AFRelease()
-dams_in[I_Week,12] = AFInflow()
-dams_out[I_Week,12] = AFOutflow()
-
-dams_in[I_Week,13] = BDIn()
-dams_out[I_Week,13] = BDOut()
-
-GCRelease_c = GCRelease()
-dams_in[I_Week,14] = GCInflow()
-dams_out[I_Week,14] = GCOutflow()
-
-dams_in[I_Week,15] = CJIn()
-dams_out[I_Week,15] = CJOut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,1] = CJCurtail()
-	mainstem_shortfall[I_Week,1] = CJInstreamShortfall()
+dams_in$WELLS[1] <- WEIn()
+dams_out$WELLS[1] <- WEOut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$WELLS[1] <- WECurtail()
+	mainstem_shortfall$WELLS[1] <- WEInstreamShortfall()
 }
 
-dams_in[I_Week,16] = WEIn()
-dams_out[I_Week,16] = WEOut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,2] = WECurtail()
-	mainstem_shortfall[I_Week,2] = WEInstreamShortfall()
+dams_in$ROCKY[1] <- RRIn()
+dams_out$ROCKY[1] <- RROut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$ROCKY[1] <- RRCurtail()
+	mainstem_shortfall$ROCKY[1] <- RRInstreamShortfall()
 }
 
-dams_in[I_Week,17] = RRIn()
-dams_out[I_Week,17] = RROut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,3] = RRCurtail()
-	mainstem_shortfall[I_Week,3] = RRInstreamShortfall()
+dams_in$RISLA[1] <- RIIn()
+dams_out$RISLA[1] <- RIOut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$RISLA[1] <- RICurtail()
+	mainstem_shortfall$RISLA[1] <- RIInstreamShortfall()
 }
 
-dams_in[I_Week,18] = RIIn()
-dams_out[I_Week,18] = RIOut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,4] = RICurtail()
-	mainstem_shortfall[I_Week,4] = RIInstreamShortfall()
+dams_in$WANAP[1] <- WAIn()
+dams_out$WANAP[1] <- WAOut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$WANAP[1] <- WACurtail()
+	mainstem_shortfall$WANAP[1] <- WAInstreamShortfall()
 }
 
-dams_in[I_Week,19] = WAIn()
-dams_out[I_Week,19] = WAOut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,5] = WACurtail()
-	mainstem_shortfall[I_Week,5] = WAInstreamShortfall()
+dams_in$PRIRA[1] <- PRIn()
+dams_out$PRIRA[1] <- PROut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$PRIRA[1] <- PRCurtail()
+	mainstem_shortfall$PRIRA[1] <- PRInstreamShortfall()
 }
 
-dams_in[I_Week,20] = PRIn()
-dams_out[I_Week,20] = PROut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,6] = PRCurtail()
-	mainstem_shortfall[I_Week,6] = PRInstreamShortfall()
+dams_in$UpSnake[1] <- USInflow()
+dams_outUpSnake[1] <- USOutflow()
+
+BRRelease_c <- BRRelease()
+dams_in$BROWN[1] <- BRInflow()
+dams_out$BROWN[1] <- BROutflow()
+
+dams_in$OXBOW[1] <- OXIn()
+dams_out$OXBOW[1] <- OXOut()
+
+dams_in$HCANY[1] <- HCIn()
+dams_out$HCANY[1] <- HCOut()
+
+DWRelease_c <- DWRelease()
+dams_in$DWORS[1] <- DWInflow()
+dams_out$DWORS[1] <- DWOutflow()
+
+dams_in$LGRAN[1] <- LGIn()
+dams_out$LGRAN[1] <- LGOut()	
+
+dams_in$LGOOS[1] <- LIGIn()
+dams_out$LGOOS[1] <- LIGOut()
+
+dams_in$LMONU[1] <- LMIn()
+dams_out$LMONU[1] <- LMOut()
+
+dams_in$ICEHA[1] <- IHIn()
+dams_out$ICEHA[1] <- IHOut()
+
+dams_in$MCNAR[1] <- MCNIn()
+dams_out$MCNAR[1] <- MCNOut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$MCNAR[1] <- MCNCurtail()
+	mainstem_shortfall$MCNAR[1] <- MCNInstreamShortfall()
+}
+Biop[1,1] <- McNaryFlowTarget()
+
+dams_in$JDAYY[1] <- JDIn()
+dams_out$JDAYY[1] <- JDOut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$JDAYY[1] <- JDCurtail()
+	mainstem_shortfall$JDAYY[1] <- JDInstreamShortfall()
 }
 
-dams_in[I_Week,21] = USInflow()
-dams_out[I_Week,21] = USOutflow()
-
-dams_in[I_Week,22] = MSInflow()
-dams_out[I_Week,22] = MSOutflow()
-
-BRRelease_c = BRRelease()
-dams_in[I_Week,23] = BRInflow()
-dams_out[I_Week,23] = BROutflow()
-
-dams_in[I_Week,24] = OXIn()
-dams_out[I_Week,24] = OXOut()
-
-dams_in[I_Week,25] = HCIn()
-dams_out[I_Week,25] = HCOut()
-
-DWRelease_c = DWRelease()
-dams_in[I_Week,26] = DWInflow()
-dams_out[I_Week,26] = DWOutflow()
-
-dams_in[I_Week,27] = LGIn()
-dams_out[I_Week,27] = LGOut()	
-
-dams_in[I_Week,28] = LIGIn()
-dams_out[I_Week,28] = LIGOut()
-
-dams_in[I_Week,29] = LMIn()
-dams_out[I_Week,29] = LMOut()
-
-dams_in[I_Week,30] = IHIn()
-dams_out[I_Week,30] = IHOut()
-
-dams_in[I_Week,31] = MCNIn()
-dams_out[I_Week,31] = MCNOut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,7] = MCNCurtail()
-	mainstem_shortfall[I_Week,7] = MCNInstreamShortfall()
-}
-Biop[I_Week,1] = McNaryFlowTarget()
-
-dams_in[I_Week,32] = JDIn()
-dams_out[I_Week,32] = JDOut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,8] = JDCurtail()
-	mainstem_shortfall[I_Week,8] = JDInstreamShortfall()
+dams_in$DALLE[1] <- DAIn()
+dams_out$DALLE[1] <- DAOut()
+if (track_curtailment == 1) {
+	mainstem_curtailments$DALLE[1] <- DACurtail()
+	mainstem_shortfall$DALLE[1] <- DAInstreamShortfall()
 }
 
-dams_in[I_Week,33] = DAIn()
-dams_out[I_Week,33] = DAOut()
-if (track_curtailment==1) {
-	mainstem_curtailments[I_Week,9] = DACurtail()
-	mainstem_shortfall[I_Week,9] = DAInstreamShortfall()
-}
+dams_in$BONNE[1] <- BONIn()
+dams_out$BONNE[1] <- BONOut()
+Biop[1,2] <- BonnevilleFlowTarget()
 
-dams_in[I_Week,34] = BONIn()
-dams_out[I_Week,34] = BONOut()
-Biop[I_Week,2] = BONTarget_AcFt()
-
-######### STORAGE FOR THE SECOND TIME STEP
-reservoir_vol_df[1,1] = reservoir_vol_df[1,1] + (dams_in[1,1] - dams_out[1,1]) # MICAA RESERVOIR
-reservoir_vol_df[1,2] = reservoir_vol_df[1,2] + (dams_in[1,3] - dams_out[1,3]) # ARROW RESERVOIR
-reservoir_vol_df[1,3] = reservoir_vol_df[1,3] + (dams_in[1,4] - dams_out[1,4]) # DUNCAN RESERVOIR
-reservoir_vol_df[1,4] = reservoir_vol_df[1,4] + (dams_in[1,7] - dams_out[1,7]) # CORRA LINN RESERVOIR 
-reservoir_vol_df[1,5] = reservoir_vol_df[1,5] + (dams_in[1,5] - dams_out[1,5]) # LIBBY RESERVOIR
-reservoir_vol_df[1,6] = reservoir_vol_df[1,6] + (dams_in[1,8] - dams_out[1,8]) # HUNGRY HORSE RESERVOIR
-reservoir_vol_df[1,7] = reservoir_vol_df[1,7] + (dams_in[1,14] - dams_out[1,14]) # GRAND COULEE RESERVOIR
-reservoir_vol_df[1,8] = reservoir_vol_df[1,8] + (dams_in[1,26] - dams_out[1,26]) # DWORSHAK RESERVOIR
-reservoir_vol_df[1,9] = reservoir_vol_df[1,9] + (dams_in[1,23] - dams_out[1,23]) # BROWNLEE RESERVOIR
-reservoir_vol_df[1,10] = reservoir_vol_df[1,10] + (dams_in[1,21] - dams_out[1,21]) # UPPER SNAKE COMPOSITE RESERVOIR
-reservoir_vol_df[1,11] = reservoir_vol_df[1,11] + (dams_in[1,22] - dams_out[1,22]) # MIDDLE SNAKE COMPOSITE RESERVOIR
+######### STORAGE FOR THE FIRST TIME STEP
+reservoir_vol_df$MI[1] <- reservoir_vol_df$MI[1] + (dams_in$MICAA[1] - dams_out$MICAA[1])
+reservoir_vol_df$AR[1] <- reservoir_vol_df$AR[1] + (dams_in$ARROW[1] - dams_out$ARROW[1]) 
+reservoir_vol_df$DU[1] <- reservoir_vol_df$DU[1] + (dams_in$DUNCA[1] - dams_out$DUNCA[1]) 
+reservoir_vol_df$CL[1] <- reservoir_vol_df$CL[1] + (dams_in$CORRA[1] - dams_out$CORRA[1]) 
+reservoir_vol_df$LB[1] <- reservoir_vol_df$LB[1] + (dams_in$LIBBY[1] - dams_out$LIBBY[1]) 
+reservoir_vol_df$HH[1] <- reservoir_vol_df$HH[1] + (dams_in$FLASF[1] - dams_out$FLASF[1]) 
+reservoir_vol_df$GC[1] <- reservoir_vol_df$GC[1] + (dams_in$GCOUL[1] - dams_out$GCOUL[1])
+reservoir_vol_df$DW[1] <- reservoir_vol_df$DW[1] + (dams_in$DWORS[1] - dams_out$DWORS[1]) 
+reservoir_vol_df$BR[1] <- reservoir_vol_df$BR[1] + (dams_in$BROWN[1] - dams_out$BROWN[1]) 
+reservoir_vol_df$US[1] <- reservoir_vol_df$US[1] + (dams_in$UpSnake[1] - dams_out$UpSnake[1]) 
+reservoir_vol_df$KE[1] <- reservoir_vol_df$KE[1] + (dams_in$FLAPO[1] - dams_out$FLAPO[1]) 
+reservoir_vol_df$AF[1] <- reservoir_vol_df$AF[1] + (dams_in$ALBEN[1] - dams_out$ALBEN[1]) 
 
 ###### MOPs Measures Of Performance
-MOP_df[I_Week,1] = shortfall() # Firm Energy Performance Metrics ==> if(shortfall()>0.001) --> does not meet target
-MOP_df[I_Week,2] = shortfall_2() # Non-Firm Energy Performance Metric ==> if(shortfall_2()>0.001) --> does not meet target
-MOP_df[I_Week,3] = shortfall_5() # Columbia Falls Flow Metrics ==> if(shortfall_5()>0.001) --> does not meet target
-MOP_df[I_Week,4] = shortfall_6() # Lower Granite Flow Metrics ==> if(shortfall_5()>0.001) --> does not meet target
-MOP_df[I_Week,5] = shortfall_7() # Vernita Bar Flow Target Metrics ==> if(shortfall_7()>0.001) --> does not meet target
-MOP_df[I_Week,6] = shortfall_8() # McNary Flow Target Metrics ==> if(shortfall_8()>0.001) --> does not meet target
-MOP_df[I_Week,7] = shortfall_9() # Grand Coulee Recreation Metrics ==> if greater than zero "0" does not meet target flow
-MOP_df[I_Week,8] = shortfall_10() # Dalles Flood Protection Metrics ==> if greater than zero "0" does not meet target flow
-MOP_df[I_Week,9] = shortfall_11() # Ice Harbor Flow Metrics ==> if(shortfall_11()>0.001) --> does not meet target
-MOP_df[I_Week,10] = ChumSF() # Bonneville Winter Chum Flow Metrics ==> if greater than zero "0" does not meet target flow
-MOP_df[I_Week,11] = BelowFCC() # Flood Pool below  curve
-MOP_df[I_Week,12] = FirmEnergySales()
-MOP_df[I_Week,13] = NonFirmSpotSales()
-MOP_df[I_Week,14] = MaxSystemEnergy()
+MOP_df$FirmEnergy[1] <- FirmEnergyMOP() # Firm energy shortfall
+MOP_df$NonFirmEnergy[1] <- NonFirmEnergyMOP() # Non-Firm energy shortfall
+MOP_df$ColFallsFlow[1] <- ColFallsFlowMOP() # Columbia Falls flow shortfall
+MOP_df$LowerGraniteFlow[1] <- LowerGraniteFlowMOP() # Lower Granite flow shortfall 
+MOP_df$VernitaBarFlow[1] <- VernitaBarFlowMOP() # Vernita Bar flow shortfall
+MOP_df$McNaryFlow[1] <- McNaryFlowMOP() # McNary flow shortfall
+MOP_df$GCRec[1] <- GCRecMOP() # Grand Coulee recreation metric
+MOP_df$DallesFlood[1] <- DallesFloodMOP() # The Dalles flood protection metric
+MOP_df$IHNav[1] <- IHNavMOP() # Ice Harbor navigation metric
+MOP_df$BonnevillFlow[1] <- BonnevillFlowMOP() # Bonneville flow shortfall
+MOP_df$BelowFCC[1] <- BelowFCC() # Excess flood storage space
+MOP_df$FirmEnergySales[1] <- FirmEnergySales()
+MOP_df$NonFirmSpotSales[1] <- NonFirmSpotSales()
+MOP_df$TotalSysEnergy[1] <- TotalSysEnergy()
 
+write.table(cbind(date_hist_sim[1,], dams_out[1,]), paste0(OutputFolder, "/dams_out.txt"), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[1,], dams_in[1,]), paste0(OutputFolder, "/dams_in.txt"), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[1,], reservoir_vol_df[1,]), paste0(OutputFolder, "/reservoir_volume.txt"), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[1,], MOP_df[1,]), paste0(OutputFolder, "/MOP_df.txt"), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[1,], water_df[1,]), paste0(OutputFolder, "/water.txt"), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[1,], energy_df[1,]), paste0(OutputFolder, "/energy.txt"), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[1,], Biop[1,]), paste0(OutputFolder, "/Biop_flow.txt"), row.names=F, col.names=T, append=F)
 
-write.table(cbind(date_hist_sim[I_Week,], dams_out[1,]), paste(OutputFolder, "/dams_out.txt", sep=""), row.names=F, col.names=T, append=F)
-write.table(cbind(date_hist_sim[I_Week,], dams_in[1,]), paste(OutputFolder, "/dams_in.txt", sep=""), row.names=F, col.names=T, append=F)
-write.table(cbind(date_hist_sim[I_Week,], reservoir_vol_df[1,]), paste(OutputFolder, "/reservoir_volume.txt", sep=""), row.names=F, col.names=T, append=F)
-write.table(cbind(date_hist_sim[I_Week,], MOP_df[1,]), paste(OutputFolder, "/MOP_df.txt", sep=""), row.names=F, col.names=T, append=F)
-write.table(cbind(date_hist_sim[I_Week,], water_df[1,]), paste(OutputFolder, "/water.txt", sep = ""), row.names=F, col.names=T, append=F)
-write.table(cbind(date_hist_sim[I_Week,], energy_df[1,]), paste(OutputFolder, "/energy.txt", sep = ""), row.names=F, col.names=T, append=F)
-write.table(cbind(date_hist_sim[I_Week,], Biop[1,]), paste(OutputFolder, "/Biop_flow.txt", sep = ""), row.names=F, col.names=T, append=F)
-
-if (track_curtailment==1) {
-	write.table(cbind(date_hist_sim[I_Week,], mainstem_shortfall[1,]), paste(OutputFolder, "/mainstem_shortfall.txt", sep=""), row.names=F, col.names=T, append=F)
-	write.table(cbind(date_hist_sim[I_Week,], mainstem_curtailments[1,]), paste(OutputFolder, "/mainstem_curtailment.txt", sep=""), row.names=F, col.names=T, append=F)
+if (track_curtailment == 1) {
+	write.table(cbind(date_hist_sim[1,], mainstem_shortfall[1,]), paste0(OutputFolder, "/mainstem_shortfall.txt"), row.names=F, col.names=T, append=F)
+	write.table(cbind(date_hist_sim[1,], mainstem_curtailments[1,]), paste0(OutputFolder, "/mainstem_curtailment.txt"), row.names=F, col.names=T, append=F)
 }
-
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################

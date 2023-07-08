@@ -88,6 +88,7 @@ Read_Rule_Curves <- function() {
 	VernitaBarFlowTarget_input <<- read.table(paste0(input_dir, "GC/VernitaBarFlowTarget_new.txt"), header=T)
 	GCBdgtForVB_input <<- read.table(paste0(input_dir, "GC/GCBdgtForVB_new.txt"), header=T)
   	Article_56_input <<- read.table(paste0(input_dir, "Kerr/article_56_new.txt"), header=T)
+	McNaryFlowTarget_input <<- read.table(paste0(input_dir, "McNary/MCN_flow_target.txt"), header=T)
 
 	######### Bonneville ########
 	BONNetHead_input <<- read.table(paste0(input_dir, "BONN/BONNetHead.txt"), header=T)

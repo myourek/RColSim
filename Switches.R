@@ -3,8 +3,8 @@ ReadSwitches <<- function() {
 
 # Factors for controlling additional flood storage space  
   
-StorFrac <<- 0.2 # Fraction of storage in Brownlee and Dworshak dams to use for meeting fish flow target at Lower Granite Dam
-InflowFrac <<- 1 # Fraction of inflow to Brownlee and Dworshak reservoirs to use for meeting fish flow target at Lower Granite Dam
+StorFrac <<- 0.2 # Weight of Brownlee and Dworshak resrevoir storage to use for meeting fish flow target at Lower Granite Dam
+InflowFrac <<- 1 # Weight of inflow to Brownlee and Dworshak reservoirs to use for meeting fish flow target at Lower Granite Dam
 MIFloodMult <<- 1.25 # Factor to multiply available storage space at Arrow and Mica dams for reducing high flow at The Dalles.
 LBFloodMult <<- 1.25 # Factor to multiply available storage space at Libby dam for reducing high flow at The Dalles.
 
@@ -26,13 +26,13 @@ track_curtailment <<- 1 # If 1, output mainstem curtailment, this slows down the
 ##### InitialConditionSwitch
 #Options: 0:  Use values imported from spreadsheet. 1:  Use fixed multiplier for whole basin (fraction of full pool)
 #2:  Use historic storage value
-InitialConditionSwitch <<- 2 # Default = 2
+InitialConditionSwitch <<- 1 # Default = 2
 ResInitFractionFull <<- 0.8 # Used with option 1
 
-week_counter_in_year <<- function() { # Find week of year starting on August 1st
-	week_counter_in_year_o = date_hist_sim$week[week_counter]
-	return(week_counter_in_year_o)
-}
+#week_counter_in_year <<- function() { # Find week of year starting on August 1st
+#	week_counter_in_year_o = date_hist_sim$week[week_counter]
+#	return(week_counter_in_year_o)
+#}
 
 ######## find which operation year we are in, from weekly data
 year_from_weekly <<- function() {
@@ -134,17 +134,7 @@ RefillSwitch <<- function(){
 # With the current setup, the release required for fish flow always exceeds the flood evacuation, so this switch 
 # does not actually change the output.
 
-KerrTopVolSw <<- 1 # Default = 1
-
-### Options for Flood curve
-# Options: 1--Use flood control curve year-round, 
-#          2--Use flood control curve only during flood evacuation season. 
-#             This option makes adjustments to the way rule curves are 
-#             such that the critical and refill curves control the minimum dam storage levels 
-#             outside of the flood evacuation period.This option improves fit of Canadian dams (Mica, Arrow, Duncan)
-#             with observed outflow prior to 2008.
-
-FC_Option <<- 2 # Default = 2
+KerrTopVolSw <<- 0 # Default = 0
 GlobalFloodEvacMult <<- 1 # Factor to adjust flood evacuation, default is 1.
 
 ########## EnergyAllocSafeFactor
@@ -164,34 +154,39 @@ UseAlternateNonFirmTarget <<- 0
 NonFirmEnergySw <<- 1 # Options: 1--Release water for non-firm hydropower generation, otherwise do not
 
 ### Estimated combined efficiency of turbines
-HHCombEfficiency <<- 0.8
-LBCombEfficiency <<- 0.8
+
 MICombEfficiency <<- 0.8
 RevCombEfficiency <<- 0.8
-CBCombEfficiency <<- 0.8
+ARCombEfficiency <<- 0.8
+DUCombEfficiency <<- 0.8
+HHCombEfficiency <<- 0.8
 KECombEfficiency <<- 0.8
 NOXCombEfficiency <<- 0.8
+CBCombEfficiency <<- 0.8
+AFCombEfficiency <<- 0.8
 BCCombEfficiency <<- 0.8
 BDCombEfficiency <<- 0.8
-CJCombEfficiency <<- 0.8
+LBCombEfficiency <<- 0.8
+CLCombEfficiency <<- 0.8
 GCCombEfficiency <<- 0.8
-PRCombEfficiency <<- 0.8
-RICombEfficiency <<- 0.8
-RRCombEfficiency <<- 0.8
-WACombEfficiency <<- 0.8
+CJCombEfficiency <<- 0.8
 WECombEfficiency <<- 0.8
+RRCombEfficiency <<- 0.8
+RICombEfficiency <<- 0.8
+WACombEfficiency <<- 0.8
+PRCombEfficiency <<- 0.8
 DWCombEfficiency <<- 0.8
-IHCombEfficiency <<- 0.8
+BRCombEfficiency <<- 0.8
+OXCombEfficiency <<- 0.8
+HCCombEfficiency <<- 0.8
 LGCombEfficiency <<- 0.8
 LIGCombEfficiency <<- 0.8
 LMCombEfficiency <<- 0.8
-BONCombEfficiency <<- 0.8
-DACombEfficiency <<- 0.8
+IHCombEfficiency <<- 0.8
+MCNCombEfficiency <<- 0.8
 JDCombEfficiency <<- 0.8
-MCCombEfficiency <<- 0.8
-ARCombEfficiency <<- 0.8
-DUCombEfficiency <<- 0.8
-DUCombEfficiency_00 <<- -999
+DACombEfficiency <<- 0.8
+BONCombEfficiency <<- 0.8
 
 ### Options for using storage to meet fish targets
 
