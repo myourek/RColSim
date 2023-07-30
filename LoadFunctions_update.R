@@ -1350,7 +1350,7 @@ LB_sturgeon_flow <- function() { # 2006 PALFWS Libby BiOp
 	} else {
 		tier_volume <- 0
 	}
-	LB_sturgeon_o <- 4000 + tier_volume / 11 / cfsToafw	
+	LB_sturgeon_o <- 4000 + tier_volume / 11 / cfsTOafw	
 	return(LB_sturgeon_o)
 }	
 # According to 2008 BiOp, Libby should be drafted to 10 ft from full by end of Sept. unless forecasted flow at the Dalles is less than the 20th percentile,
@@ -3686,9 +3686,9 @@ JLFloodRuleCurve <- function() {
 	return(JLFloodRuleCurve_o)
 }
 UpSnakeAgReq <- function() {
-	demand <- DemAM
-	supply <- NatFlowAM - NatFlowIP - NatFlowPAL - NatFlowRIR
-	UpSnakeAgReq_o <- max(0, demand - supply + AMObsQin())
+	CLUpSnake <- 1.25
+	IrrigationDemand <- DemAM
+	UpSnakeAgReq_o = IrrigationDemand * CLUpSnake
 	return(UpSnakeAgReq_o)
 }
 JLAgReq <- function() {
@@ -3707,7 +3707,7 @@ JLTopVol <- function() {
 }
 JLMinReq <- function() {
 	JLAvgMin <- 100 # minimum monthly average gauge flow
-	JLMinReq_o <- max(JLAgReq(), JLAvgMin)
+	JLMinReq_o <- max(JLAgReq(), JLAvgMin * cfsTOafw)
 	return(JLMinReq_o)
 }
 JLRuleReq <- function() {
@@ -3747,8 +3747,8 @@ JLOutflow <- function() {
 #------------------ PALISADES DAM ------------------#
 #####################################################
 
-PALFullPoolVol <- 1197000
-PALBotVol <- 0
+PALFullPoolVol <- 1401000
+PALBotVol <- 201000
 InitPALLink <- 1000000
 InitPAL <- function() {
 	PALHistStor <- HistStor_input$PALHistStor[week_counter]
@@ -3815,10 +3815,6 @@ PALFloodRuleCurve <- function() {
 	}
 	return(PALFloodRuleCurve_o)
 }
-AMObsQin <- function() {
-	AMObsQin_o <- AMObsInflow$cfs[week_in_year]
-	return(AMObsQin_o)
-}
 PALAgReq <- function() {
 	PALAgReq_o <- UpSnakeAgReq() * Palisades() / (Palisades() + Jackson() + IslandPark() + Ririe())
 	return(PALAgReq_o)
@@ -3835,7 +3831,7 @@ PALTopVol <- function() {
 }
 PALMinReq <- function() {
 	PALAvgMin <- 700 # minimum average monthly flow at Neely, ID gauge near American Falls from historical data
-	PALMinReq_o <- max(PALAgReq(), PALAvgMin)
+	PALMinReq_o <- max(PALAgReq(), PALAvgMin * cfsTOafw)
 	return(PALMinReq_o)
 }
 PALRuleReq <- function() {
@@ -3947,8 +3943,8 @@ IPTopVol <- function() {
 	return(IPTopVol_o)
 }
 IPMinReq <- function() {
-	IPAvgMin <- 0
-	IPMinReq_o <- max(IPAgReq(), IPAvgMin)
+	IPAvgMin <- 30
+	IPMinReq_o <- max(IPAgReq(), IPAvgMin * cfsTOafw)
 	return(IPMinReq_o)
 }
 IPRuleReq <- function() {
@@ -3988,9 +3984,9 @@ IPOutflow <- function() {
 #--------------------- RIRIE DAM ---------------------#
 #######################################################
 
-RIRFullPoolVol <- 80540
-RIRBotVol <- 0
-InitRIRLink <- 50000
+RIRFullPoolVol <- 100500
+RIRBotVol <- 19960
+InitRIRLink <- 80000
 InitRIR <- function() {
 	RIRHistStor <- HistStor_input$RIRHistStor[week_counter]
 	if (InitialConditionSwitch == 0) {
@@ -4063,7 +4059,7 @@ RIRTopVol <- function() {
 }
 RIRMinReq <- function() {
 	RIRAvgMin <- 0
-	RIRMinReq_o <- max(RIRAgReq(), RIRAvgMin)
+	RIRMinReq_o <- max(RIRAgReq(), RIRAvgMin * cfsTOafw)
 	return(RIRMinReq_o)
 }
 RIRRuleReq <- function() {
@@ -4147,37 +4143,142 @@ AMInflow <- function() {
 	return(AMInflow_o)
 }
 MinidokaAgReq <- function() {
-	BrownleeFlowData() - LuckyPeakFlowData() - MinidokaFlowData()
-	MinidokaAgReq_o <- max(0, DemMID - (NatFlowMID - NatFlowMIN) + KingsHillObsQ())
+	ConveyanceLossMID <- 1.25
+	IrrigationDemand <- DemMID + DemMIN 
+	MinidokaAgReq_o <- IrrigationDemand * ConveyanceLossMID
+	return(MinidokaAgReq_o)
+]
 AMAgReq <- function() {
-	AMAgReq_o <- UpSnakeAgReq() * Ririe() / (Palisades() + Jackson() + IslandPark() + Ririe())
-	return(RIRAgReq_o)
+	AMAgReq_o <- MinidokaAgReq() * AmericanFalls() / (AmericanFalls() + Minidoka())
+	return(AMAgReq)
 }
-
-
-
-
-
-
-
-
-
+AMMinReq <- function() {
+	AMAvgMin <- 300 # minimum monthly average gauge flow
+	AMMinReq_o <- max(AMAgReq(), AMAvgMin * cfsTOafw)
+	return(AMMinReq_o)
+}
+AMAvailAfter <- function() {
+	AMAvailAfter_o <- max(0, AmericanFalls() + AMIn() - AMBotVol)
+	return(AMAvailAfter_o)
+}
+AMPrelim <- function() {
+	AMPrelim_o <- min(AMAvailAfter(), AMMinReq())
+	return(AMPrelim_o)
+}
+AMRelLimit <- function() {
+	AMRelLimit_o <- max(0, AmericanFalls() + AMInflow() - AMBotVol)
+	return(AMRelLimit_o)
+}
+AMDamProtectRel <- function() {
+	AMDamProtectRel_o <- max(0, AmericanFalls() + AMInflow() - AMFullPoolVol)
+	return(AMDamProtectRel_o)
+}
+AMRelease <- function() {
+  AMRelease_o <- max(AMDamProtectRel(), min(AMPrelim(), AMRelLimit()))
+  return(AMRelease_o)
+}
+AMOutflow <- function() {
+	if (ResetStorage() == 1) {
+		AMOutflow_o <- 0
+	} else {
+		AMOutflow_o <- AMRelease_c
+	}
+  return(AMOutflow_o)
+}
 
 #######################################################
 #----------------- MINIDOKA DAM ----------------------#
 #######################################################
 
-
-
+MINFullPoolVol <- 95180
+MINBotVol <- 0
+InitPALLink <- 70000
+InitMIN <- function() {
+	MINHistStor <- HistStor_input$MINHistStor[week_counter]
+	if (InitialConditionSwitch == 0) {
+		InitMIN_o <- InitMINLink
+	} else if (InitialConditionSwitch == 1) {
+		InitMIN_o <- ResInitFractionFull * MINFullPoolVol
+	} else if (InitialConditionSwitch == 2) {
+		InitMIN_o <- MINHistStor
+	} else {
+		InitMIN_o <- MINFullPoolVol	
+	}
+	return(InitMIN_o)
+}	
+Minidoka <- function() {
+	if (week_counter == 1) {
+		Minidoka_o <- InitMIN()
+	} else {
+		Minidoka_o <- reservoir_vol_df$MIN[week_counter - 1]
+	}
+	return(Minidoka_o)
+}
+MinidokaFlowData <- function() {
+	return(FlowMIN)
+}
+MINInc <- function() {
+	MINInc_o <- MinidokaFlowData() - AmericanFallsFlowData()
+	return(MINInc_o)
+}
+MINIn <- function() {
+	MINIn_o <- AMPrelim() + MINInc()
+	return(MINIn_o)
+}
+MINInflow <- function() {
+	if (ResetStorage() == 1) {
+		MINInflow_o <- InitMIN() - Minidoka()
+	} else {
+		MINInflow_o <- AMOutflow() + MINInc()
+	}
+	return(MINInflow_o)
+}
+MINAgReq <- function() {
+	MINAgReq_o <- MinidokaAgReq() * Minidoka() / (AmericanFalls() + Minidoka())
+	return(MINAgReq)
+}
+MINMinReq <- function() {
+	MINAvgMin <- 300 # minimum average monthly flow at Neely, ID gauge near American Falls from historical data
+	MINMinReq_o <- max(MINAgReq(), MINAvgMin * cfsTOafw)
+	return(MINMinReq_o)
+}
+MINAvailAfter <- function() {
+	MINAvailAfter_o <- max(0, Minidoka() + MINIn() - MINBotVol)
+	return(MINAvailAfter_o)
+}
+MINPrelim <- function() {
+	MINPrelim_o <- min(MINAvailAfter(), MINMinReq())
+	return(MINPrelim_o)
+}
+MINRelLimit <- function() {
+	MINRelLimit_o <- max(Minidoka() + MINInflow() - MINBotVol, 0)
+	return(MINRelLimit_o)
+}
+MINDamProtectRel <- function() {
+	MINDamProtectRel_o <- max(0, Minidoka() + MINInflow() - MINFullPoolVol)
+	return(MINDamProtectRel_o)
+}
+MINRelease <- function() {
+  MINRelease_o <- max(MINDamProtectRel(), min(MINPrelim(), MINRelLimit()))
+  return(MINRelease_o)
+}
+MINOutflow <- function() {
+	if (ResetStorage() == 1) {
+		MINOutflow_o <- 0
+	} else {
+		MINOutflow_o <- MINRelease_c
+	}
+  return(MINOutflow_o)
+}
 
 #######################################################
 #------------------- BOISE SYSTEM --------------------#
 #------ (ARROW ROCK, ANDERSON RANCH, LUCKY PEAK) -----#
 #######################################################
 
-BoiseFullPoolVol <- 949700
-BoiseBotVol <- 0
-InitBoiseLink <- 50000
+BoiseFullPoolVol <- 1011000
+BoiseBotVol <- 61300
+InitBoiseLink <- 750000
 InitBoise <- function() {
 	BoiseHistStor <- HistStor_input$BoiseHistStor[week_counter]
 	if (InitialConditionSwitch == 0) {
@@ -4233,7 +4334,9 @@ BoiseFloodRuleCurve <- function() {
 	return(BoiseFloodRuleCurve_o)
 }
 BoiseAgReq <- function() {
-	BoiseAgReq_o <- max(0, DemLowerBoise - (NatFlowLowerBoise - NatFlowLUC) + LowerBoiseObsQin())
+	IrrigationDemand <- DemLowerBoise
+	ConveyanceLossBoise <- 1.25
+	BoiseAgReq_o <- IrrigationDemand * ConveyanceLossBoise
 	return(BoiseAgReq_o)
 }
 BoiseTopVol <- function() {
@@ -4248,7 +4351,7 @@ BoiseTopVol <- function() {
 }
 BoiseMinReq <- function() {
 	LUCAvgMin <- 100
-	BoiseMinReq_o <- max(BoiseAgReq(), LUCAvgMin)
+	BoiseMinReq_o <- max(BoiseAgReq(), LUCAvgMin * cfsTOafw)
 	return(BoiseMinReq_o)
 }
 BoiseRuleReq <- function() {
@@ -4256,7 +4359,7 @@ BoiseRuleReq <- function() {
 	return(BoiseRuleReq_o)
 }
 BoiseAvailAfter <- function() {
-	BoiseAvailAfter_o <- max(0, Boise() + BoiseIn() - BoiseBotVol)
+	BoiseAvailAfter_o <- max(Boise() + BoiseIn() - BoiseBotVol, 0)
 	return(BoiseAvailAfter_o)
 }
 BoisePrelim <- function() {
@@ -4281,7 +4384,232 @@ BoiseOutflow <- function() {
 	} else {
 		BoiseOutflow_o <- BoiseCRelease_c
 	}
-  return(BoiseCOutflow_o)
+  return(BoiseOutflow_o)
+}
+
+#######################################################
+#------------------ PAYETTE SYSTEM -------------------#
+#--------------- (DEADWOOD AND CASCADE) --------------#
+#######################################################
+
+PayetteFullPoolVol <- 847192
+PayetteBotVol <- 46740
+InitPayetteLink <- 750000
+InitPayette <- function() {
+	PayetteHistStor <- HistStor_input$PayetteHistStor[week_counter]
+	if (InitialConditionSwitch == 0) {
+		InitPayette_o <- InitPayetteLink
+	} else if (InitialConditionSwitch == 1) {
+		InitPayette_o <- ResInitFractionFull * PayetteFullPoolVol
+	} else if (InitialConditionSwitch == 2) {
+		InitPayette_o <- PayetteHistStor
+	} else {
+		InitPayette_o <- PayetteFullPoolVol	
+	}
+	return(InitPayette_o)
+}	
+Payette <- function() {
+	if (week_counter == 1) {
+		Payette_o <- InitPayette()
+	} else {
+		Payette_o <- reservoir_vol_df$Payette[week_counter - 1]
+	}
+	return(Payette_o)
+}
+PayetteFlowData <- function() {
+	return(FlowPAY)
+}
+PayetteIn <- function() {
+	PayetteIn_o <- PayetteFlowData()
+	return(PayetteIn_o)
+}
+PayetteInflow <- function() {
+	if (ResetStorage() == 1) {
+		PayetteInflow_o <- InitPayette() - Payette()
+	} else {
+		PayetteInflow_o <- PayetteIn()
+	}
+	return(PayetteInflow_o)
+}
+PayetteFloodRuleCurve <- function() {
+	if (PayetteRunoffRemainingJanJul <= 0.5E6) {
+		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood1[week_in_year] + (PayetteRunoffRemainingJanJul - 0) / (0.5E6 - 0) * (PayetteFlood_input$PayetteFlood2[week_in_year] - PayetteFlood_input$PayetteFlood1[week_in_year])
+	} else if (PayetteRunoffRemainingJanJul <= 1.0E6) {
+		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood2[week_in_year] + (PayetteRunoffRemainingJanJul - 0.5E6) / (1.0E6 - 0.5E6) * (PayetteFlood_input$PayetteFlood3[week_in_year] - PayetteFlood_input$PayetteFlood2[week_in_year])
+	} else if (PayetteRunoffRemainingJanJul <= 1.5E6) {
+		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood3[week_in_year] + (PayetteRunoffRemainingJanJul - 1.0E6) / (1.5E6 - 1.0E6) * (PayetteFlood_input$PayetteFlood4[week_in_year] - PayetteFlood_input$PayetteFlood3[week_in_year])
+	} else if (PayetteRunoffRemainingJanJul <= 2.0E6) {
+		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood4[week_in_year] + (PayetteRunoffRemainingJanJul - 1.5E6) / (2.0E6 - 1.5E6) * (PayetteFlood_input$PayetteFlood5[week_in_year] - PayetteFlood_input$PayetteFlood4[week_in_year])
+	} else if (PayetteRunoffRemainingJanJul <= 3.0E6) {
+		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood5[week_in_year] + (PayetteRunoffRemainingJanJul - 2.0E6) / (3.0E6 - 2.0E6) * (PayetteFlood_input$PayetteFlood6[week_in_year] - PayetteFlood_input$PayetteFlood5[week_in_year])
+	} else {
+		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood6
+	}
+	return(PayetteFloodRuleCurve_o)
+}
+PayetteAgReq <- function() {
+	IrrigationDemand <- DemPayette
+	ConveyanceLossPayette <- 1.25
+	PayetteAgReq_o <- IrrigationDemand * ConveyanceLossPayette
+	return(PayetteAgReq_o)
+}
+PayetteTopVol <- function() {
+	if (TopRuleSw() == 0) {
+		PayetteTopVol_o <- PayetteFloodCurve()
+	} else if (TopRuleSw() == 1) {
+		PayetteTopVol_o <- PayetteFullPoolVol
+	} else if (TopRuleSw() == 2) {
+		PayetteTopVol_o <- PayetteFlood_input$PayetteFlood1[week_in_year]
+	}
+	return(PayetteTopVol_o)
+}
+PayetteMinReq <- function() {
+	PayetteAvgMin <- 700
+	PayetteMinReq_o <- max(PayetteAgReq(), PayetteAvgMin * cfsTOafw)
+	return(PayetteMinReq_o)
+}
+PayetteRuleReq <- function() {
+	PayetteRuleReq_o <- max(Payette() + PayetteIn() - PayetteTopVol(), 0)
+	return(PayetteRuleReq_o)
+}
+PayetteAvailAfter <- function() {
+	PayetteAvailAfter_o <- max(Payette() + PayetteIn() - PayetteBotVol, 0)
+	return(PayetteAvailAfter_o)
+}
+PayettePrelim <- function() {
+	PayettePrelim_o <- min(PayetteAvailAfter(), max(PayetteRuleReq(), PayetteMinReq()))
+	return(PayettePrelim_o)
+}
+PayetteRelLimit <- function() {
+	PayetteRelLimit_o <- max(Payette() + PayetteInflow() - PayetteBotVol, 0)
+	return(PayetteRelLimit_o)
+}
+PayetteDamProtectRel <- function() {
+	PayetteDamProtectRel_o <- max(0, Payette() + PayetteInflow() - PayetteFullPoolVol)
+	return(PayetteDamProtectRel_o)
+}
+PayetteRelease <- function() {
+  PayetteRelease_o <- max(PayetteDamProtectRel(), min(PayettePrelim(), PayetteRelLimit()))
+  return(PayetteRelease_o)
+}
+PayetteOutflow <- function() {
+	if (ResetStorage() == 1) {
+		PayetteOutflow_o <- 0
+	} else {
+		PayetteOutflow_o <- PayetteCRelease_c
+	}
+  return(PayetteOutflow_o)
+}
+
+#######################################################
+#--------------------- OWYHEE DAM --------------------#
+#######################################################
+
+OWYFullPoolVol <- 1120000
+OWYBotVol <- 405000
+InitOWYLink <- 750000
+InitOWY <- function() {
+	OWYHistStor <- HistStor_input$OWYHistStor[week_counter]
+	if (InitialConditionSwitch == 0) {
+		InitOWY_o <- InitOWYLink
+	} else if (InitialConditionSwitch == 1) {
+		InitOWY_o <- ResInitFractionFull * OWYFullPoolVol
+	} else if (InitialConditionSwitch == 2) {
+		InitOWY_o <- OWYHistStor
+	} else {
+		InitOWY_o <- OWYFullPoolVol	
+	}
+	return(InitOWY_o)
+}	
+Owyhee <- function() {
+	if (week_counter == 1) {
+		OWY_o <- InitOWY()
+	} else {
+		OWY_o <- reservoir_vol_df$OWY[week_counter - 1]
+	}
+	return(OWY_o)
+}
+OWYFlowData <- function() {
+	return(FlowOWY)
+}
+OWYIn <- function() {
+	OWYIn_o <- OWYFlowData()
+	return(OWYIn_o)
+}
+OWYInflow <- function() {
+	if (ResetStorage() == 1) {
+		OWYInflow_o <- InitOWY() - OWY()
+	} else {
+		OWYInflow_o <- OWYIn()
+	}
+	return(OWYInflow_o)
+}
+OWYFloodRuleCurve <- function() {
+	if (OwyheeRunoffRemainingJanJul <= 0.5E6) {
+		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood1[week_in_year] + (OwyheeRunoffRemainingJanJul - 0) / (0.5E6 - 0) * (OWYFlood_input$OWYFlood2[week_in_year] - OWYFlood_input$OWYFlood1[week_in_year])
+	} else if (OwyheeRunoffRemainingJanJul <= 1.0E6) {
+		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood2[week_in_year] + (OwyheeRunoffRemainingJanJul - 0.5E6) / (1.0E6 - 0.5E6) * (OWYFlood_input$OWYFlood3[week_in_year] - OWYFlood_input$OWYFlood2[week_in_year])
+	} else if (OwyheeRunoffRemainingJanJul <= 2.0E6) {
+		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood3[week_in_year] + (OwyheeRunoffRemainingJanJul - 1.0E6) / (2.0E6 - 1.0E6) * (OWYFlood_input$OWYFlood4[week_in_year] - OWYFlood_input$OWYFlood3[week_in_year])
+	} else if (OwyheeRunoffRemainingJanJul <= 3.0E6) {
+		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood4[week_in_year] + (OwyheeRunoffRemainingJanJul - 2.0E6) / (3.0E6 - 2.0E6) * (OWYFlood_input$OWYFlood5[week_in_year] - OWYFlood_input$OWYFlood4[week_in_year])
+	} else {
+		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood5
+	}
+	return(OWYFloodRuleCurve_o)
+}
+OWYAgReq <- function() {
+	IrrigationDemand <- DemOWY_ID
+	ConveyanceLossOWY <- 1.25
+	OWYAgReq_o <- IrrigationDemand * ConveyanceLossOWY
+	return(OWYAgReq_o)
+}
+OWYTopVol <- function() {
+	if (TopRuleSw() == 0) {
+		OWYTopVol_o <- OWYFloodCurve()
+	} else if (TopRuleSw() == 1) {
+		OWYTopVol_o <- OWYFullPoolVol
+	} else if (TopRuleSw() == 2) {
+		OWYTopVol_o <- OWYFlood_input$OWYFlood1[week_in_year]
+	}
+	return(OWYTopVol_o)
+}
+OWYMinReq <- function() {
+	OWYAvgMin <- 0
+	OWYMinReq_o <- max(OWYAgReq(), OWYAvgMin * cfsTOafw)
+	return(OWYMinReq_o)
+}
+OWYRuleReq <- function() {
+	OWYRuleReq_o <- max(Owyhee() + OWYIn() - OWYTopVol(), 0)
+	return(OWYRuleReq_o)
+}
+OWYAvailAfter <- function() {
+	OWYAvailAfter_o <- max(Owyhee() + OWYIn() - OWYBotVol, 0)
+	return(OWYAvailAfter_o)
+}
+OWYPrelim <- function() {
+	OWYPrelim_o <- min(OWYAvailAfter(), max(OWYRuleReq(), OWYMinReq()))
+	return(OWYPrelim_o)
+}
+OWYRelLimit <- function() {
+	OWYRelLimit_o <- max(Owyhee() + OWYInflow() - OWYBotVol, 0)
+	return(OWYRelLimit_o)
+}
+OWYDamProtectRel <- function() {
+	OWYDamProtectRel_o <- max(0, Owyhee() + OWYInflow() - OWYFullPoolVol)
+	return(OWYDamProtectRel_o)
+}
+OWYRelease <- function() {
+  OWYRelease_o <- max(OWYDamProtectRel(), min(OWYPrelim(), OWYRelLimit()))
+  return(OWYRelease_o)
+}
+OWYOutflow <- function() {
+	if (ResetStorage() == 1) {
+		OWYOutflow_o <- 0
+	} else {
+		OWYOutflow_o <- OWYCRelease_c
+	}
+  return(OWYOutflow_o)
 }
 
 #######################################################
@@ -4740,7 +5068,7 @@ OXInc <- function() {
 }
 OXPenLimit <- function() {
 	OXPenCap <- 25000 # https://www.cbr.washington.edu/hydro/oxbow
-	OXPenLimit_o <- OXPenCap * cfsToafw
+	OXPenLimit_o <- OXPenCap * cfsTOafw
 	return(OXPenLimit_o)
 }
 OXPrelim <- function() {
@@ -4779,7 +5107,7 @@ HCInc <- function() {
 }
 HCPenLimit <- function() {
 	OXPenCap <- 9000 # FERC No. 1971 Licese Application
-	OXPenLimit_o <- OXPenCap * cfsToafw
+	OXPenLimit_o <- OXPenCap * cfsTOafw
 	return(OXPenLimit_o)
 }
 HCNetHead <- function() {
