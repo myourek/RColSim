@@ -786,67 +786,6 @@ AROutflow <- function() {
 }
 
 #######################################################
-#----------------- BOX CANYON DAM --------------------#
-#######################################################
-
-BCNetHead <- function() {  
-	BCNetHead_o <- 46 # https://popud.org/projects/box-canyon-dam/
-	return(BCNetHead_o)
-}
-BCPrelim <- function() {
-	BCPrelim_o <- AFPrelim_c
-	return(BCPrelim_o)
-}
-BCPenLimit <- function() {
-	BoxCanyonPenCap <- 27400 # FERC License no. 2042-013	
-	BCPenLimit_o <- BoxCanyonPenCap * cfsTOafw
-	return(BCPenLimit_o)
-}
-BCPreEnergy <- function() {
-	BCPreEnergy_o <- min(BCPrelim(), BCPenLimit()) * BCNetHead() * BCCombEfficiency * MWhr_per_ftAcFt
-	return(BCPreEnergy_o)
-}
-BCIn <- function() {
-	BCIn_o <- AFOutflow()
-	return(BCIn_o)
-}
-BCOut <- function(){
-	BCOut_o <- BCIn()
-	return(BCOut_o)
-}
-
-#######################################################
-#--------------- THOMPSON FALLS DAM ------------------#
-#######################################################
-
-TFNetHead <- function() {
-	TFNetHead_o <- 55 # FERC No. 1869 (docket P-1869)
-	return(TFNetHead_o)
-}
-TFPrelim <- function() {
-	TFPrelim_o <- KEPrelim_c
-	return(TFPrelim_o)
-}
-TFPenLimit <- function() {
-	TFPenCap <- 23252 # FERC License no. 2042-013	
-	TFPenLimit_o <- TFPenCap * cfsTOafw
-	return(TFPenLimit_o)
-}
-TFPreEnergy <- function() {
-	TFCombEfficiency <- 0.8
-	TFPreEnergy_o <- min(TFPrelim(), TFPenLimit()) * TFNetHead() * TFCombEfficiency * MWhr_per_ftAcFt
-	return(TFPreEnergy_o)
-}
-TFIn <- function() {
-	TFIn_o <- KEOutflow()
-	return(TFIn_o)
-}
-TFOut <- function(){
-	TFOut_o <- TFIn()
-	return(TFOut_o)
-}
-
-#######################################################
 #-------------------- DUNCAN DAM ---------------------#
 #######################################################
 
@@ -1527,7 +1466,7 @@ BONFInc <- function() {
 	return(BONFInc_o)
 }
 BONFIn <- function() {
-	BONFIn_o <- BOutflow() + BONFInc()
+	BONFIn_o <- LBOutflow() + BONFInc()
 	return(BONFIn_o)
 }
 BONDFOut <- function() {
@@ -1606,7 +1545,7 @@ CLInflow <- function() {
 	if (ResetStorage() == 1) {
 		CLInflow_o <- InitCL() - CorraLinn()
 	} else {
-		CLInflow_o <- DUOutflow() + BONFOut() + CLInc() - DemVICCL - CLEvap()
+		CLInflow_o <- DUOutflow() + BONFOut() + CLInc() - CLEvap()
 	}
 	return(CLInflow_o)
 }
@@ -2205,7 +2144,7 @@ COLInc <- function() {
 	return(COLInc_o)
 }
 COLIn <- function() {
-	COLIn_o <- HHOutflow() + COLInc() - DemVICCL
+	COLIn_o <- HHOutflow() + COLInc()
 	return(COLIn_o)
 }
 COLOut <- function() {
@@ -2300,7 +2239,7 @@ KERelLimit <- function() {
 	return(KERelLimit_o)
 }
 KEAvailAfter <- function() {
-	KEAvailAfter_o <- max(0, Kerr() + KEIn() - KEBotVol)
+	KEAvailAfter_o <- max(Kerr() + KEIn() - KEBotVol, 0)
 	return(KEAvailAfter_o)
 }
 
@@ -2356,10 +2295,6 @@ Article_56 <- function() {
 
 ################### Kerr energy ######################################
 
-KECombEfficiency <- function() {
-	KECombEfficiency_o <- 0.8
-	return(KECombEfficiency_o)
-}
 KEPreEnergy <- function() {
 	KEPreEnergy_o <- MWhr_per_ftAcFt * min(KEPrelim(), KEPenLimit()) * KENetHead() * KECombEfficiency()
 	return(KEPreEnergy_o)
@@ -2459,6 +2394,43 @@ KEOutflow <- function() {
 }
 
 #######################################################
+#--------------- THOMPSON FALLS DAM ------------------#
+#######################################################
+
+ThompsonFlowData <- function() {
+	return(FlowTF)
+}
+TFInc <- function() {
+	TFInc_o <- ThompsonFlowData() - KerrFlowData()
+	return(TFInc_o)
+}
+TFNetHead <- function() {
+	TFNetHead_o <- 55 # FERC No. 1869 (docket P-1869)
+	return(TFNetHead_o)
+}
+TFPenLimit <- function() {
+	TFPenCap <- 23252 # FERC License no. 2042-013	
+	TFPenLimit_o <- TFPenCap * cfsTOafw
+	return(TFPenLimit_o)
+}
+TFIn <- function() {
+	TFIn_o <- KEOutflow() + TFInc()
+	return(TFIn_o)
+}
+TFPrelim <- function() {
+	TFPrelim_o <- KEPrelim() + TFInc()
+	return(TFPrelim_o)
+}
+TFPreEnergy <- function() {
+	TFPreEnergy_o <- min(TFPrelim(), TFPenLimit()) * TFNetHead() * TFCombEfficiency * MWhr_per_ftAcFt
+	return(TFPreEnergy_o)
+}
+TFOut <- function(){
+	TFOut_o <- TFIn()
+	return(TFOut_o)
+}
+
+#######################################################
 #-------------- NOXON RAPIDS DAM ---------------------#
 #######################################################
 
@@ -2466,29 +2438,29 @@ NoxonFlowData <- function() {
 	return(FlowNOX)
 }
 NOXInc <- function() {
-	NOXInc_o <- NoxonFlowData() - KerrFlowData()
+	NOXInc_o <- NoxonFlowData() - ThompsonFlowDataFlowData()
 	return(NOXInc_o)
+}
+NOXNetHead <- function() {
+	NOXNetHead_o <- 152  # forebay range: 2321 - 2331 ft. Average tailwater elveation: 2177 ft. Meeting with Avista (Klint Kalich, 9/19/2022)
+	return(NOXNetHead_o)
 }
 NOXPenLimit <- function() {
 	NOXPenCap <- 51000 # Meeting with Avista (Klint Kalich, 9/19/2022), changed 5/25/2023 from 50000
 	NOXPenLimit_o <- NOXPenCap * cfsTOafw
 	return(NOXPenLimit_o)
 }
+NOXIn <- function() {
+	NOXIn_o <- TFPrelim() + NOXInc()
+	return(NOXIn_o)
+}
 NOXPrelim <- function() {
-	NOXPrelim_o <- KEPrelim() + NOXInc()
+	NOXPrelim_o <- TFOut() + TFInc()
 	return(NOXPrelim_o)
 }
-NOXNetHead <- function() {
-	NOXNetHead_o <- 152  # forebay range: 2321 - 2331 ft. Average tailwater elveation: 2177 ft. Meeting with Avista (Klint Kalich, 9/19/2022)
-	return(NOXNetHead_o)
-}
 NOXPreEnergy <- function() {
-	NOXPreEnergy_o <- MWhr_per_ftAcFt * min(NOXPrelim(), NOXPenLimit()) * NOXNetHead() * NOXCombEfficiency
+	NOXPreEnergy_o <-  min(NOXPrelim(), NOXPenLimit()) * NOXNetHead() * NOXCombEfficiency * MWhr_per_ftAcFt
 	return(NOXPreEnergy_o)
-}
-NOXIn <- function() {
-	NOXIn_o <- KEOutflow() + NOXInc()
-	return(NOXIn_o)
 }
 NOXOut <- function() {
 	NOXOut_o <- NOXIn()
@@ -2506,28 +2478,26 @@ CBInc <- function() {
 	CBInc_o <- CabinetFlowData() - NoxonFlowData()
 	return(CBInc_o)
 }
+CBNetHead <- function() {
+	CBNetHead_o <- 97.2  # forebay range: 2168 - 2175 ft. Average tailwater elevation: 2073.5 ft. Meeting with Avista (Klint Kalich, 9/19/2022)
+	return(CBNetHead_o)
+}
 CBPenLimit <- function() {
 	CBPenCap <- 39000 # Meeting with Avista (Klint Kalich, 9/19/2022), changed 5/25/2023 from 35700
 	CBPenLimit_o <- CBPenCap * cfsTOafw
 	return(CBPenLimit_o)
 }
-CBPrelim <- function() {
-	UpDemand <- DemVICNOX + DemVICCB
-	IncFlow <- 
-	CBPrelim_o <- KEPrelim() + CabinetFlowData() - KerrFlowData()
-	return(CBPrelim_o)
+CBIn <- function() {
+	CBIn_o <- NOXOut() + CBInc()
+	return(CBIn_o)
 }
-CBNetHead <- function() {
-	CBNetHead_o <- 97.2  # forebay range: 2168 - 2175 ft. Average tailwater elevation: 2073.5 ft. Meeting with Avista (Klint Kalich, 9/19/2022)
-	return(CBNetHead_o)
+CBPrelim <- function() {
+	CBPrelim_o <- NOXPrelim() + CBInc()
+	return(CBPrelim_o)
 }
 CBPreEnergy <- function() {
 	CBPreEnergy_o <- MWhr_per_ftAcFt * min(CBPrelim(), CBPenLimit()) * CBNetHead() * CBCombEfficiency
 	return(CBPreEnergy_o)
-}
-CBIn <- function() {
-	CBIn_o <- NOXOut() + CBInc()
-	return(CBIn_o)
 }
 CBOut <- function() {
 	CBOut_o <- CBIn()
@@ -2765,6 +2735,42 @@ AFOutflow <- function() {
 	}
 	return(AFOutflow_o)
 }
+#######################################################
+#----------------- BOX CANYON DAM --------------------#
+#######################################################
+
+BoxCanyonFlowData <- function() {
+	return(FlowBC)
+}
+BCInc <- function() {
+	BCInc_o <- BoxCanyonFlowData() - AlbeniFallFlowData() 
+	return(BCInc_o)
+}
+BCPenLimit <- function() {
+	BoxCanyonPenCap <- 27400 # FERC License no. 2042-013	
+	BCPenLimit_o <- BoxCanyonPenCap * cfsTOafw
+	return(BCPenLimit_o)
+}
+BCNetHead <- function() {  
+	BCNetHead_o <- 46 # https://popud.org/projects/box-canyon-dam/
+	return(BCNetHead_o)
+}
+BCIn <- function() {
+	BCIn_o <- AFOutflow() + BCInc()
+	return(BCIn_o)
+}
+BCPrelim <- function() {
+	BCPrelim_o <- AFPrelim() + BCInc()
+	return(BCPrelim_o)
+}
+BCPreEnergy <- function() {
+	BCPreEnergy_o <- min(BCPrelim(), BCPenLimit()) * BCNetHead() * BCCombEfficiency * MWhr_per_ftAcFt
+	return(BCPreEnergy_o)
+}
+BCOut <- function(){
+	BCOut_o <- BCIn()
+	return(BCOut_o)
+}
 
 #######################################################
 #----------------- BOUNDARY DAM ----------------------#
@@ -2774,34 +2780,35 @@ BoundaryFlowData <- function() {
 	return(FlowBD)
 }
 BDInc <- function() {
-	BDInc_o <- BoundaryFlowData() - AlbeniFallFlowData()
+	BDInc_o <- BoundaryFlowData() - BoxCanyonFlowData()
 	return(BDInc_o)
-}
-BDNetHead <- function() {
-	BDNetHead_o <- 261 # FERC No. 2144 
-	return(BDNetHead_o)
 }
 BDPenLimit <- function() {
 	BDPenCap <- 55000 # https://www.seattle.gov/light/Boundary/Relicense/docs/Study_03_TDG_Final_Report_03_09.pdf. (FERC No. 2144)
 	BDPenLimit_o <- BDPenCap * cfsTOafw
 	return(BDPenLimit_o)
 }
+BDNetHead <- function() {
+	BDNetHead_o <- 261 # FERC No. 2144 
+	return(BDNetHead_o)
+}
+BDIn <- function() {
+	BDIn_o <- BCOut() + BDInc()
+	return(BDIn_o)
+}
 BDPrelim <- function() {
-	BDPrelim_o <- AFPrelim() + BDInc() 
+	BDPrelim_o <- BCPrelim() + BDInc() 
 	return(BDPrelim_o)
 }
 BDPreEnergy <- function() {
 	BDPreEnergy_o <- MWhr_per_ftAcFt * min(BDPrelim(), BDPenLimit()) * BDNetHead() * BDCombEfficiency
 	return(BDPreEnergy_o)
 }
-BDIn <- function() {
-	BDIn_o <- AFOutflow() + BDInc()
-	return(BDIn_o)
-}
 BDOut <- function() {
 	BDOut_o <- BDIn()
 	return(BDOut_o)
 }
+
 
 #######################################################
 #-------------- GRAND COULEE DAM ---------------------#
@@ -3336,174 +3343,124 @@ CJOut <- function() {
 }
 
 #######################################################
-#--------------- ROCK ISLAND DAM ---------------------#
-#######################################################
+#------------------ CHELAN DAM -----------------------#
+####################################################### 
 
-RockIslandFlowData <- function() {
-	return(FlowRI)
-}
-RIInc <- function() {
-	RIInc_o <- RockIslandFlowData() - RockyReachFlowData()
-	return(RIInc_o)
-}
-RICurtail <- function() {
-	RICurtail_0 <- min(DemVICRI, max(IflowRI - RROut() - RIInc(), 0))
-	if (curtail_option==1) {
-		RICurtail_o <- ifelse(RICurtail_0 > 0, CurtVICRI, 0)
-	} else if (curtail_option==2) {
-	  RICurtail_o <- RICurtail_0
-	} else if (curtail_option==3) {
-	  RICurtail_o <- 0
-	}
-	if (DallesRunoffAprSep > mainstem_rule) {
-		RICurtail_o <- 0
+CHFullPoolVol <- 1676000
+CHBotVol <- 998600
+InitCHLink <- 1000000
+Chelan <- function() {
+	if (week_counter == 1) {
+		Chelan_o <- InitCH()
 	} else {
-		RICurtail_o <- RICurtail_o
-	}		
-	return(RICurtail_o)
-}
-RIInstreamShortfall <- function() {
-	RIInstreamShortfall_o = max(IflowRI - RROut() - RIInc(), 0)
-	return(RIInstreamShortfall_o)
-}
-RIPenLimit <- function() {
-	RIPenCap <- 217000 #email contact Lindsey Files from Chelan PUD (8/26/2022), changed from 220000 on 5/25/23
-	RIPenLimit_o <- RIPenCap * cfsTOafw
-	return(RIPenLimit_o)
-}
-RINetHead <- function() {
-	RINetHead_o <- 41.5 # Varies from 29.3 to 50.4 ft. Email contact Lindsey Files from Chelan PUD (8/26/2022). Changed from 34.4 5/25/23
-	return(RINetHead_o)
-}
-RIPrelim <- function() {
-	RIPrelim_o <- GCPrelim() + RockIslandFlowData() - GrandCouleeFlowData()
-	return(RIPrelim_o)
-}
-RIPreEnergy <- function() {
-	RIPreEnergy_o <- MWhr_per_ftAcFt * min(RIPrelim(), RIPenLimit()) * RINetHead() * RICombEfficiency
-	return(RIPreEnergy_o)
-}
-RIIn <- function() {
-	RIIn_o <- RROut() + RIInc()
-	return(RIIn_o)
-}
-RIOut <- function() {
-	RIOut_o <- RIIn()
-	return(RIOut_o)
-}
-
-#######################################################
-#--------------- ROCKY REACH DAM ---------------------#
-#######################################################
-
-RockyReachFlowData <- function() {
-	return(FlowRR)
-}
-RRInc <- function() {
-	RRInc_o <- RockyReachFlowData() - WellsFlowData()
-	return(RRInc_o)
-}
-RRCurtail <- function() {
-	RRCurtail_0 <- min(DemVICRR, max(IflowRR - WEOut() - RRInc(), 0))
-	if (curtail_option==1) {
-		RRCurtail_o <- ifelse(RRCurtail_0 > 0, CurtVICRR, 0)
-	} else if (curtail_option == 2) {
-		RRCurtail_o <- RRCurtail_0
-	} else if (curtail_option == 3) {
-		RRCurtail_o <- 0
+		Chelan_o <- reservoir_vol_df$CH[week_counter - 1]
 	}
-	if (DallesRunoffAprSep > mainstem_rule) {
-		RRCurtail_o <- 0
+	return(Chelan_o)
+}
+ChelanFlowData <- function() {
+	return(FlowCH)
+}
+CHPenLimit <- function() {
+	CHPenCap <- 2200 # Chelan settlement agreement, FERC P-637-022, 2003
+	CHPenLimit_o <- CHPenCap * cfsTOafw
+	return(CHPenLimit_o)
+}
+CHNetHead <- function() {
+	CHNetHead_o <- 400 # https://hydroreform.org/resource/lake-chelan-project/ 
+	return(CHNetHead_o)
+}
+CHIn <- function() {
+	CHIn_o <- ChelanFlowData()
+	return(CHIn_o)
+}
+CHInflow <- function() {
+	if (ResetStorage() == 1) {
+		CHInflow_o <- InitCH() - Chelan()
 	} else {
-		RRCurtail_o <- RRCurtail_o
-	}		
-	return(RRCurtail_o)
-}
-RRInstreamShortfall <- function() {
-	RRInstreamShortfall_o = max(IflowRR - WEOut() - RRInc(), 0)
-	return(RRInstreamShortfall_o)
-}
-RRPenLimit <- function() {
-	RRPenCap <- 201000 # email contact Lindsey Files from Chelan PUD (8/26/2022), changed from 220000 on 5/25/23
-	RRPenLimit_o <- RRPenCap * cfsTOafw
-	return(RRPenLimit_o)
-}
-RRPrelim <- function() {
-	RRPrelim_o <- GCPrelim() + RockyReachFlowData() - GrandCouleeFlowData()
-	return(RRPrelim_o)
-}
-RRNetHead <- function() {
-	RRNetHead_o <- 88.6 ## Varies from 96.8 to 73.4 ft, email contact Lindsey Files from Chelan PUD (8/26/2022), changed 5/25/23 from 86.5
-	return(RRNetHead_o)
-}
-RRPreEnergy <- function() {
-	RRPreEnergy_o <- MWhr_per_ftAcFt * min(RRPrelim(), RRPenLimit()) * RRNetHead() * RRCombEfficiency
-	return(RRPreEnergy_o)
-}
-RRIn <- function() {
-	RRIn_o <- WEOut() + RRInc()
-	return(RRIn_o)
-}
-RROut <- function() {
-	RROut_o <- RRIn()
-	return(RROut_o)
-}
-
-#######################################################
-#------------------ WANAPUM DAM ----------------------#
-#######################################################
-
-WanapumFlowData <- function() {
-	return(FlowWA)
-}
-WAInc <- function() {
-	WAInc_o <- WanapumFlowData() - RockIslandFlowData()
-	return(WAInc_o)
-}
-WACurtail <- function() {
-	WACurtail_0 <- min(DemVICWA, max(IflowWA - RIOut() - WAInc(), 0))
-	if (curtail_option == 1) {
-		WACurtail_o <- ifelse(WACurtail_0 > 0, CurtVICWA, 0)
-	} else if (curtail_option == 2) {
-		WACurtail_o <- WACurtail_0
-	} else if (curtail_option == 3) {
-		WACurtail_o <- 0
+		CHInflow_o <- CHIn()
 	}
-	if (DallesRunoffAprSep > mainstem_rule) {
-		WACurtail_o <- 0
+	return(CHInflow_o)
+}
+
+##################### Chelan max and min releases ########## 
+ 
+CHMinReq <- function() { # Chelan settlement agreement, FERC P-637-022, 2003
+	if (ChelanFlowData() <= CHFlow_percentiles$Q20[week_in_year]) {
+		CHMin <- 80
+	} else if (ChelanFlowData() > CHFlow_percentiles$Q80[week_in_year]) {
+		if (week_in_year %in% c(51,52,1:40)) {
+			CHMin <- 80
+		} else {
+			CHMin <- 320
+		}
 	} else {
-		WACurtail_o <- WACurtail_o
-	}		
-	return(WACurtail_o)
+		if (week_in_year %in% c(51,52,1:40)) {
+			CHMin <- 80
+		} else {
+			CHMin <- 200
+		}
+	}
+	CHMinReq_o <- CHMin * cfsTOafw
+	return(CHMinReq_o)
 }
-WAInstreamShortfall <- function() {
-	WAInstreamShortfall_o = max(IflowWA - RIOut() - WAInc(), 0)
-	return(WAInstreamShortfall_o)
+CHDamProtectRel <- function() {
+	CHDamProtectRel_o <- max(0, ChelanFlowData() + CHInflow() - CHFullPoolVol)
+	return(CHDamProtectRel_o)
 }
-WAPenLimit <- function() {
-	WAPenCap <- 178000 # https://www.eesi.org/files/PUDpdf.pdf
-	WAPenLimit_o <- WAPenCap * cfsTOafw
-	return(WAPenLimit_o)
+CHRelLimit <- function() {
+	CHRelLimit_o <- max(Chelan() + CHInflow() - CHBotVol, 0)
+	return(CHRelLimit_o)
 }
-WAPrelim <- function() {
-	WAPrelim_o <- GCPrelim() + WanapumFlowData() - GrandCouleeFlowData()
-	return(WAPrelim_o)
+CHAvailAfter <- function() {
+	CHAvailAfter_o <- max(0, Chelan() + CHIn() - CHBotVol)
+	return(CHAvailAfter_o)
+} 
+ 
+############## Chelan rule curve ##################
+
+CHFloodCurve <- function() {
+	CHFloodCurve_o <- CHFlood_input$CHFlood[week_in_year]
+	return(CHFloodCurve_o)
 }
-WANetHead <- function() {
-	WANetHead_o <- 77.8 # https://www.nwd-wc.usace.army.mil/dd/common/dataquery/www/?k=wanapum
-	return(WANetHead_o)
+CHTopVol <- function() {
+	if (TopRuleSw() == 0) {
+		CHTopVol_o <- CHFloodCurve()
+	} else if (TopRuleSw() == 1) {
+		CHTopVol_o <- CHFullPoolVol
+	} else if (TopRuleSw() == 2) {
+		CHTopVol_o <- CHFlood_input$CHFlood[week_in_year]
+	}
+	return(CHTopVol_o)
 }
-WAPreEnergy <- function() {
-	WAPreEnergy_o <- MWhr_per_ftAcFt * min(WAPrelim(), WAPenLimit()) * WANetHead() * WACombEfficiency
-	return(WAPreEnergy_o)
+CHRuleReq <- function() {
+	CHRuleReq_o <- max(Chelan() + CHIn() - CHTopVol(), 0)
+	return(CHRuleReq_o)
 }
-WAIn <- function() {
-	WAIn_o <- RIOut() + WAInc()
-	return(WAIn_o)
+CHPrelim <- function() {
+	CHPrelim_o <- min(CHAvailAfter(), max(CHRuleReq(), CHMinReq()))
+	return(CHPrelim_o)
 }
-WAOut <- function() {
-	WAOut_o <- WAIn()
-	return(WAOut_o)
+
+################## Chelan energy ######################
+
+CHPreEnergy <- function() {
+	CHPreEnergy_o <- MWhr_per_ftAcFt * min(CHPrelim(), CHPenLimit()) * CHNetHead() * CHCombEfficiency
+	return(CHPreEnergy_o)
+} 
+
+################## Chelan final release ###############
+
+CHRelease <- function() {
+	CHRelease_o <- max(CHDamProtectRel(), min(CHPrelim(), CHRelLimit()))
+	return(CHRelease_o)
+}
+CHOutflow <- function() {  
+  if (ResetStorage() == 1) {
+	CHOutflow_o <- 0
+  } else {
+	CHOutflow_o <- CHRelease_c
+  }
+  return(CHOutflow_o)
 }
 
 #######################################################
@@ -3564,6 +3521,177 @@ WEOut <- function() {
 }
 
 #######################################################
+#--------------- ROCKY REACH DAM ---------------------#
+#######################################################
+
+RockyReachFlowData <- function() {
+	return(FlowRR)
+}
+RRInc <- function() {
+	RRInc_o <- RockyReachFlowData() - WellsFlowData() - ChelanFlowData()
+	return(RRInc_o)
+}
+RRCurtail <- function() {
+	RRCurtail_0 <- min(DemVICRR, max(IflowRR - WEOut() - CHOutflow() - RRInc(), 0))
+	if (curtail_option==1) {
+		RRCurtail_o <- ifelse(RRCurtail_0 > 0, CurtVICRR, 0)
+	} else if (curtail_option == 2) {
+		RRCurtail_o <- RRCurtail_0
+	} else if (curtail_option == 3) {
+		RRCurtail_o <- 0
+	}
+	if (DallesRunoffAprSep > mainstem_rule) {
+		RRCurtail_o <- 0
+	} else {
+		RRCurtail_o <- RRCurtail_o
+	}		
+	return(RRCurtail_o)
+}
+RRInstreamShortfall <- function() {
+	RRInstreamShortfall_o = max(IflowRR - WEOut() - RRInc(), 0)
+	return(RRInstreamShortfall_o)
+}
+RRPenLimit <- function() {
+	RRPenCap <- 201000 # email contact Lindsey Files from Chelan PUD (8/26/2022), changed from 220000 on 5/25/23
+	RRPenLimit_o <- RRPenCap * cfsTOafw
+	return(RRPenLimit_o)
+}
+RRPrelim <- function() {
+	RRPrelim_o <- GCPrelim() + RockyReachFlowData() - GrandCouleeFlowData()
+	return(RRPrelim_o)
+}
+RRNetHead <- function() {
+	RRNetHead_o <- 88.6 ## Varies from 96.8 to 73.4 ft, email contact Lindsey Files from Chelan PUD (8/26/2022), changed 5/25/23 from 86.5
+	return(RRNetHead_o)
+}
+RRPreEnergy <- function() {
+	RRPreEnergy_o <- MWhr_per_ftAcFt * min(RRPrelim(), RRPenLimit()) * RRNetHead() * RRCombEfficiency
+	return(RRPreEnergy_o)
+}
+RRIn <- function() {
+	RRIn_o <- WEOut() + RRInc()
+	return(RRIn_o)
+}
+RROut <- function() {
+	RROut_o <- RRIn()
+	return(RROut_o)
+}
+
+#######################################################
+#--------------- ROCK ISLAND DAM ---------------------#
+#######################################################
+
+RockIslandFlowData <- function() {
+	return(FlowRI)
+}
+RIInc <- function() {
+	RIInc_o <- RockIslandFlowData() - RockyReachFlowData()
+	return(RIInc_o)
+}
+RICurtail <- function() {
+	RICurtail_0 <- min(DemVICRI, max(IflowRI - RROut() - RIInc(), 0))
+	if (curtail_option==1) {
+		RICurtail_o <- ifelse(RICurtail_0 > 0, CurtVICRI, 0)
+	} else if (curtail_option==2) {
+	  RICurtail_o <- RICurtail_0
+	} else if (curtail_option==3) {
+	  RICurtail_o <- 0
+	}
+	if (DallesRunoffAprSep > mainstem_rule) {
+		RICurtail_o <- 0
+	} else {
+		RICurtail_o <- RICurtail_o
+	}		
+	return(RICurtail_o)
+}
+RIInstreamShortfall <- function() {
+	RIInstreamShortfall_o = max(IflowRI - RROut() - RIInc(), 0)
+	return(RIInstreamShortfall_o)
+}
+RIPenLimit <- function() {
+	RIPenCap <- 217000 #email contact Lindsey Files from Chelan PUD (8/26/2022), changed from 220000 on 5/25/23
+	RIPenLimit_o <- RIPenCap * cfsTOafw
+	return(RIPenLimit_o)
+}
+RINetHead <- function() {
+	RINetHead_o <- 41.5 # Varies from 29.3 to 50.4 ft. Email contact Lindsey Files from Chelan PUD (8/26/2022). Changed from 34.4 5/25/23
+	return(RINetHead_o)
+}
+RIPrelim <- function() {
+	RIPrelim_o <- GCPrelim() + RockIslandFlowData() - GrandCouleeFlowData()
+	return(RIPrelim_o)
+}
+RIPreEnergy <- function() {
+	RIPreEnergy_o <- MWhr_per_ftAcFt * min(RIPrelim(), RIPenLimit()) * RINetHead() * RICombEfficiency
+	return(RIPreEnergy_o)
+}
+RIIn <- function() {
+	RIIn_o <- RROut() + RIInc()
+	return(RIIn_o)
+}
+RIOut <- function() {
+	RIOut_o <- RIIn()
+	return(RIOut_o)
+}
+
+#######################################################
+#------------------ WANAPUM DAM ----------------------#
+#######################################################
+
+WanapumFlowData <- function() {
+	return(FlowWA)
+}
+WAInc <- function() {
+	WAInc_o <- WanapumFlowData() - RockIslandFlowData()
+	return(WAInc_o)
+}
+WACurtail <- function() {
+	WACurtail_0 <- min(DemVICWA, max(IflowWA - RIOut() - WAInc(), 0))
+	if (curtail_option == 1) {
+		WACurtail_o <- ifelse(WACurtail_0 > 0, CurtVICWA, 0)
+	} else if (curtail_option == 2) {
+		WACurtail_o <- WACurtail_0
+	} else if (curtail_option == 3) {
+		WACurtail_o <- 0
+	}
+	if (DallesRunoffAprSep > mainstem_rule) {
+		WACurtail_o <- 0
+	} else {
+		WACurtail_o <- WACurtail_o
+	}		
+	return(WACurtail_o)
+}
+WAInstreamShortfall <- function() {
+	WAInstreamShortfall_o = max(IflowWA - RIOut() - WAInc(), 0)
+	return(WAInstreamShortfall_o)
+}
+WAPenLimit <- function() {
+	WAPenCap <- 178000 # https://www.eesi.org/files/PUDpdf.pdf
+	WAPenLimit_o <- WAPenCap * cfsTOafw
+	return(WAPenLimit_o)
+}
+WAPrelim <- function() {
+	WAPrelim_o <- GCPrelim() + WanapumFlowData() - GrandCouleeFlowData()
+	return(WAPrelim_o)
+}
+WANetHead <- function() {
+	WANetHead_o <- 77.8 # https://www.nwd-wc.usace.army.mil/dd/common/dataquery/www/?k=wanapum
+	return(WANetHead_o)
+}
+WAPreEnergy <- function() {
+	WAPreEnergy_o <- MWhr_per_ftAcFt * min(WAPrelim(), WAPenLimit()) * WANetHead() * WACombEfficiency
+	return(WAPreEnergy_o)
+}
+WAIn <- function() {
+	WAIn_o <- RIOut() + WAInc()
+	return(WAIn_o)
+}
+WAOut <- function() {
+	WAOut_o <- WAIn()
+	return(WAOut_o)
+}
+
+#######################################################
 #-------------- PRIEST RAPIDS DAM --------------------#
 #######################################################
 
@@ -3620,6 +3748,8 @@ PROut <- function() {
 	return(PROut_o)
 }
 
+############ UPPER SNAKE SYSTEM ##########################
+
 #####################################################
 #---------------- JACKSON LAKE DAM -----------------#
 #####################################################
@@ -3663,27 +3793,27 @@ JLInflow <- function() {
 	}
 	return(JLInflow_o)
 }
-JLFloodRuleCurve <- function() {
+JLFloodCurve <- function() {
 	if (HeiseRunoffRemainingJanJul <= 1.0E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood1[week_in_year] + (HeiseRunoffRemainingJanJul - 0) / (1.0E6 - 0) * (JLFlood_input$JLFlood2[week_in_year] - JLFlood_input$JLFlood1[week_in_year])
+		JLFloodCurve_o <- JLFlood_input$JLFlood1[week_in_year] + (HeiseRunoffRemainingJanJul - 0) / (1.0E6 - 0) * (JLFlood_input$JLFlood2[week_in_year] - JLFlood_input$JLFlood1[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 1.5E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood2[week_in_year] + (HeiseRunoffRemainingJanJul - 1.0E6) / (1.5E6 - 1.0E6) * (JLFlood_input$JLFlood3[week_in_year] - JLFlood_input$JLFlood2[week_in_year])
+		JLFloodCurve_o <- JLFlood_input$JLFlood2[week_in_year] + (HeiseRunoffRemainingJanJul - 1.0E6) / (1.5E6 - 1.0E6) * (JLFlood_input$JLFlood3[week_in_year] - JLFlood_input$JLFlood2[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 2.0E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood3[week_in_year] + (HeiseRunoffRemainingJanJul - 1.5E6) / (2.0E6 - 1.5E6) * (JLFlood_input$JLFlood4[week_in_year] - JLFlood_input$JLFlood3[week_in_year])
+		JLFloodCurve_o <- JLFlood_input$JLFlood3[week_in_year] + (HeiseRunoffRemainingJanJul - 1.5E6) / (2.0E6 - 1.5E6) * (JLFlood_input$JLFlood4[week_in_year] - JLFlood_input$JLFlood3[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 2.5E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood4[week_in_year] + (HeiseRunoffRemainingJanJul - 2.0E6) / (2.5E6 - 2.0E6) * (JLFlood_input$JLFlood5[week_in_year] - JLFlood_input$JLFlood4[week_in_year])
+		JLFloodCurve_o <- JLFlood_input$JLFlood4[week_in_year] + (HeiseRunoffRemainingJanJul - 2.0E6) / (2.5E6 - 2.0E6) * (JLFlood_input$JLFlood5[week_in_year] - JLFlood_input$JLFlood4[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 3.0E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood5[week_in_year] + (HeiseRunoffRemainingJanJul - 2.5E6) / (3.0E6 - 2.5E6) * (JLFlood_input$JLFlood6[week_in_year] - JLFlood_input$JLFlood5[week_in_year])
+		JLFloodCurve_o <- JLFlood_input$JLFlood5[week_in_year] + (HeiseRunoffRemainingJanJul - 2.5E6) / (3.0E6 - 2.5E6) * (JLFlood_input$JLFlood6[week_in_year] - JLFlood_input$JLFlood5[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 3.5E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood6[week_in_year] + (HeiseRunoffRemainingJanJul - 3.0E6) / (3.5E6 - 3.0E6) * (JLFlood_input$JLFlood7[week_in_year] - JLFlood_input$JLFlood6[week_in_year])
+		JLFloodCurve_o <- JLFlood_input$JLFlood6[week_in_year] + (HeiseRunoffRemainingJanJul - 3.0E6) / (3.5E6 - 3.0E6) * (JLFlood_input$JLFlood7[week_in_year] - JLFlood_input$JLFlood6[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 4.0E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood7[week_in_year] + (HeiseRunoffRemainingJanJul - 3.5E6) / (4.0E6 - 3.5E6) * (JLFlood_input$JLFlood8[week_in_year] - JLFlood_input$JLFlood7[week_in_year])
+		JLFloodCurve_o <- JLFlood_input$JLFlood7[week_in_year] + (HeiseRunoffRemainingJanJul - 3.5E6) / (4.0E6 - 3.5E6) * (JLFlood_input$JLFlood8[week_in_year] - JLFlood_input$JLFlood7[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 5.0E6) {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood8[week_in_year] + (HeiseRunoffRemainingJanJul - 4.0E6) / (5.0E6 - 4.0E6) * (JLFlood_input$JLFlood9[week_in_year] - JLFlood_input$JLFlood8[week_in_year])		
+		JLFloodCurve_o <- JLFlood_input$JLFlood8[week_in_year] + (HeiseRunoffRemainingJanJul - 4.0E6) / (5.0E6 - 4.0E6) * (JLFlood_input$JLFlood9[week_in_year] - JLFlood_input$JLFlood8[week_in_year])		
 	} else {
-		JLFloodRuleCurve_o <- JLFlood_input$JLFlood9
+		JLFloodCurve_o <- JLFlood_input$JLFlood9
 	}
-	return(JLFloodRuleCurve_o)
+	return(JLFloodCurve_o)
 }
 UpSnakeAgReq <- function() {
 	CLUpSnake <- 1.25
@@ -3793,27 +3923,27 @@ PALInflow <- function() {
 # The Upper Snake flood rule curve is based on the storage reservation diagram for Palisades and Jackson Lake reservoirs. The curve is multiplied by the ratio of total Upper Snake storage (4135695 AF) 
 # to Palidades and Jackson Lake storage (2050000)
 
-PALFloodRuleCurve <- function() {
+PALFloodCurve <- function() {
 	if (HeiseRunoffRemainingJanJul <= 1.0E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood1[week_in_year] + (HeiseRunoffRemainingJanJul - 0) / (1.0E6 - 0) * (PALFlood_input$PALFlood2[week_in_year] - PALFlood_input$PALFlood1[week_in_year])
+		PALFloodCurve_o <- PALFlood_input$PALFlood1[week_in_year] + (HeiseRunoffRemainingJanJul - 0) / (1.0E6 - 0) * (PALFlood_input$PALFlood2[week_in_year] - PALFlood_input$PALFlood1[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 1.5E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood2[week_in_year] + (HeiseRunoffRemainingJanJul - 1.0E6) / (1.5E6 - 1.0E6) * (PALFlood_input$PALFlood3[week_in_year] - PALFlood_input$PALFlood2[week_in_year])
+		PALFloodCurve_o <- PALFlood_input$PALFlood2[week_in_year] + (HeiseRunoffRemainingJanJul - 1.0E6) / (1.5E6 - 1.0E6) * (PALFlood_input$PALFlood3[week_in_year] - PALFlood_input$PALFlood2[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 2.0E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood3[week_in_year] + (HeiseRunoffRemainingJanJul - 1.5E6) / (2.0E6 - 1.5E6) * (PALFlood_input$PALFlood4[week_in_year] - PALFlood_input$PALFlood3[week_in_year])
+		PALFloodCurve_o <- PALFlood_input$PALFlood3[week_in_year] + (HeiseRunoffRemainingJanJul - 1.5E6) / (2.0E6 - 1.5E6) * (PALFlood_input$PALFlood4[week_in_year] - PALFlood_input$PALFlood3[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 2.5E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood4[week_in_year] + (HeiseRunoffRemainingJanJul - 2.0E6) / (2.5E6 - 2.0E6) * (PALFlood_input$PALFlood5[week_in_year] - PALFlood_input$PALFlood4[week_in_year])
+		PALFloodCurve_o <- PALFlood_input$PALFlood4[week_in_year] + (HeiseRunoffRemainingJanJul - 2.0E6) / (2.5E6 - 2.0E6) * (PALFlood_input$PALFlood5[week_in_year] - PALFlood_input$PALFlood4[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 3.0E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood5[week_in_year] + (HeiseRunoffRemainingJanJul - 2.5E6) / (3.0E6 - 2.5E6) * (PALFlood_input$PALFlood6[week_in_year] - PALFlood_input$PALFlood5[week_in_year])
+		PALFloodCurve_o <- PALFlood_input$PALFlood5[week_in_year] + (HeiseRunoffRemainingJanJul - 2.5E6) / (3.0E6 - 2.5E6) * (PALFlood_input$PALFlood6[week_in_year] - PALFlood_input$PALFlood5[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 3.5E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood6[week_in_year] + (HeiseRunoffRemainingJanJul - 3.0E6) / (3.5E6 - 3.0E6) * (PALFlood_input$PALFlood7[week_in_year] - PALFlood_input$PALFlood6[week_in_year])
+		PALFloodCurve_o <- PALFlood_input$PALFlood6[week_in_year] + (HeiseRunoffRemainingJanJul - 3.0E6) / (3.5E6 - 3.0E6) * (PALFlood_input$PALFlood7[week_in_year] - PALFlood_input$PALFlood6[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 4.0E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood7[week_in_year] + (HeiseRunoffRemainingJanJul - 3.5E6) / (4.0E6 - 3.5E6) * (PALFlood_input$PALFlood8[week_in_year] - PALFlood_input$PALFlood7[week_in_year])
+		PALFloodCurve_o <- PALFlood_input$PALFlood7[week_in_year] + (HeiseRunoffRemainingJanJul - 3.5E6) / (4.0E6 - 3.5E6) * (PALFlood_input$PALFlood8[week_in_year] - PALFlood_input$PALFlood7[week_in_year])
 	} else if (HeiseRunoffRemainingJanJul <= 5.0E6) {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood8[week_in_year] + (HeiseRunoffRemainingJanJul - 4.0E6) / (5.0E6 - 4.0E6) * (PALFlood_input$PALFlood9[week_in_year] - PALFlood_input$PALFlood8[week_in_year])		
+		PALFloodCurve_o <- PALFlood_input$PALFlood8[week_in_year] + (HeiseRunoffRemainingJanJul - 4.0E6) / (5.0E6 - 4.0E6) * (PALFlood_input$PALFlood9[week_in_year] - PALFlood_input$PALFlood8[week_in_year])		
 	} else {
-		PALFloodRuleCurve_o <- PALFlood_input$PALFlood9
+		PALFloodCurve_o <- PALFlood_input$PALFlood9
 	}
-	return(PALFloodRuleCurve_o)
+	return(PALFloodCurve_o)
 }
 PALAgReq <- function() {
 	PALAgReq_o <- UpSnakeAgReq() * Palisades() / (Palisades() + Jackson() + IslandPark() + Ririe())
@@ -3910,23 +4040,23 @@ IPInflow <- function() {
 	}
 	return(IPInflow_o)
 }
-IPFloodRuleCurve <- function() {
+IPFloodCurve <- function() {
 	if (HenryRunoffRemainingJanJul <= 0.1E6) {
-		IPFloodRuleCurve_o <- IPFlood_input$IPFlood1[week_in_year] + (HenryRunoffRemainingJanJul - 0) / (0.1E6 - 0) * (IPFlood_input$IPFlood2[week_in_year] - IPFlood_input$IPFlood1[week_in_year])
+		IPFloodCurve_o <- IPFlood_input$IPFlood1[week_in_year] + (HenryRunoffRemainingJanJul - 0) / (0.1E6 - 0) * (IPFlood_input$IPFlood2[week_in_year] - IPFlood_input$IPFlood1[week_in_year])
 	} else if (HenryRunoffRemainingJanJul <= 0.15E6) {
-		IPFloodRuleCurve_o <- IPFlood_input$IPFlood2[week_in_year] + (HenryRunoffRemainingJanJul - 0.1E6) / (0.15E6 - 0.1E6) * (IPFlood_input$IPFlood3[week_in_year] - IPFlood_input$IPFlood2[week_in_year])
+		IPFloodCurve_o <- IPFlood_input$IPFlood2[week_in_year] + (HenryRunoffRemainingJanJul - 0.1E6) / (0.15E6 - 0.1E6) * (IPFlood_input$IPFlood3[week_in_year] - IPFlood_input$IPFlood2[week_in_year])
 	} else if (HenryRunoffRemainingJanJul <= 0.2E6) {
-		IPFloodRuleCurve_o <- IPFlood_input$IPFlood3[week_in_year] + (HenryRunoffRemainingJanJul - 0.15E6) / (0.2E6 - 0.15E6) * (IPFlood_input$IPFlood4[week_in_year] - IPFlood_input$IPFlood3[week_in_year])
+		IPFloodCurve_o <- IPFlood_input$IPFlood3[week_in_year] + (HenryRunoffRemainingJanJul - 0.15E6) / (0.2E6 - 0.15E6) * (IPFlood_input$IPFlood4[week_in_year] - IPFlood_input$IPFlood3[week_in_year])
 	} else if (HenryRunoffRemainingJanJul <= 0.25E6) {
-		IPFloodRuleCurve_o <- IPFlood_input$IPFlood4[week_in_year] + (HenryRunoffRemainingJanJul - 0.2E6) / (0.25E6 - 0.2E6) * (IPFlood_input$IPFlood5[week_in_year] - IPFlood_input$IPFlood4[week_in_year])
+		IPFloodCurve_o <- IPFlood_input$IPFlood4[week_in_year] + (HenryRunoffRemainingJanJul - 0.2E6) / (0.25E6 - 0.2E6) * (IPFlood_input$IPFlood5[week_in_year] - IPFlood_input$IPFlood4[week_in_year])
 	} else if (HenryRunoffRemainingJanJul <= 0.28E6) {
-		IPFloodRuleCurve_o <- IPFlood_input$IPFlood5[week_in_year] + (HenryRunoffRemainingJanJul - 0.25E6) / (0.28E6 - 0.25E6) * (IPFlood_input$IPFlood6[week_in_year] - IPFlood_input$IPFlood5[week_in_year])
+		IPFloodCurve_o <- IPFlood_input$IPFlood5[week_in_year] + (HenryRunoffRemainingJanJul - 0.25E6) / (0.28E6 - 0.25E6) * (IPFlood_input$IPFlood6[week_in_year] - IPFlood_input$IPFlood5[week_in_year])
 	} else if (HenryRunoffRemainingJanJul <= 0.31E6) {
-		IPFloodRuleCurve_o <- IPFlood_input$IPFlood6[week_in_year] + (HenryRunoffRemainingJanJul - 0.28E6) / (0.31E6 - 0.28E6) * (IPFlood_input$IPFlood7[week_in_year] - IPFlood_input$IPFlood6[week_in_year])
+		IPFloodCurve_o <- IPFlood_input$IPFlood6[week_in_year] + (HenryRunoffRemainingJanJul - 0.28E6) / (0.31E6 - 0.28E6) * (IPFlood_input$IPFlood7[week_in_year] - IPFlood_input$IPFlood6[week_in_year])
 	} else {
-		IPFloodRuleCurve_o <- IPFlood_input$IPFlood7
+		IPFloodCurve_o <- IPFlood_input$IPFlood7
 	}
-	return(IPFloodRuleCurve_o)
+	return(IPFloodCurve_o)
 }
 IPAgReq <- function() {
 	IPAgReq_o <- UpSnakeAgReq() * IslandPark() / (Palisades() + Jackson() + IslandPark() + Ririe())
@@ -4023,25 +4153,25 @@ RIRInflow <- function() {
 	}
 	return(RIRInflow_o)
 }
-RIRFloodRuleCurve <- function() {
+RIRFloodCurve <- function() {
 	if (RirieRunoffRemainingJanJul <= 0.05E6) {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood1[week_in_year] + (RirieRunoffRemainingJanJul - 0) / (0.05E6 - 0) * (RIRFlood_input$RIRFlood2[week_in_year] - RIRFlood_input$RIRFlood1[week_in_year])
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood1[week_in_year] + (RirieRunoffRemainingJanJul - 0) / (0.05E6 - 0) * (RIRFlood_input$RIRFlood2[week_in_year] - RIRFlood_input$RIRFlood1[week_in_year])
 	} else if (RirieRunoffRemainingJanJul <= 0.08E6) {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood2[week_in_year] + (RirieRunoffRemainingJanJul - 0.05E6) / (0.08E6 - 0.05E6) * (RIRFlood_input$RIRFlood3[week_in_year] - RIRFlood_input$RIRFlood2[week_in_year])
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood2[week_in_year] + (RirieRunoffRemainingJanJul - 0.05E6) / (0.08E6 - 0.05E6) * (RIRFlood_input$RIRFlood3[week_in_year] - RIRFlood_input$RIRFlood2[week_in_year])
 	} else if (RirieRunoffRemainingJanJul <= 0.1E6) {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood3[week_in_year] + (RirieRunoffRemainingJanJul - 0.08E6) / (0.1E6 - 0.08E6) * (RIRFlood_input$RIRFlood4[week_in_year] - RIRFlood_input$RIRFlood3[week_in_year])
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood3[week_in_year] + (RirieRunoffRemainingJanJul - 0.08E6) / (0.1E6 - 0.08E6) * (RIRFlood_input$RIRFlood4[week_in_year] - RIRFlood_input$RIRFlood3[week_in_year])
 	} else if (RirieRunoffRemainingJanJul <= 0.15E6) {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood4[week_in_year] + (RirieRunoffRemainingJanJul - 0.1E6) / (0.15E6 - 0.1E6) * (RIRFlood_input$RIRFlood5[week_in_year] - RIRFlood_input$RIRFlood4[week_in_year])
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood4[week_in_year] + (RirieRunoffRemainingJanJul - 0.1E6) / (0.15E6 - 0.1E6) * (RIRFlood_input$RIRFlood5[week_in_year] - RIRFlood_input$RIRFlood4[week_in_year])
 	} else if (RirieRunoffRemainingJanJul <= 0.2E6) {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood5[week_in_year] + (RirieRunoffRemainingJanJul - 0.15E6) / (0.2E6 - 0.15E6) * (RIRFlood_input$RIRFlood6[week_in_year] - RIRFlood_input$RIRFlood5[week_in_year])
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood5[week_in_year] + (RirieRunoffRemainingJanJul - 0.15E6) / (0.2E6 - 0.15E6) * (RIRFlood_input$RIRFlood6[week_in_year] - RIRFlood_input$RIRFlood5[week_in_year])
 	} else if (RirieRunoffRemainingJanJul <= 0.25E6) {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood6[week_in_year] + (RirieRunoffRemainingJanJul - 0.2E6) / (0.25E6 - 0.2E6) * (RIRFlood_input$RIRFlood7[week_in_year] - RIRFlood_input$RIRFlood6[week_in_year])
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood6[week_in_year] + (RirieRunoffRemainingJanJul - 0.2E6) / (0.25E6 - 0.2E6) * (RIRFlood_input$RIRFlood7[week_in_year] - RIRFlood_input$RIRFlood6[week_in_year])
 	} else if (RirieRunoffRemainingJanJul <= 0.3E6) {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood7[week_in_year] + (RirieRunoffRemainingJanJul - 0.25E6) / (0.3E6 - 0.25E6) * (RIRFlood_input$RIRFlood8[week_in_year] - RIRFlood_input$RIRFlood7[week_in_year])
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood7[week_in_year] + (RirieRunoffRemainingJanJul - 0.25E6) / (0.3E6 - 0.25E6) * (RIRFlood_input$RIRFlood8[week_in_year] - RIRFlood_input$RIRFlood7[week_in_year])
 	} else {
-		RIRFloodRuleCurve_o <- RIRFlood_input$RIRFlood8
+		RIRFloodCurve_o <- RIRFlood_input$RIRFlood8
 	}
-	return(RIRFloodRuleCurve_o)
+	return(RIRFloodCurve_o)
 }
 RIRAgReq <- function() {
 	RIRAgReq_o <- UpSnakeAgReq() * Ririe() / (Palisades() + Jackson() + IslandPark() + Ririe())
@@ -4272,6 +4402,28 @@ MINOutflow <- function() {
 }
 
 #######################################################
+#------------------- MILNER DAM ----------------------#
+#######################################################
+
+MilnerFlowData <- function() {
+	return(FlowMIL)
+}
+MILInc <- function() {
+	MILInc_o <- MilnerFlowData() - MinidokaFlowData()
+	return(MILInc_o)
+}
+MILIn <- function() {
+	MILIn_o <- MINOutflow() + MILInc()
+	return(MILIn_o)
+}
+MILOut <- function() {
+	MILOut_o <- MILIn()
+	return(MILOut_o)
+}
+
+############## Middle Snake #################################
+
+#######################################################
 #------------------- BOISE SYSTEM --------------------#
 #------ (ARROW ROCK, ANDERSON RANCH, LUCKY PEAK) -----#
 #######################################################
@@ -4315,23 +4467,23 @@ BoiseInflow <- function() {
 	}
 	return(BoiseInflow_o)
 }
-BoiseFloodRuleCurve <- function() {
+BoiseFloodCurve <- function() {
 	if (LuckyRunoffRemainingJanJul <= 0.1E6) {
-		BoiseFloodRuleCurve_o <- BoiseFlood_input$BoiseFlood1[week_in_year] + (LuckyRunoffRemainingJanJul - 0) / (0.1E6 - 0) * (BoiseFlood_input$BoiseFlood2[week_in_year] - BoiseFlood_input$BoiseFlood1[week_in_year])
+		BoiseFloodCurve_o <- BoiseFlood_input$BoiseFlood1[week_in_year] + (LuckyRunoffRemainingJanJul - 0) / (0.1E6 - 0) * (BoiseFlood_input$BoiseFlood2[week_in_year] - BoiseFlood_input$BoiseFlood1[week_in_year])
 	} else if (LuckyRunoffRemainingJanJul <= 0.15E6) {
-		BoiseFloodRuleCurve_o <- BoiseFlood_input$BoiseFlood2[week_in_year] + (LuckyRunoffRemainingJanJul - 0.1E6) / (0.15E6 - 0.1E6) * (BoiseFlood_input$BoiseFlood3[week_in_year] - BoiseFlood_input$BoiseFlood2[week_in_year])
+		BoiseFloodCurve_o <- BoiseFlood_input$BoiseFlood2[week_in_year] + (LuckyRunoffRemainingJanJul - 0.1E6) / (0.15E6 - 0.1E6) * (BoiseFlood_input$BoiseFlood3[week_in_year] - BoiseFlood_input$BoiseFlood2[week_in_year])
 	} else if (LuckyRunoffRemainingJanJul <= 0.2E6) {
-		BoiseFloodRuleCurve_o <- BoiseFlood_input$BoiseFlood3[week_in_year] + (LuckyRunoffRemainingJanJul - 0.15E6) / (0.2E6 - 0.15E6) * (BoiseFlood_input$BoiseFlood4[week_in_year] - BoiseFlood_input$BoiseFlood3[week_in_year])
+		BoiseFloodCurve_o <- BoiseFlood_input$BoiseFlood3[week_in_year] + (LuckyRunoffRemainingJanJul - 0.15E6) / (0.2E6 - 0.15E6) * (BoiseFlood_input$BoiseFlood4[week_in_year] - BoiseFlood_input$BoiseFlood3[week_in_year])
 	} else if (LuckyRunoffRemainingJanJul <= 0.25E6) {
-		BoiseFloodRuleCurve_o <- BoiseFlood_input$BoiseFlood4[week_in_year] + (LuckyRunoffRemainingJanJul - 0.2E6) / (0.25E6 - 0.2E6) * (BoiseFlood_input$BoiseFlood5[week_in_year] - BoiseFlood_input$BoiseFlood4[week_in_year])
+		BoiseFloodCurve_o <- BoiseFlood_input$BoiseFlood4[week_in_year] + (LuckyRunoffRemainingJanJul - 0.2E6) / (0.25E6 - 0.2E6) * (BoiseFlood_input$BoiseFlood5[week_in_year] - BoiseFlood_input$BoiseFlood4[week_in_year])
 	} else if (LuckyRunoffRemainingJanJul <= 0.28E6) {
-		BoiseFloodRuleCurve_o <- BoiseFlood_input$BoiseFlood5[week_in_year] + (LuckyRunoffRemainingJanJul - 0.25E6) / (0.28E6 - 0.25E6) * (BoiseFlood_input$BoiseFlood6[week_in_year] - BoiseFlood_input$BoiseFlood5[week_in_year])
+		BoiseFloodCurve_o <- BoiseFlood_input$BoiseFlood5[week_in_year] + (LuckyRunoffRemainingJanJul - 0.25E6) / (0.28E6 - 0.25E6) * (BoiseFlood_input$BoiseFlood6[week_in_year] - BoiseFlood_input$BoiseFlood5[week_in_year])
 	} else if (LuckyRunoffRemainingJanJul <= 0.31E6) {
-		BoiseFloodRuleCurve_o <- BoiseFlood_input$BoiseFlood6[week_in_year] + (LuckyRunoffRemainingJanJul - 0.28E6) / (0.31E6 - 0.28E6) * (BoiseFlood_input$BoiseFlood7[week_in_year] - BoiseFlood_input$BoiseFlood6[week_in_year])
+		BoiseFloodCurve_o <- BoiseFlood_input$BoiseFlood6[week_in_year] + (LuckyRunoffRemainingJanJul - 0.28E6) / (0.31E6 - 0.28E6) * (BoiseFlood_input$BoiseFlood7[week_in_year] - BoiseFlood_input$BoiseFlood6[week_in_year])
 	} else {
-		BoiseFloodRuleCurve_o <- BoiseFlood_input$BoiseFlood7
+		BoiseFloodCurve_o <- BoiseFlood_input$BoiseFlood7
 	}
-	return(BoiseFloodRuleCurve_o)
+	return(BoiseFloodCurve_o)
 }
 BoiseAgReq <- function() {
 	IrrigationDemand <- DemLowerBoise
@@ -4389,7 +4541,7 @@ BoiseOutflow <- function() {
 
 #######################################################
 #------------------ PAYETTE SYSTEM -------------------#
-#--------------- (DEADWOOD AND CASCADE) --------------#
+#-------------- (DEADWOOD AND CASCADE) ---------------#
 #######################################################
 
 PayetteFullPoolVol <- 847192
@@ -4431,21 +4583,21 @@ PayetteInflow <- function() {
 	}
 	return(PayetteInflow_o)
 }
-PayetteFloodRuleCurve <- function() {
+PayetteFloodCurve <- function() {
 	if (PayetteRunoffRemainingJanJul <= 0.5E6) {
-		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood1[week_in_year] + (PayetteRunoffRemainingJanJul - 0) / (0.5E6 - 0) * (PayetteFlood_input$PayetteFlood2[week_in_year] - PayetteFlood_input$PayetteFlood1[week_in_year])
+		PayetteFloodCurve_o <- PayetteFlood_input$PayetteFlood1[week_in_year] + (PayetteRunoffRemainingJanJul - 0) / (0.5E6 - 0) * (PayetteFlood_input$PayetteFlood2[week_in_year] - PayetteFlood_input$PayetteFlood1[week_in_year])
 	} else if (PayetteRunoffRemainingJanJul <= 1.0E6) {
-		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood2[week_in_year] + (PayetteRunoffRemainingJanJul - 0.5E6) / (1.0E6 - 0.5E6) * (PayetteFlood_input$PayetteFlood3[week_in_year] - PayetteFlood_input$PayetteFlood2[week_in_year])
+		PayetteFloodCurve_o <- PayetteFlood_input$PayetteFlood2[week_in_year] + (PayetteRunoffRemainingJanJul - 0.5E6) / (1.0E6 - 0.5E6) * (PayetteFlood_input$PayetteFlood3[week_in_year] - PayetteFlood_input$PayetteFlood2[week_in_year])
 	} else if (PayetteRunoffRemainingJanJul <= 1.5E6) {
-		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood3[week_in_year] + (PayetteRunoffRemainingJanJul - 1.0E6) / (1.5E6 - 1.0E6) * (PayetteFlood_input$PayetteFlood4[week_in_year] - PayetteFlood_input$PayetteFlood3[week_in_year])
+		PayetteFloodCurve_o <- PayetteFlood_input$PayetteFlood3[week_in_year] + (PayetteRunoffRemainingJanJul - 1.0E6) / (1.5E6 - 1.0E6) * (PayetteFlood_input$PayetteFlood4[week_in_year] - PayetteFlood_input$PayetteFlood3[week_in_year])
 	} else if (PayetteRunoffRemainingJanJul <= 2.0E6) {
-		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood4[week_in_year] + (PayetteRunoffRemainingJanJul - 1.5E6) / (2.0E6 - 1.5E6) * (PayetteFlood_input$PayetteFlood5[week_in_year] - PayetteFlood_input$PayetteFlood4[week_in_year])
+		PayetteFloodCurve_o <- PayetteFlood_input$PayetteFlood4[week_in_year] + (PayetteRunoffRemainingJanJul - 1.5E6) / (2.0E6 - 1.5E6) * (PayetteFlood_input$PayetteFlood5[week_in_year] - PayetteFlood_input$PayetteFlood4[week_in_year])
 	} else if (PayetteRunoffRemainingJanJul <= 3.0E6) {
-		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood5[week_in_year] + (PayetteRunoffRemainingJanJul - 2.0E6) / (3.0E6 - 2.0E6) * (PayetteFlood_input$PayetteFlood6[week_in_year] - PayetteFlood_input$PayetteFlood5[week_in_year])
+		PayetteFloodCurve_o <- PayetteFlood_input$PayetteFlood5[week_in_year] + (PayetteRunoffRemainingJanJul - 2.0E6) / (3.0E6 - 2.0E6) * (PayetteFlood_input$PayetteFlood6[week_in_year] - PayetteFlood_input$PayetteFlood5[week_in_year])
 	} else {
-		PayetteFloodRuleCurve_o <- PayetteFlood_input$PayetteFlood6
+		PayetteFloodCurve_o <- PayetteFlood_input$PayetteFlood6
 	}
-	return(PayetteFloodRuleCurve_o)
+	return(PayetteFloodCurve_o)
 }
 PayetteAgReq <- function() {
 	IrrigationDemand <- DemPayette
@@ -4529,11 +4681,11 @@ Owyhee <- function() {
 	}
 	return(OWY_o)
 }
-OWYFlowData <- function() {
+OwyheeFlowData <- function() {
 	return(FlowOWY)
 }
 OWYIn <- function() {
-	OWYIn_o <- OWYFlowData()
+	OWYIn_o <- OwyheeFlowData()
 	return(OWYIn_o)
 }
 OWYInflow <- function() {
@@ -4544,19 +4696,19 @@ OWYInflow <- function() {
 	}
 	return(OWYInflow_o)
 }
-OWYFloodRuleCurve <- function() {
+OWYFloodCurve <- function() {
 	if (OwyheeRunoffRemainingJanJul <= 0.5E6) {
-		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood1[week_in_year] + (OwyheeRunoffRemainingJanJul - 0) / (0.5E6 - 0) * (OWYFlood_input$OWYFlood2[week_in_year] - OWYFlood_input$OWYFlood1[week_in_year])
+		OWYFloodCurve_o <- OWYFlood_input$OWYFlood1[week_in_year] + (OwyheeRunoffRemainingJanJul - 0) / (0.5E6 - 0) * (OWYFlood_input$OWYFlood2[week_in_year] - OWYFlood_input$OWYFlood1[week_in_year])
 	} else if (OwyheeRunoffRemainingJanJul <= 1.0E6) {
-		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood2[week_in_year] + (OwyheeRunoffRemainingJanJul - 0.5E6) / (1.0E6 - 0.5E6) * (OWYFlood_input$OWYFlood3[week_in_year] - OWYFlood_input$OWYFlood2[week_in_year])
+		OWYFloodCurve_o <- OWYFlood_input$OWYFlood2[week_in_year] + (OwyheeRunoffRemainingJanJul - 0.5E6) / (1.0E6 - 0.5E6) * (OWYFlood_input$OWYFlood3[week_in_year] - OWYFlood_input$OWYFlood2[week_in_year])
 	} else if (OwyheeRunoffRemainingJanJul <= 2.0E6) {
-		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood3[week_in_year] + (OwyheeRunoffRemainingJanJul - 1.0E6) / (2.0E6 - 1.0E6) * (OWYFlood_input$OWYFlood4[week_in_year] - OWYFlood_input$OWYFlood3[week_in_year])
+		OWYFloodCurve_o <- OWYFlood_input$OWYFlood3[week_in_year] + (OwyheeRunoffRemainingJanJul - 1.0E6) / (2.0E6 - 1.0E6) * (OWYFlood_input$OWYFlood4[week_in_year] - OWYFlood_input$OWYFlood3[week_in_year])
 	} else if (OwyheeRunoffRemainingJanJul <= 3.0E6) {
-		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood4[week_in_year] + (OwyheeRunoffRemainingJanJul - 2.0E6) / (3.0E6 - 2.0E6) * (OWYFlood_input$OWYFlood5[week_in_year] - OWYFlood_input$OWYFlood4[week_in_year])
+		OWYFloodCurve_o <- OWYFlood_input$OWYFlood4[week_in_year] + (OwyheeRunoffRemainingJanJul - 2.0E6) / (3.0E6 - 2.0E6) * (OWYFlood_input$OWYFlood5[week_in_year] - OWYFlood_input$OWYFlood4[week_in_year])
 	} else {
-		OWYFloodRuleCurve_o <- OWYFlood_input$OWYFlood5
+		OWYFloodCurve_o <- OWYFlood_input$OWYFlood5
 	}
-	return(OWYFloodRuleCurve_o)
+	return(OWYFloodCurve_o)
 }
 OWYAgReq <- function() {
 	IrrigationDemand <- DemOWY_ID
@@ -4645,7 +4797,7 @@ BrownleeFlowData <- function() {
 	return(FlowBR)
 }
 BRInc <- function() {
-	BRInc_o <- BrownleeFlowData() - MilnerFlowData()
+	BRInc_o <- BrownleeFlowData() - MilnerFlowData() - LuckyPeakFlowData() - PayetteFlowData() - OwyheeFlowData()
 	return(BRInc_o)
 }
 BRElev_ft <- function() {
@@ -4860,7 +5012,6 @@ BRECC <- function() {
 
 ########################### Brownlee fish flows ############################################
 
-
 BRDraftLimit <- function() {
 	if (UseAllStorForMCNLG == 1) { # Default = 0
 		BRDraftLimit_o <- BRBotVol
@@ -4931,8 +5082,7 @@ BRRelForJohnsonsBar <- function() { # Release of water from Brownlee to meet Joh
 	return(BRRelForJohnsonsBar_o)
 }
 LimePointFlowData <- function() {
-	LimePointFlowData_o <- HellsCanyonFlowData() * 1.3
-	return(LimePointFlowData_o)
+	return(FlowLimePoint)
 }
 LPInc <- function() {
 	LPInc_o <- LimePointFlowData() - HellsCanyonFlowData()
@@ -4951,7 +5101,6 @@ BRRelForJBandLP <- function() {
 
 ############################# Brownlee energy ##########################
 
-BRCombEfficiency <- 0.8
 BRPreEnergy <- function() {
 	BRPreEnergy_o <- MWhr_per_ftAcFt * min(BRPrelim(), BRPenLimit()) * BRNetHead() * BRCombEfficiency
 	return(BRPreEnergy_o)
@@ -5062,32 +5211,26 @@ BROutflow <- function() {
 OxbowFlowData <- function() {
 	return(FlowOX)
 }
-OXInc <- function() {
-	OXInc_o <- OxbowFlowData() - BrownleeFlowData()
-	return(OXInc_o)
+OXNetHead <- function() {
+	OXNetHead_o <- 117 # FERC No. 1971 Licese Application
+	return(OXNetHead_o)
 }
 OXPenLimit <- function() {
 	OXPenCap <- 25000 # https://www.cbr.washington.edu/hydro/oxbow
 	OXPenLimit_o <- OXPenCap * cfsTOafw
 	return(OXPenLimit_o)
 }
-OXPrelim <- function() {
-	UpDemand <- DemVICOX
-	IncFlow <- OXInc()
-	OXPrelim_o <- BRPrelim_c + IncFlow - UpDemand
-	return(OXPrelim_o)
+OXIn <- function() {
+	OXIn_o <- BROutflow()
+	return(OXIn_o)
 }
-OXNetHead <- function() {
-	OXNetHead_o <- 117 # FERC No. 1971 Licese Application
-	return(OXNetHead_o)
+OXPrelim <- function() {
+	OXPrelim_o <- BRPrelim_c
+	return(OXPrelim_o)
 }
 OXPreEnergy <- function() {
 	OXPreEnergy_o <- MWhr_per_ftAcFt * min(OXPrelim(), OXPenLimit()) * OXNetHead() * OXCombEfficiency
 	return(OXPreEnergy_o)
-}
-OXIn <- function() {
-	OXIn_o <- BROutflow() + OXInc() - DemVICOX
-	return(OXIn_o)
 }
 OXOut <- function() {
 	OXOut_o <- OXIn()
@@ -5113,6 +5256,10 @@ HCPenLimit <- function() {
 HCNetHead <- function() {
 	HCNetHead_o <- 210 # FERC No. 1971 Licese Application
 	return(HCNetHead_o)
+}
+HCPrelim <- function() {
+	HCPrelim_o <- OXPrelim() + HCInc()
+	return(HCPrelim_o)
 }
 HCPreEnergy <- function() {
 	HCPreEnergy_o <- MWhr_per_ftAcFt * min(HCPrelim(), HCPenLimit()) * HCNetHead() * HCCombEfficiency
@@ -5458,28 +5605,26 @@ LGInc <- function() {
 	LGInc_o <- LowerGraniteFlowData() - HellsCanyonFlowData() - DworshakFlowData()
 	return(LGInc_o)
 }
+LGNetHead <- function() {
+	LGNetHead_o <- 100 #https://www.nww.usace.army.mil/Missions/Water-Management/
+	return(LGNetHead_o)
+}
 LGPenLimit <- function() {
 	LGPenCap <- 130000 # https://www.nwd.usace.army.mil/CRSO/Project-Locations/Lower-Granite/#top
 	LGPenLimit_o <- LGPenCap * cfsTOafw
 	return(LGPenLimit_o)
 }
-LGPrelim <- function() {
-	UpDemand <- DemVICOX + DemVICHC + DemVICLG
-	IncFlow <- LowerGraniteFlowData() - DworshakFlowData() - BrownleeFlowData()
-	LGPrelim_o <- BRPrelim_c + DWPrelim() + IncFlow - UpDemand
-	return(LGPrelim_o)
+LGIn <- function() {
+	LGIn_o <- DWOutflow() + HCOut() + LGInc()
+	return(LGIn_o)
 }
-LGNetHead <- function() {
-	LGNetHead_o <- 100 #https://www.nww.usace.army.mil/Missions/Water-Management/
-	return(LGNetHead_o)
+LGPrelim <- function() {
+	LGPrelim_o <- HCPrelim() + DWPrelim() + LGInc()
+	return(LGPrelim_o)
 }
 LGPreEnergy <- function() {
 	LGPreEnergy_o <- MWhr_per_ftAcFt * min(LGPrelim(), LGPenLimit()) * LGNetHead() * LGCombEfficiency
 	return(LGPreEnergy_o)
-}
-LGIn <- function() {
-	LGIn_o <- DWOutflow() + HCOut() + LGInc() - DemVICLG
-	return(LGIn_o)
 }
 LGOut <- function() {
 	LGOut_o <- LGIn()
@@ -5497,12 +5642,6 @@ LIGInc <- function() {
 	LIGInc_o <- LittleGooseFlowData() - LowerGraniteFlowData()
 	return(LIGInc_o)
 }
-LIGPrelim <- function() {
-	UpDemand <- DemVICOX + DemVICHC + DemVICLG + DemVICLIG # Water demand between Little Goose Falls and Brownlee
-	IncFlow <- LittleGooseFlowData() - DworshakFlowData() - BrownleeFlowData()
-	LIGPrelim_o <- BRPrelim_c + IncFlow - UpDemand
-	return(LIGPrelim_o)
-}
 LIGNetHead <- function() {
 	LIGNetHead_o <- 98 # https://www.nww.usace.army.mil/Missions/Water-Management/
 	return(LIGNetHead_o)
@@ -5512,13 +5651,17 @@ LIGPenLimit <- function() {
 	LIGPenLimit_o <- LIGPenCap * cfsTOafw
 	return(LIGPenLimit_o)
 }
+LIGIn <- function() {
+	LIGIn_o <- LGOut() + LIGInc()
+	return(LIGIn_o)
+}
+LIGPrelim <- function() {
+	LIGPrelim_o <- LGPrelim() + LIGInc()
+	return(LIGPrelim_o)
+}
 LIGPreEnergy <- function() {
 	LIGPreEnergy_o <- MWhr_per_ftAcFt * min(LIGPrelim(), LIGPenLimit()) * LIGNetHead() * LIGCombEfficiency
 	return(LIGPreEnergy_o)
-}
-LIGIn <- function() {
-	LIGIn_o <- LGOut() + LIGInc() - DemVICLIG
-	return(LIGIn_o)
 }
 LIGOut <- function() {
 	LIGOut_o <- LIGIn()
@@ -5536,28 +5679,26 @@ LMInc <- function() {
 	LMInc_o <- LowerMonuFlowData() - LittleGooseFlowData()
 	return(LMInc_o)
 }
+LMNetHead <- function() {
+	LMNetHead_o <- 100 # https://www.nww.usace.army.mil/Missions/Water-Management/
+	return(LMNetHead_o)
+}
 LMPenLimit <- function() {
 	LMPenCap <- 130000 # https://www.nwd.usace.army.mil/CRSO/Project-Locations/Lower-Monumental/#top
 	LMPenLimit_o <- LMPenCap * cfsTOafw
 	return(LMPenLimit_o)
 }
-LMNetHead <- function() {
-	LMNetHead_o <- 100 # https://www.nww.usace.army.mil/Missions/Water-Management/
-	return(LMNetHead_o)
+LMIn <- function() {
+	LMIn_o <- LIGOut() + LMInc()
+	return(LMIn_o)
 }
 LMPrelim <- function() {
-	UpDemand <- DemVICOX + DemVICHC + DemVICLG + DemVICLIG + DemVICLM # Water demand between Lower Monumental and Brownlee
-	IncFlow <- LowerMonuFlowData() - DworshakFlowData() - BrownleeFlowData()
-	LMPrelim_o <- BRPrelim_c + IncFlow - UpDemand
+	LMPrelim_o <- LIGPrelim() + LMInc()
 	return(LMPrelim_o)
 }
 LMPreEnergy <- function() {
 	LMPreEnergy_o <- MWhr_per_ftAcFt * min(LMPrelim(), LMPenLimit()) * LMNetHead() * LMCombEfficiency
 	return(LMPreEnergy_o)
-}
-LMIn <- function() {
-	LMIn_o <- LIGPrelim() + LMInc() - DemVICLM
-	return(LMIn_o)
 }
 LMOut <- function() {
 	LMOut_o <- LMIn()
@@ -5575,27 +5716,25 @@ IHInc <- function() {
 	IHInc_o <- IceHarborFlowData() - LowerMonuFlowData()
 	return(IHInc_o)
 }
-IHPrelim <- function() {
-	UpDemand <- DemVICOX+ DemVICHC + DemVICLG + DemVICLIG + DemVICLM + DemVICIH # Water demand between Ice Harbor and Brownlee
-	IncFlow <- IceHarborFlowData() - DworshakFlowData() - BrownleeFlowData()
-	IHPrelim_o <- BRPrelim_c + IncFlow - UpDemand
-	return(IHPrelim_o)
+IHNetHead <- function() {
+	IHNetHead_o <- 98 # https://www.nww.usace.army.mil/Missions/Water-Management/
+	return(IHNetHead_o)
 }
 IHPenLimit <- function() {
 	IHPenCap <- 106000 # https://www.nwd.usace.army.mil/CRSO/Project-Locations/Ice-Harbor/#top
 	IHPenLimit_o <- IHPenCap * cfsTOafw
 	return(IHPenLimit_o)
 }
-IHNetHead <- function() {
-	IHNetHead_o <- 98 # https://www.nww.usace.army.mil/Missions/Water-Management/
-	return(IHNetHead_o)
+IHPrelim <- function() {
+	IHPrelim_o <- LMPrelim() + IHInc()
+	return(IHPrelim_o)
 }
 IHPreEnergy <- function() {
 	IHPreEnergy_o <- MWhr_per_ftAcFt * min(IHPrelim(), IHPenLimit()) * IHNetHead() * IHCombEfficiency
 	return(IHPreEnergy_o)
 }
 IHIn <- function() {
-	IHIn_o <- LMOut() + IHInc() - DemVICIH
+	IHIn_o <- LMOut() + IHInc()
 	return(IHIn_o)
 }
 IHOut <- function() {
@@ -5613,6 +5752,19 @@ McNaryFlowData <- function() {
 MCNInc <- function() {
 	MCNInc_o <- McNaryFlowData() - IceHarborFlowData() - PriestRapidsFlowData()
 	return(MCNInc_o)
+}
+MCNetHead <- function() {
+	MCNetHead_o <- 74 # https://www.nww.usace.army.mil/Missions/Water-Management/
+	return(MCNetHead_o)
+}
+MCNPenLimit <- function() {
+	MCNPenCap <- 232000  # https://www.cbr.washington.edu/hydro/mcnary
+	MCNPenLimit_o <- MCNPenCap * cfsTOafw
+	return(MCNPenLimit_o)
+}
+MCNIn <- function() {
+	MCNIn_o <- IHOut() + PROut() + MCNInc() - DemVICMCN
+	return(MCNIn_o)
 }
 MCNCurtail <- function() {
 	MCNCurtail_0 <- min(DemVICMCN, max(IflowMCN + DemVICMCN - IHOut() - PROut() - MCNInc(), 0))
@@ -5635,25 +5787,12 @@ MCNInstreamShortfall <- function() {
 	return(MCNInstreamShortfall_o)
 }
 MCNPrelim <- function() {
-	MCNPrelim_o <- IHPrelim() + PRPrelim() + MCNInc() - DemVICMCN
+	MCNPrelim_o <- IHPrelim() + PRPrelim() + MCNInc()
 	return(MCNPrelim_o)
-}
-MCNetHead <- function() {
-	MCNetHead_o <- 74 # https://www.nww.usace.army.mil/Missions/Water-Management/
-	return(MCNetHead_o)
-}
-MCNPenLimit <- function() {
-	MCNPenCap <- 232000  # https://www.cbr.washington.edu/hydro/mcnary
-	MCNPenLimit_o <- MCNPenCap * cfsTOafw
-	return(MCNPenLimit_o)
 }
 MCNPreEnergy <- function() {
 	MCNPreEnergy_o <- MWhr_per_ftAcFt * min(MCNPrelim(), MCNPenLimit()) * MCNetHead() * MCNCombEfficiency
 	return(MCNPreEnergy_o)
-}
-MCNIn <- function() {
-	MCNIn_o <- IHOut() + PROut() + MCNInc() - DemVICMCN
-	return(MCNIn_o)
 }
 MCNOut <- function() {
 	MCNOut_o <- MCNIn()
@@ -5681,7 +5820,6 @@ McNaryFlowTarget <- function() {
 	}
 	return(McNaryFlowTarget_o)
 }
-
 McNaryFlowDeficit <- function() {
 	if (BRPrelim_c == -9999) {
 		BRPrelim_c <<- BRPrelim()
@@ -5728,7 +5866,7 @@ JDPenLimit <- function() {
 	return(JDPenLimit_o)
 }
 JDPrelim <- function() {
-	JDPrelim_o <- MCNPrelim() + JDInc() - DemVICJD
+	JDPrelim_o <- MCNPrelim() + JDInc()
 	return(JDPrelim_o)
 }
 JDNetHead <- function() {
@@ -5740,12 +5878,120 @@ JDPreEnergy <- function() {
 	return(JDPreEnergy_o)
 }
 JDIn <- function() {
-	JDIn_o <- MCNOut() + JDInc() - DemVICJD
+	JDIn_o <- MCNOut() + JDInc()
 	return(JDIn_o)
 }
 JDOut <- function() {
 	JDOut_o <- JDIn()
 	return(JDOut_o)
+}
+
+#######################################################
+#---------------- PELTON COMPLEX ---------------------#
+#---- (PELTON, ROUND BUTTE, AND REREGULATING DAM) ----#
+#######################################################
+
+PELFullPoolVol <- 558270
+PELBotVol <- 249700
+InitPELLink <- 500000
+Pelton <- function() {
+	if (week_counter == 1) {
+		Pelton_o <- InitPEL()
+	} else {
+		Pelton_o <- reservoir_vol_df$PEL[week_counter - 1]
+	}
+	return(Pelton_o)
+}
+PeltonFlowData <- function() {
+	return(FlowPEL)
+}
+PELPenLimit <- function() {
+	PELPenCap <- 14000 # 2005 BiOp for Pelton Round Butte Hydroelectric Project (FERC No. 2030)
+	PELPenLimit_o <- PELPenCap * cfsTOafw
+	return(KEPenLimit_o)
+}
+PELNetHead <- function() {
+	PELNetHead_o <- 385 # back-calculated using installed capacity of 367 MW, flow of 14000 cfs and efficiency of 0.8
+	return(PELNetHead_o)
+}
+PELIn <- function() {
+	PELIn_o <- PeltonFlowData()
+	return(PELIn_o)
+}
+PELInflow <- function() {
+	if (ResetStorage() == 1) {
+		PELInflow_o <- InitPEL() - Pelton()
+	} else {
+		PELInflow_o <- PELIn()
+	}
+	return(PELInflow_o)
+}
+
+##################### Pelton Round Butte max and min releases ##########
+
+PELMinReq <- function() {
+	PELMin <- PEL_target_min[week_in_year] # FERC P-2030
+	PELMinReq_o <- PELMin * cfsTOafw
+	return(PELMinReq_o)
+}
+PELDamProtectRel <- function() {
+	PELDamProtectRel_o <- max(0, PeltonFlowData() + PELInflow() - PELFullPoolVol)
+	return(PELDamProtectRel_o)
+}
+PELRelLimit <- function() {
+	PELRelLimit_o <- max(Pelton() + PELInflow() - PELBotVol, 0)
+	return(PELRelLimit_o)
+}
+PELAvailAfter <- function() {
+	PELAvailAfter_o <- max(0, Pelton() + PELIn() - PELBotVol)
+	return(PELAvailAfter_o)
+}
+
+############## Pelton Round Butte rule curve ##################
+
+PELFloodCurve <- function() {
+	PELFloodCurve_o <- PELFlood_input$PELFlood[week_in_year]
+	return(PELFloodCurve_o)
+}
+PELTopVol <- function() {
+	if (TopRuleSw() == 0) {
+		PELTopVol_o <- PELFloodCurve()
+	} else if (TopRuleSw() == 1) {
+		PELTopVol_o <- PELFullPoolVol
+	} else if (TopRuleSw() == 2) {
+		PELTopVol_o <- PELFlood_input$PELFlood[week_in_year]
+	}
+	return(PELTopVol_o)
+}
+PELRuleReq <- function() {
+	PELRuleReq_o <- max(Pelton() + PELIn() - PELTopVol(), 0)
+	return(PELRuleReq_o)
+}
+PELPrelim <- function() {
+	PELPrelim_o <- min(PELAvailAfter(), max(PELRuleReq(), PELMinReq()))
+	return(PELPrelim_o)
+}
+
+############ Pelton Round Butte energy ######################
+
+PELPreEnergy <- function() {
+	KEPreEnergy_o <- MWhr_per_ftAcFt * min(KEPrelim(), KEPenLimit()) * KENetHead() * KECombEfficiency
+	return(KEPreEnergy_o)
+} 
+ 
+################## Pelton Round Butte final release ###################
+
+PELRelease <- function() {
+	PELRelease_o <- max(PELDamProtectRel(), min(PELPrelim(), PELRelLimit()))
+	return(PELRelease_o)
+}
+PELOutflow <- function() {  
+  if (ResetStorage() == 1) { # default ResetStorage == 0
+	PELOutflow_o <- 0
+  } else {
+	PELOutflow_o <- PELRelease_c
+  }
+  return(PELOutflow_o)
 }
 
 #######################################################
@@ -5756,11 +6002,24 @@ DallesFlowData <- function() {
 	return(FlowDA)
 }
 DAInc <- function() {
-	DAInc_o <- DallesFlowData() - JohnDayFlowData()
+	DAInc_o <- DallesFlowData() - JohnDayFlowData() - PeltonFlowData()
 	return(DAInc_o)
 }
+DAPenLimit <- function() {
+	DAPenCap <- 375000 # https://www.nwd.usace.army.mil/CRSO/Project-Locations/The-Dalles/#top
+	DAPenLimit_o <- DAPenCap * cfsTOafw
+	return(DAPenLimit_o)
+}
+DANetHead <- function() {
+	DANetHead_o <- 80.1 # https://www.nwd-wc.usace.army.mil/dd/common/dataquery/www/?k=the%20dalles
+	return(DANetHead_o)
+}
+DAIn <- function() {
+	DAIn_o <- JDOut() + PELOutflow() + DAInc()
+	return(DAIn_o)
+}
 DACurtail <- function() {
-	DACurtail_0 <- min(DemVICDA, max(IflowDA + DemVICDA - JDOut() - DAInc(), 0))
+	DACurtail_0 <- min(DemVICDA, max(IflowDA + DemVICDA - JDOut() - PELOutflow() - DAInc(), 0))
 	if (curtail_option == 1) {
 		DACurtail_o <- ifelse(DACurtail_0 > 0, CurtVICDA, 0)
 	} else if (curtail_option == 2) {
@@ -5776,29 +6035,16 @@ DACurtail <- function() {
 	return(DACurtail_o)
 }
 DAInstreamShortfall <- function() {
-	DAInstreamShortfall_o = max(IflowDA + DemVICDA - JDOut() - DAInc(), 0)
+	DAInstreamShortfall_o = max(IflowDA + DemVICDA - JDOut() - PELOutflow() - DAInc(), 0)
 	return(DAInstreamShortfall_o)
 }
-DAPenLimit <- function() {
-	DAPenCap <- 375000 # https://www.nwd.usace.army.mil/CRSO/Project-Locations/The-Dalles/#top
-	DAPenLimit_o <- DAPenCap * cfsTOafw
-	return(DAPenLimit_o)
-}
 DAPrelim <- function() {
-	DAPrelim_o <- JDPrelim() + DAInc() - DemVICDA
+	DAPrelim_o <- JDPrelim() + PELPrelim() + DAInc()
 	return(DAPrelim_o)
-}
-DANetHead <- function() {
-	DANetHead_o <- 80.1 # https://www.nwd-wc.usace.army.mil/dd/common/dataquery/www/?k=the%20dalles
-	return(DANetHead_o)
 }
 DAPreEnergy <- function() {
 	DAPreEnergy_o <- MWhr_per_ftAcFt * min(DAPrelim(), DAPenLimit()) * DANetHead() * DACombEfficiency
 	return(DAPreEnergy_o)
-}
-DAIn <- function() {
-	DAIn_o <- JDOut() + DAInc() - DemVICDA
-	return(DAIn_o)
 }
 DAOut <- function() {
 	DAOut_o <- DAIn()
@@ -5808,7 +6054,6 @@ DAOut <- function() {
 #######################################################
 #---------------- BONNEVILLE DAM ---------------------#
 #######################################################
-
 
 BonnevilleFlowData <- function() {
 	return(FlowBON)
@@ -5927,15 +6172,17 @@ KerrGroupPreEnergy <- function() {
 }
 TotalCoordPreEnergy <- function() { # Hydropower that could be generated from prelinary releases at all dams
 	TotalCoordPreEnergy_o <- TotalEnergyFromMcNarySups() + HungryHorsePreEnergy() + LibbyPreEnergy() + MicaGroupPreEnergy() + KerrGrPreEnergy() +
-		AlbeniFallsGroupPreEnergy() + GrandCouleeGroupPreEnergy() + DworshakGroupPreEnergy() + LowerColGroupPreEnergy()
+		AlbeniFallsGroupPreEnergy() + GrandCouleeGroupPreEnergy() + DworshakGroupPreEnergy() + LowerColGroupPreEnergy() + CHPreEnergy() + PELPreEnergy()
 	return(TotalCoordPreEnergy_o)
 }
 TotalEnergyContent <- function() {
-	TotalEnergyContent_o <- DWEnergyContent() + GCEngContMult * GCEnergyContent() + HHEnergyContent() + LBEnergyContent() + MIEnergyContent() + AREnergyContent() + DUEnergyContent()
+	TotalEnergyContent_o <- DWEnergyContent() + GCEngContMult * GCEnergyContent() + HHEnergyContent() + LBEnergyContent() + MIEnergyContent() + 
+		AREnergyContent() + DUEnergyContent() + CLEnergyContent() + KerrEnergyContent() + AFEnergyContent() + BREnergyContent()
 	return(TotalEnergyContent_o)
 }
 TotalECCEnergyContent <- function() {
-	TotalECCEnergyContent_o <- DWECCEnergyContent() + GCEngContMult * GCECCEnergyContent() + HHECCEnergyContent() + LBECCEnergyContent() + MIECCEnergyContent() + ARECCEnergyContent() + DUECCEnergyContent()
+	TotalECCEnergyContent_o <- DWECCEnergyContent() + GCEngContMult * GCECCEnergyContent() + HHECCEnergyContent() + LBECCEnergyContent() + MIECCEnergyContent() + 
+		ARECCEnergyContent() + DUECCEnergyContent() + CLECCEnergyContent() + KerrECCEnergyContent() + AFECCEnergyContent() + BRECCEnergyContent()
 	return(TotalECCEnergyContent_o)
 }
 FirmFraction <- function() { # Adjustment to the average firm energy load throughout the year. 
@@ -6156,5 +6403,12 @@ LBEnergyProduction <- function() {
 	LibbyEnergy_o <- MWhr_per_ftAcFt * min(LBOutflow(), LBPenLimit()) * LBNetHead() * LBCombEfficiency
 	return(LibbyEnergy_o)
 }
-
+CHEnergyProduction <- function() {
+	ChelanEnergy_o <- MWhr_per_ftAcFt * min(CHOutflow(), CHPenLimit()) * CHNetHead() * CHCombEfficiency
+	return(ChelanEnergy_o)
+}
+PELEnergyProduction <- function() {
+	PeltonEnergy_o <- MWhr_per_ftAcFt * min(PELOutflow(), PELPenLimit()) * PELNetHead() * PELCombEfficiency
+	return(PeltonEnergy_o)
+}
 
