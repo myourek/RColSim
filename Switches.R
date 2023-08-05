@@ -27,7 +27,7 @@ track_curtailment <<- 1 # If 1, output mainstem curtailment, this slows down the
 #Options: 0:  Use values imported from spreadsheet. 1:  Use fixed multiplier for whole basin (fraction of full pool)
 #2:  Use historic storage value
 InitialConditionSwitch <<- 1 # Default = 2
-ResInitFractionFull <<- 0.8 # Used with option 1
+ResInitFractionFull <<- 1 # Used with option 1
 
 #week_counter_in_year <<- function() { # Find week of year starting on August 1st
 #	week_counter_in_year_o = date_hist_sim$week[week_counter]
@@ -101,7 +101,7 @@ UseTotalEnergyContentForFirm <<- function() { # Default is 1
 	#Options:
 	#0--Allocate based on  ECC for Firm Energy.  Reservoir may release only to ECC after allocation.
 	#1-Allocate based on volume mid point between ECC and bottom of pool for Firm Energy.  Reservoir may release to bottom of pool after allocation.
-	UseTotalEnergyContentForFirm_o = 1
+	UseTotalEnergyContentForFirm_o = 0
 	return(UseTotalEnergyContentForFirm_o)
 }
 
@@ -116,12 +116,7 @@ RefillSwitch <<- function(){
 	# or refill rule curves based on higher quality forecasts that specify refill lower values Aug-July.  Settings are:
 	#  1-Refill based on status Quo Operations
 	#  2-Refill based on perfect forecast
-  
-	if (SQuo_Refill_Targ==1 | PfctForecast_Refill_Targ==0 ) {
-		RefillSwitch_o = 1
-	} else if (PfctForecast_Refill_Targ==1) {
-		RefillSwitch_o = 2
-	}
+	RefillSwitch_o <- 2
 	return(RefillSwitch_o)
 }
 
@@ -136,6 +131,8 @@ RefillSwitch <<- function(){
 
 KerrTopVolSw <<- 0 # Default = 0
 GlobalFloodEvacMult <<- 1 # Factor to adjust flood evacuation, default is 1.
+DWFloodEvacMult <<- 1
+HHFloodMult <<- 1
 
 ########## EnergyAllocSafeFactor
 #Due to penstock constraints, the energy allocation algorithm may occasionally request water from an upstream dam that is already spilling water.
@@ -155,38 +152,41 @@ NonFirmEnergySw <<- 1 # Options: 1--Release water for non-firm hydropower genera
 
 ### Estimated combined efficiency of turbines
 
-MICombEfficiency <<- 0.8
-RevCombEfficiency <<- 0.8
-ARCombEfficiency <<- 0.8
-DUCombEfficiency <<- 0.8
-HHCombEfficiency <<- 0.8
-KECombEfficiency <<- 0.8
-NOXCombEfficiency <<- 0.8
-CBCombEfficiency <<- 0.8
 AFCombEfficiency <<- 0.8
-BCCombEfficiency <<- 0.8
-BDCombEfficiency <<- 0.8
-LBCombEfficiency <<- 0.8
-CLCombEfficiency <<- 0.8
-GCCombEfficiency <<- 0.8
-CJCombEfficiency <<- 0.8
-WECombEfficiency <<- 0.8
-RRCombEfficiency <<- 0.8
-RICombEfficiency <<- 0.8
-WACombEfficiency <<- 0.8
-PRCombEfficiency <<- 0.8
-DWCombEfficiency <<- 0.8
-BRCombEfficiency <<- 0.8
-OXCombEfficiency <<- 0.8
-HCCombEfficiency <<- 0.8
-LGCombEfficiency <<- 0.8
-LIGCombEfficiency <<- 0.8
-LMCombEfficiency <<- 0.8
-IHCombEfficiency <<- 0.8
-MCNCombEfficiency <<- 0.8
-JDCombEfficiency <<- 0.8
-DACombEfficiency <<- 0.8
+ARCombEfficiency <<- 0.8
 BONCombEfficiency <<- 0.8
+BDCombEfficiency <<- 0.8
+BCCombEfficiency <<- 0.8
+BRCombEfficiency <<- 0.8
+CBCombEfficiency <<- 0.8
+CHCombEfficiency <<- 0.8
+CJCombEfficiency <<- 0.8
+CLCombEfficiency <<- 0.8
+DACombEfficiency <<- 0.8
+DUCombEfficiency <<- 0.8
+DWCombEfficiency <<- 0.8
+KECombEfficiency <<- 0.8
+HHCombEfficiency <<- 0.8
+GCCombEfficiency <<- 0.8
+HCCombEfficiency <<- 0.8
+IHCombEfficiency <<- 0.8
+JDCombEfficiency <<- 0.8
+LBCombEfficiency <<- 0.8
+LIGCombEfficiency <<- 0.8
+LGCombEfficiency <<- 0.8
+LMCombEfficiency <<- 0.8
+MCNCombEfficiency <<- 0.8
+MICombEfficiency <<- 0.8
+NOXCombEfficiency <<- 0.8
+OXCombEfficiency <<- 0.8
+PELCombEfficiency <<- 0.8
+PRCombEfficiency <<- 0.8
+RevCombEfficiency <<- 0.8
+RICombEfficiency <<- 0.8
+RRCombEfficiency <<- 0.8
+TFCombEfficiency <<- 0.8
+WACombEfficiency <<- 0.8
+WECombEfficiency <<- 0.8
 
 ### Options for using storage to meet fish targets
 
@@ -196,6 +196,7 @@ UseAllStorForMCNLG <<- 0 # Options: 0--Use current draft limits for McNary and L
 ## Other controls
 
 GCEngContMult <<- 1 # Multiplier for flow from GC allocated for meeting firm energy target
+GlobalFloodEvacMult <<- 1
 Deviation__From_Normal_Curve <<- 1 # Multiplier to adjust firm energy target, leave as 1 unless experimenting
 mainstem_rule <<- 600E6 # Sum of Apr to September runoff at Dalles that triggers mainstem curtailement (actual is 60E6), leave high to force curtailment every year
 

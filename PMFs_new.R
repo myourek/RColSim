@@ -138,10 +138,6 @@ NonFirmSpotSales <- function() {
     NonFirmSpotSales_o <- NonFirmEnergyMarketed() * SpotNonFirmPrice[month_in_year]
 	return(NonFirmSpotSales_o)
 }
-TotalSysEnergy <- function() { # Hydropower production for entire CRB, excluding upper Snake River
-	TotalSysEnergy_o <- AlbeniFallsGroupEnergy() + DworshakGroupEnergy() + GrandCouleeGroupEnergy() + HungryHorseEnergy() + KerrGroupEnergy() + LibbyEnergy() + LowerColEnergy() + MicaGroupEnergy() + BrownleeGroupEnergy()
-	return(TotalSysEnergy_o)
-}
 
 ###############################################################################################
 #######################################################################################################################
@@ -182,7 +178,7 @@ TotalSysStorage <- function() {
 	return(TotalSysStorage_o)
 }
 SumFloodTarget <- function() { # Target storage for dams to meet flood protection objective
-	SumFloodTarget_o <- ARFloodCurve() + DUFloodCurve() + DWFloodCurve() + GCFloodCurve() + HHFloodCurve() + LibbyFloodCurve() + MIFloodCurve() + BRFloodCurve() + CLFloodCurve() + KEFloodCurve() + AFFloodCurve()
+	SumFloodTarget_o <- ARFloodCurve() + DUFloodCurve() + DWFloodCurve() + GCFloodCurve() + HHFloodCurve() + LBFloodCurve() + MIFloodCurve() + BRFloodCurve() + CLFloodCurve() + KEFloodCurve() + AFFloodCurve()
 	return(SumFloodTarget_o)
 }
 BelowFCC <- function() { # Excess storage space
