@@ -116,7 +116,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:22){
+for (I_Week in 1:48){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -426,7 +426,7 @@ for (I_Week in 1:22){
 			write.table(cbind(date_hist_sim[week_counter,], mainstem_curtailments[week_counter,]), paste0(OutputFolder, "/mainstem_curtailment.txt"), row.names=F, col.names=F, append=T)
 		}
 	}
-	print(AFOutflow())
+	#print(dams_in$AMERI[week_counter] - dams_out$AMERI[week_counter])
 }
 
 

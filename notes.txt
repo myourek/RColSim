@@ -1,0 +1,2 @@
+Whenever there are nested functions, the second time the function with nested functions is called, 
+exececution is significantly slowed. This is why the initialization step takes much longer than subseqent time steps.

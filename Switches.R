@@ -15,7 +15,7 @@ Chum_Q_Switch <<- function() {
   Chum_Q_Switch_o <- 1
   return(Chum_Q_Switch_o)
 }  
-
+fish_over_refill <<- 0
 # Curtail option allows the user to select how mainstem curtailment should be calculated.
 # Options: 1--Calculate mainstem curtailment based on interruptible demand, 
 #          2--Calculate the minimum of total demand and instream flow deficit 

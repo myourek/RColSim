@@ -4,14 +4,14 @@
 dams_out = data.frame(matrix(nrow=N_of_TimeSteps, ncol=46))
 names(dams_out) = c("ALBEN", "AMERI", "ARROW", "BONFE", "BONNE", "BOUND", "BOXCA", "BROWN", "CABIN", "CHELA",
 	"CHIEF", "CORRA", "DALLE", "DUNCA", "DWORS", "FLAPO", "FLASF", "GCOUL", "HCANY", "ICEHA", "IPARK", 
-	"JDAYY", "JLAKE", "LIBBY", "LGOOS", "LGRAN", "LMONU", "LUCKY", "MCNAR", "MICAA", "MILNE", "MINAD", "NOXON",
+	"JDAYY", "JLAKE", "LIBBY", "LGOOS", "LGRAN", "LMONU", "BOISE", "MCNAR", "MICAA", "MILNE", "MINAD", "NOXON",
 	"OWYHE", "OXBOW", "PALIS", "PAYHS", "PELTO", "PRIRA", "REVEL", "RIRDM", "RISLA", "ROCKY", "THOMF", "WANAP",
 	"WELLS")
 
 dams_in = data.frame(matrix(nrow=N_of_TimeSteps, ncol=46))
 names(dams_in) = c("ALBEN", "AMERI", "ARROW", "BONFE", "BONNE", "BOUND", "BOXCA", "BROWN", "CABIN", "CHELA",
 	"CHIEF", "CORRA", "DALLE", "DUNCA", "DWORS", "FLAPO", "FLASF", "GCOUL", "HCANY", "ICEHA", "IPARK", 
-	"JDAYY", "JLAKE", "LIBBY", "LGOOS", "LGRAN", "LMONU", "LUCKY", "MCNAR", "MICAA", "MILNE", "MINAD", "NOXON",
+	"JDAYY", "JLAKE", "LIBBY", "LGOOS", "LGRAN", "LMONU", "BOISE", "MCNAR", "MICAA", "MILNE", "MINAD", "NOXON",
 	"OWYHE", "OXBOW", "PALIS", "PAYHS", "PELTO", "PRIRA", "REVEL", "RIRDM", "RISLA", "ROCKY", "THOMF", "WANAP",
 	"WELLS")
 	
