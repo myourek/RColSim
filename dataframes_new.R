@@ -29,12 +29,20 @@ reservoir_vol_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=22))
 names(reservoir_vol_df) = c("MICAA", "ARROW", "DUNCA", "CORRA", "LIBBY", "FLASF", "GCOUL", "DWORS", "BROWN", "FLAPO", 
 	"ALBEN", "CHELA", "JLAKE", "PALIS", "IPARK", "RIRDM", "AMERI", "MINAD", "BOISE", "PAYHS", "OWYHE", "PELTO")
 
-energy_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=7))
-names(energy_df) = c("ARFirmEngSupReq", "TotalEnergyContent", "TotalECCEnergyContent", "FirmEnergyDeficit",
+energy_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=6))
+names(energy_df) = c("TotalEnergyContent", "TotalECCEnergyContent", "FirmEnergyDeficit",
 "TotalCoordPreEnergy", "TotalNFEnergyContent", "NonFirmEnergyDeficit")
 
-water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=21))
-names(water_df) = c("BRPrelim_c", "TotalFloodSpace_c", "TotalRelReducReq", "ARPrelim", "ARCombSup", "AREnergySup", "ARMcNarySup", "ARSharedWater", "ARECCSharedWater", "AR_CRT_SOA_storage", "AR_CRT_storage", "AR_CRT_release", "MI_CRT_storage", "MI_CRT_release", "MIMcNarySup", "MI_CRT_SOA_storage", "MIRelReducReq", "ARRelReducReq", "TotalMcNarySharedWater_c", "BRIn", "GCIn")
+water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=9))
+names(water_df) = c("TotalFloodSpace", "TotalRelReducReq", "TotalMcNarySharedWater", "GCSupForVernitaBar", "BRLGSup", "BRRelForJBandLP",
+	"DWLGSup", "BRIn", "GCIn")
 
-Biop = data.frame(matrix(nrow=N_of_TimeSteps, ncol=2))
-names(Biop) = c("MCNAR", "BONNE")
+BiOp = data.frame(matrix(nrow=N_of_TimeSteps, ncol=2))
+names(BiOp) = c("MCNAR", "BONNE")
+
+flood_curve_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=20))
+names(flood_curve_df) = c("MICAA", "ARROW", "DUNCA", "CORRA", "LIBBY", "FLASF", "GCOUL", "DWORS", "BROWN", "FLAPO", 
+	"ALBEN", "CHELA", "JLAKE", "PALIS", "IPARK", "RIRDM", "BOISE", "PAYHS", "OWYHE", "PELTO")
+	
+energy_curve_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=11))
+names(energy_curve_df) = c("MICAA", "ARROW", "DUNCA", "CORRA", "LIBBY", "FLASF", "GCOUL", "DWORS", "BROWN", "FLAPO", "ALBEN")

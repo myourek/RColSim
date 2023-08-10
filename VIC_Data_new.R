@@ -4,7 +4,7 @@
 
 VIC_Data <- function() {
 	####### supply, demands, curtailment ########
-	terms = c("Flow", "Dem", "Iflow", "Curt", "Refill", "Ret")
+	terms = c("Flow", "Dem", "Iflow", "Curt", "Refill", "Ret", "Residual")
 	for (j in terms) {
 		cols = grep(j, names(input_file))
 		for (i in cols) {

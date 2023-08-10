@@ -75,13 +75,13 @@ num_years_to_skip <<- as.numeric(start_year) - as.numeric(format(as.Date(input_s
 
 date_hist_sim <- date_hist_sim_0[lines_to_keep,]
 N_of_TimeSteps <- length(date_hist_sim[,1])
-input_file <- input_file[lines_to_keep,]
+
 
 # ------- Load functions and rule curves
 # 5 files need to be loaded in the following order: 1- LoadFunctions.R 2- Read_Rule_Curves.R 3- Switches.R  4- dataframes.R 5- Measures of performance
 
 # 1- LOAD ALL FUNCTIONS
-source("~/RColSim/LoadFunctions_update2.R") 
+source("~/RColSim/LoadFunctions_update_cleaned.R") 
 # 2- READ ALL INPUT FILES
 source("~/RColSim/Read_Rule_Curves_new.R")
 Read_Rule_Curves()
@@ -116,16 +116,19 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:48){
+for (I_Week in 1:N_of_TimeSteps){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
-		week_in_year <- input_file$Week[week_counter]
+		print(paste0("time step = ", week_counter))
+		week_in_year <- input_file$Week[week_counter + num_lines_to_skip]
 		year_counter <- year_from_weekly()
 		###### READ INPUT DATA FOR WEEK week_counter
 		VIC_Data()
 		############### Common weekly variables
 		BRPrelim_c <- -9999
+		BRIn_c <- -9999
+		GCIn_c <- -9999
 		TotalFloodSpace_c <- -9999
 		ARFirmEngSupReq_c <- -9999
 		ARFirmEngSup_c <- -9999
@@ -139,15 +142,17 @@ for (I_Week in 1:48){
 		# ---------------- Initialize the model
 		source("~/RColSim/initialize_model_new.R")		
 	} else {
-		print(paste0("time step = ", week_counter))
 		# FIND THE RIGHT TIME STEP
 		week_counter <- I_Week
+		print(paste0("time step = ", week_counter))
 		week_in_year <- input_file$Week[week_counter]
 		year_counter <- year_from_weekly() ## Year of the current time step
 		###### READ INPUT DATA FOR EACH WEEK
 		VIC_Data()
 		############### COMMON WEEKLY VARIABLES
 		BRPrelim_c <- -9999
+		BRIn_c <- -9999
+		GCIn_c <- -9999
 		TotalFloodSpace_c <- -9999
 		ARFirmEngSupReq_c <- -9999
 		ARFirmEngSup_c <- -9999
@@ -160,9 +165,11 @@ for (I_Week in 1:48){
 		TotalMcNarySharedWater_c <- -9999
   
 		
-		MicaRelease_c <- MIRelease()
+		MIRelease_c <- MIRelease()
 		dams_in$MICAA[week_counter] <- MIInflow()
 		dams_out$MICAA[week_counter] <- MIOutflow()
+		flood_curve_df$MICAA[week_counter] <- MIFloodCurve()
+		energy_curve_df$MICAA[week_counter] <- MIECC()
 
 		dams_in$REVEL[week_counter] <- REVIn()
 		dams_out$REVEL[week_counter] <- REVOut()
@@ -170,14 +177,20 @@ for (I_Week in 1:48){
 		ARRelease_c <- ARRelease()
 		dams_in$ARROW[week_counter] <- ARInflow()
 		dams_out$ARROW[week_counter] <- AROutflow()
+		flood_curve_df$ARROW[week_counter] <- ARFloodCurve()
+		energy_curve_df$ARROW[week_counter] <- ARECC()
 
 		HHRelease_c <- HHRelease()
 		dams_in$FLASF[week_counter] <- HHInflow()
 		dams_out$FLASF[week_counter] <- HHOutflow()
+		flood_curve_df$FLASF[week_counter] <- HHFloodCurve()
+		energy_curve_df$FLASF[week_counter] <- HHECC()
 
 		KERelease_c <- KERelease()
 		dams_in$FLAPO[week_counter] <- KEInflow()
 		dams_out$FLAPO[week_counter] <- KEOutflow()
+		flood_curve_df$FLAPO[week_counter] <- KEFloodCurve()
+		energy_curve_df$FLAPO[week_counter] <- KerrECC()
 
 		dams_in$THOMF[week_counter] <- TFIn()
 		dams_out$THOMF[week_counter] <- TFOut()
@@ -191,6 +204,8 @@ for (I_Week in 1:48){
 		AFRelease_c <- AFRelease()
 		dams_in$ALBEN[week_counter] <- AFInflow()
 		dams_out$ALBEN[week_counter] <- AFOutflow()
+		flood_curve_df$ALBEN[week_counter] <- AFFloodCurve()
+		energy_curve_df$ALBEN[week_counter] <- AFECC()
 
 		dams_in$BOXCA[week_counter] <- BCIn()
 		dams_out$BOXCA[week_counter] <- BCOut()
@@ -201,6 +216,8 @@ for (I_Week in 1:48){
 		LBRelease_c <- LBRelease()
 		dams_in$LIBBY[week_counter] <- LBInflow()
 		dams_out$LIBBY[week_counter] <- LBOutflow()
+		flood_curve_df$LIBBY[week_counter] <- LBFloodCurve()
+		energy_curve_df$LIBBY[week_counter] <- LBECC()
 
 		dams_in$BONFE[week_counter] <- BONFIn()
 		dams_out$BONFE[week_counter] <- BONFOut()
@@ -208,14 +225,20 @@ for (I_Week in 1:48){
 		DURelease_c <- DURelease() 
 		dams_in$DUNCA[week_counter] <- DUInflow()
 		dams_out$DUNCA[week_counter] <- DUOutflow()
+		flood_curve_df$DUNCA[week_counter] <- DUFloodCurve()
+		energy_curve_df$DUNCA[week_counter] <- DUECC()
 
 		CLRelease_c <- CLRelease() 
 		dams_in$CORRA[week_counter] <- CLInflow()
 		dams_out$CORRA[week_counter] <- CLOutflow()
+		flood_curve_df$CORRA[week_counter] <- CLFloodCurve()
+		energy_curve_df$CORRA[week_counter] <- CLECC()
 
 		GCRelease_c <- GCRelease()
 		dams_in$GCOUL[week_counter] <- GCInflow()
 		dams_out$GCOUL[week_counter] <- GCOutflow()
+		flood_curve_df$GCOUL[week_counter] <- GCFloodCurve()
+		energy_curve_df$GCOUL[week_counter] <- GCECC()
 
 		dams_in$CHIEF[week_counter] <- CJIn()
 		dams_out$CHIEF[week_counter] <- CJOut()
@@ -234,6 +257,7 @@ for (I_Week in 1:48){
 		CHRelease_c <- CHRelease()
 		dams_in$CHELA[week_counter] <- CHInflow()
 		dams_out$CHELA[week_counter] <- CHOutflow()
+		flood_curve_df$CHELA[week_counter] <- CHFloodCurve()
 
 		dams_in$ROCKY[week_counter] <- RRIn()
 		dams_out$ROCKY[week_counter] <- RROut()
@@ -266,18 +290,22 @@ for (I_Week in 1:48){
 		JLRelease_c <- JLRelease()
 		dams_in$JLAKE[week_counter] <- JLInflow()
 		dams_out$JLAKE[week_counter] <- JLOutflow()
+		flood_curve_df$JLAKE[week_counter] <- JLFloodCurve()
 
 		PALRelease_c <- PALRelease()
 		dams_in$PALIS[week_counter] <- PALInflow()
 		dams_out$PALIS[week_counter] <- PALOutflow()
+		flood_curve_df$PALIS[week_counter] <- PALFloodCurve()
 
 		IPRelease_c <- IPRelease()
 		dams_in$IPARK[week_counter] <- IPInflow()
 		dams_out$IPARK[week_counter] <- IPOutflow()
+		flood_curve_df$IPARK[week_counter] <- IPFloodCurve()
 
 		RIRRelease_c <- RIRRelease()
 		dams_in$RIRDM[week_counter] <- RIRInflow()
 		dams_out$RIRDM[week_counter] <- RIROutflow()
+		flood_curve_df$RIRDM[week_counter] <- RIRFloodCurve()
 
 		AMRelease_c <- AMRelease()
 		dams_in$AMERI[week_counter] <- AMInflow()
@@ -293,18 +321,23 @@ for (I_Week in 1:48){
 		BoiseRelease_c <- BoiseRelease()
 		dams_in$BOISE[week_counter] <- BoiseInflow()
 		dams_out$BOISE[week_counter] <- BoiseOutflow()
+		flood_curve_df$BOISE[week_counter] <- BoiseFloodCurve()
 
 		PayetteRelease_c <- PayetteRelease()
 		dams_in$PAYHS[week_counter] <- PayetteInflow()
 		dams_out$PAYHS[week_counter] <- PayetteOutflow()
+		flood_curve_df$PAYHS[week_counter] <- PayetteFloodCurve()
 
 		OWYRelease_c <- OWYRelease()
 		dams_in$OWYHE[week_counter] <- OWYInflow()
 		dams_out$OWYHE[week_counter] <- OWYOutflow()
+		flood_curve_df$OWYHE[week_counter] <- OWYFloodCurve()
 
 		BRRelease_c <- BRRelease()
 		dams_in$BROWN[week_counter] <- BRInflow()
 		dams_out$BROWN[week_counter] <- BROutflow()
+		flood_curve_df$BROWN[week_counter] <- BRFloodCurve()
+		energy_curve_df$BROWN[week_counter] <- BRECC()
 
 		dams_in$OXBOW[week_counter] <- OXIn()
 		dams_out$OXBOW[week_counter] <- OXOut()
@@ -315,6 +348,8 @@ for (I_Week in 1:48){
 		DWRelease_c <- DWRelease()
 		dams_in$DWORS[week_counter] <- DWInflow()
 		dams_out$DWORS[week_counter] <- DWOutflow()
+		flood_curve_df$DWORS[week_counter] <- DWFloodCurve()
+		energy_curve_df$DWORS[week_counter] <- DWECC()
 
 		dams_in$LGRAN[week_counter] <- LGIn()
 		dams_out$LGRAN[week_counter] <- LGOut()	
@@ -334,7 +369,7 @@ for (I_Week in 1:48){
 			mainstem_curtailments$MCNAR[week_counter] <- MCNCurtail()
 			mainstem_shortfall$MCNAR[week_counter] <- MCNInstreamShortfall()
 		}
-		Biop[week_counter,week_counter] <- McNaryFlowTarget()
+		BiOp$MCNAR[week_counter] <- McNaryFlowTarget()
 
 		dams_in$JDAYY[week_counter] <- JDIn()
 		dams_out$JDAYY[week_counter] <- JDOut()
@@ -346,6 +381,7 @@ for (I_Week in 1:48){
 		PELRelease_c <- PELRelease()
 		dams_in$PELTO[week_counter] <- PELInflow()
 		dams_out$PELTO[week_counter] <- PELOutflow()
+		flood_curve_df$PELTO[week_counter] <- PELFloodCurve()
 
 		dams_in$DALLE[week_counter] <- DAIn()
 		dams_out$DALLE[week_counter] <- DAOut()
@@ -356,7 +392,7 @@ for (I_Week in 1:48){
 
 		dams_in$BONNE[week_counter] <- BONIn()
 		dams_out$BONNE[week_counter] <- BONOut()
-		Biop[week_counter,2] <- BonnevilleFlowTarget()
+		BiOp$BONNE[week_counter] <- BonnevilleFlowTarget()
     
 		##################################################################################################################
 		##################################################################################################################
@@ -370,29 +406,10 @@ for (I_Week in 1:48){
 		##################################################################################################################
 		##################################################################################################################
 		
-		reservoir_vol_df$MICAA[week_counter] <- reservoir_vol_df$MICAA[week_counter-1] + (dams_in$MICAA[week_counter] - dams_out$MICAA[week_counter])
-		reservoir_vol_df$ARROW[week_counter] <- reservoir_vol_df$ARROW[week_counter-1] + (dams_in$ARROW[week_counter] - dams_out$ARROW[week_counter]) 
-		reservoir_vol_df$DUNCA[week_counter] <- reservoir_vol_df$DUNCA[week_counter-1] + (dams_in$DUNCA[week_counter] - dams_out$DUNCA[week_counter]) 
-		reservoir_vol_df$CORRA[week_counter] <- reservoir_vol_df$CORRA[week_counter-1] + (dams_in$CORRA[week_counter] - dams_out$CORRA[week_counter]) 
-		reservoir_vol_df$LIBBY[week_counter] <- reservoir_vol_df$LIBBY[week_counter-1] + (dams_in$LIBBY[week_counter] - dams_out$LIBBY[week_counter]) 
-		reservoir_vol_df$FLASF[week_counter] <- reservoir_vol_df$FLASF[week_counter-1] + (dams_in$FLASF[week_counter] - dams_out$FLASF[week_counter]) 
-		reservoir_vol_df$GCOUL[week_counter] <- reservoir_vol_df$GCOUL[week_counter-1] + (dams_in$GCOUL[week_counter] - dams_out$GCOUL[week_counter])
-		reservoir_vol_df$DWORS[week_counter] <- reservoir_vol_df$DWORS[week_counter-1] + (dams_in$DWORS[week_counter] - dams_out$DWORS[week_counter]) 
-		reservoir_vol_df$BROWN[week_counter] <- reservoir_vol_df$BROWN[week_counter-1] + (dams_in$BROWN[week_counter] - dams_out$BROWN[week_counter]) 
-		reservoir_vol_df$FLAPO[week_counter] <- reservoir_vol_df$FLAPO[week_counter-1] + (dams_in$FLAPO[week_counter] - dams_out$FLAPO[week_counter]) 
-		reservoir_vol_df$ALBEN[week_counter] <- reservoir_vol_df$ALBEN[week_counter-1] + (dams_in$ALBEN[week_counter] - dams_out$ALBEN[week_counter]) 
-		reservoir_vol_df$CHELA[week_counter] <- reservoir_vol_df$CHELA[week_counter-1] + (dams_in$CHELA[week_counter] - dams_out$CHELA[week_counter]) 
-		reservoir_vol_df$JLAKE[week_counter] <- reservoir_vol_df$JLAKE[week_counter-1] + (dams_in$JLAKE[week_counter] - dams_out$JLAKE[week_counter]) 
-		reservoir_vol_df$PALIS[week_counter] <- reservoir_vol_df$PALIS[week_counter-1] + (dams_in$PALIS[week_counter] - dams_out$PALIS[week_counter]) 
-		reservoir_vol_df$IPARK[week_counter] <- reservoir_vol_df$IPARK[week_counter-1] + (dams_in$IPARK[week_counter] - dams_out$IPARK[week_counter]) 
-		reservoir_vol_df$RIRDM[week_counter] <- reservoir_vol_df$RIRDM[week_counter-1] + (dams_in$RIRDM[week_counter] - dams_out$RIRDM[week_counter]) 
-		reservoir_vol_df$AMERI[week_counter] <- reservoir_vol_df$AMERI[week_counter-1] + (dams_in$AMERI[week_counter] - dams_out$AMERI[week_counter]) 
-		reservoir_vol_df$MINAD[week_counter] <- reservoir_vol_df$MINAD[week_counter-1] + (dams_in$MINAD[week_counter] - dams_out$MINAD[week_counter]) 
-		reservoir_vol_df$BOISE[week_counter] <- reservoir_vol_df$BOISE[week_counter-1] + (dams_in$BOISE[week_counter] - dams_out$BOISE[week_counter]) 
-		reservoir_vol_df$PAYHS[week_counter] <- reservoir_vol_df$PAYHS[week_counter-1] + (dams_in$PAYHS[week_counter] - dams_out$PAYHS[week_counter]) 
-		reservoir_vol_df$OWYHE[week_counter] <- reservoir_vol_df$OWYHE[week_counter-1] + (dams_in$OWYHE[week_counter] - dams_out$OWYHE[week_counter]) 
-		reservoir_vol_df$PELTO[week_counter] <- reservoir_vol_df$PELTO[week_counter-1] + (dams_in$PELTO[week_counter] - dams_out$PELTO[week_counter])  
-
+		for (res in names(reservoir_vol_df)) {
+			reservoir_vol_df[week_counter,res] <- reservoir_vol_df[week_counter-1,res] + (dams_in[week_counter,res] - dams_out[week_counter,res])
+		}
+		
 		###### MOPs Measures Of Performance
 		MOP_df$FirmEnergy[week_counter] <- FirmEnergyMOP() # Firm energy shortfall
 		MOP_df$NonFirmEnergy[week_counter] <- NonFirmEnergyMOP() # Non-Firm energy shortfall
@@ -419,14 +436,16 @@ for (I_Week in 1:48){
 		write.table(cbind(date_hist_sim[week_counter,], MOP_df[week_counter,]), paste0(OutputFolder, "/MOP_df.txt"), row.names=F, col.names=F, append=T)
 		write.table(cbind(date_hist_sim[week_counter,], water_df[week_counter,]), paste0(OutputFolder, "/water.txt"), row.names=F, col.names=F, append=T)
 		write.table(cbind(date_hist_sim[week_counter,], energy_df[week_counter,]), paste0(OutputFolder, "/energy.txt"), row.names=F, col.names=F, append=T)
-		write.table(cbind(date_hist_sim[week_counter,], Biop[week_counter,]), paste0(OutputFolder, "/Biop_flow.txt"), row.names=F, col.names=F, append=T)
+		write.table(cbind(date_hist_sim[week_counter,], BiOp[week_counter,]), paste0(OutputFolder, "/BiOp_flow.txt"), row.names=F, col.names=F, append=T)
+		write.table(cbind(date_hist_sim[week_counter,], flood_curve_df[week_counter,]), paste0(OutputFolder, "/flood_curve.txt"), row.names=F, col.names=F, append=T)
+		write.table(cbind(date_hist_sim[week_counter,], energy_curve_df[week_counter,]), paste0(OutputFolder, "/energy_content_curve.txt"), row.names=F, col.names=F, append=T)
 
 		if (track_curtailment == week_counter) {
 			write.table(cbind(date_hist_sim[week_counter,], mainstem_shortfall[week_counter,]), paste0(OutputFolder, "/mainstem_shortfall.txt"), row.names=F, col.names=F, append=T)
 			write.table(cbind(date_hist_sim[week_counter,], mainstem_curtailments[week_counter,]), paste0(OutputFolder, "/mainstem_curtailment.txt"), row.names=F, col.names=F, append=T)
 		}
 	}
-	#print(dams_in$AMERI[week_counter] - dams_out$AMERI[week_counter])
+	#print(paste(Libby(), LBRelease_c))
 }
 
 
