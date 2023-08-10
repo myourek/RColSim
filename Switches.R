@@ -201,3 +201,5 @@ Deviation__From_Normal_Curve <<- 1 # Multiplier to adjust firm energy target, le
 mainstem_rule <<- 600E6 # Sum of Apr to September runoff at Dalles that triggers mainstem curtailement (actual is 60E6), leave high to force curtailment every year
 
 } ### end of all switches
+
+#jkj
