@@ -359,7 +359,7 @@ MICombSup <- function() { # Total water to be released to meet fish and energy o
 	}
 	if (GCIn_c == -9999) {
 		GCIn_c <<- GCIn()
-		water_df$GCIn_c[week_counter] <<- GCIn_c
+		water_df$GCIn[week_counter] <<- GCIn_c
 	}
 	MICombSup_o <- MIEnergySup() + MIMcNarySup()
 	return(MICombSup_o)
@@ -5004,11 +5004,12 @@ BRJBAvailAfter <- function() {
 	return(BRJBAvailAfter_o)
 }
 BRLGSup <- function() { # Release of water from Brownlee to meet Lower Granite fish flow target 
-	if ((StorFrac * Brownlee() + StorFrac * Dworshak() + InflowFrac * BRIn_c + InflowFrac * DWIn() - StorFrac * BRDraftLimit() - StorFrac * DWDraftLimit()) == 0) {
+	denominator <- StorFrac * Brownlee() + StorFrac * Dworshak() + InflowFrac * BRIn_c + InflowFrac * DWIn() - BRPrelim_c - DWPrelim() - StorFrac * BRDraftLimit() - StorFrac * DWDraftLimit()
+	numerator <- StorFrac * Brownlee() + InflowFrac * BRIn_c - BRPrelim_c - StorFrac * BRDraftLimit()
+	if (denominator == 0) {
 		BRRelForLG_1 <- 0
 	} else {
-		BRRelForLG_1 <- TotalRelForLowerGranite() * ((StorFrac * Brownlee() + InflowFrac * BRIn_c - StorFrac * BRDraftLimit()) / 
-			(StorFrac * Brownlee() + StorFrac * Dworshak() + InflowFrac * BRIn_c + InflowFrac * DWIn() - StorFrac * BRDraftLimit() - StorFrac * DWDraftLimit()))
+		BRRelForLG_1 <- TotalRelForLowerGranite() * numerator / denominator
 	}
 	BRRelForLG_o <- min(BRLGAvailAfter(), BRRelForLG_1)
 	if (is.na(water_df$BRLGSup[week_counter])) {
@@ -5438,12 +5439,12 @@ DWLGAvailAfter <- function() {
 	return(DWLGAvailAfter_o)
 }
 DWLGSup <- function() { # Release from Dworshak for meeting Lower Graninte fish flow target
-	if ((StorFrac * Brownlee() + StorFrac * Dworshak() + InflowFrac * BRIn_c + InflowFrac * DWIn() - StorFrac * BRDraftLimit() - StorFrac * DWDraftLimit()) == 0) {
+	denominator <- StorFrac * Brownlee() + StorFrac * Dworshak() + InflowFrac * BRIn_c + InflowFrac * DWIn() - BRPrelim_c - DWPrelim() - StorFrac * BRDraftLimit() - StorFrac * DWDraftLimit()
+	numerator <- StorFrac * Dworshak() + InflowFrac * DWIn() - DWPrelim() - StorFrac * DWDraftLimit()
+	if (denominator == 0) {
 		DWRelForLG_1 <- 0
 	} else {
-		DWRelForLG_1 <- TotalRelForLowerGranite() *
-			((StorFrac * Dworshak() + InflowFrac * DWIn() - StorFrac * DWDraftLimit()) /
-			(StorFrac * Brownlee() + StorFrac * Dworshak() + InflowFrac * BRIn_c + InflowFrac * DWIn() - StorFrac * BRDraftLimit() - StorFrac * DWDraftLimit()))
+		DWRelForLG_1 <- TotalRelForLowerGranite() * numerator / denominator
 	}
 	DWRelForLG_o <- min(DWLGAvailAfter(), DWRelForLG_1)
 	if (is.na(water_df$DWLGSup[week_counter])) {

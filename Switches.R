@@ -3,7 +3,7 @@ ReadSwitches <<- function() {
 
 # Factors for controlling additional flood storage space  
   
-StorFrac <<- 0.2 # Weight of Brownlee and Dworshak resrevoir storage to use for meeting fish flow target at Lower Granite Dam
+StorFrac <<- 1 # Weight of Brownlee and Dworshak resrevoir storage to use for meeting fish flow target at Lower Granite Dam
 InflowFrac <<- 1 # Weight of inflow to Brownlee and Dworshak reservoirs to use for meeting fish flow target at Lower Granite Dam
 MIFloodMult <<- 1.25 # Factor to multiply available storage space at Arrow and Mica dams for reducing high flow at The Dalles.
 LBFloodMult <<- 1.25 # Factor to multiply available storage space at Libby dam for reducing high flow at The Dalles.
