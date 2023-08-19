@@ -33,9 +33,9 @@ energy_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=6))
 names(energy_df) = c("TotalEnergyContent", "TotalECCEnergyContent", "FirmEnergyDeficit",
 "TotalCoordPreEnergy", "TotalNFEnergyContent", "NonFirmEnergyDeficit")
 
-water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=9))
+water_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=13))
 names(water_df) = c("TotalFloodSpace", "TotalRelReducReq", "TotalMcNarySharedWater", "GCSupForVernitaBar", "BRLGSup", "BRRelForJBandLP",
-	"DWLGSup", "BRIn", "GCIn")
+	"DWLGSup", "DWFirmEngSup", "GCFirmEngSup", "TotalEnergySup", "UpstreamFloodEvacGC", "BRIn", "GCIn")
 
 BiOp = data.frame(matrix(nrow=N_of_TimeSteps, ncol=2))
 names(BiOp) = c("MCNAR", "BONNE")
@@ -46,3 +46,6 @@ names(flood_curve_df) = c("MICAA", "ARROW", "DUNCA", "CORRA", "LIBBY", "FLASF", 
 	
 energy_curve_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=11))
 names(energy_curve_df) = c("MICAA", "ARROW", "DUNCA", "CORRA", "LIBBY", "FLASF", "GCOUL", "DWORS", "BROWN", "FLAPO", "ALBEN")
+
+GC_VDL_df = data.frame(matrix(nrow=N_of_TimeSteps, ncol=1))
+names(GC_VDL_df) = "GCOUL"

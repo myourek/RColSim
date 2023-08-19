@@ -289,6 +289,7 @@ write.table(cbind(date_hist_sim[1,], energy_df[1,]), paste0(OutputFolder, "/ener
 write.table(cbind(date_hist_sim[1,], BiOp[1,]), paste0(OutputFolder, "/BiOp_flow.txt"), row.names=F, col.names=T, append=F)
 write.table(cbind(date_hist_sim[1,], flood_curve_df[1,]), paste0(OutputFolder, "/flood_curve.txt"), row.names=F, col.names=T, append=F)
 write.table(cbind(date_hist_sim[1,], energy_curve_df[1,]), paste0(OutputFolder, "/energy_content_curve.txt"), row.names=F, col.names=T, append=F)
+write.table(cbind(date_hist_sim[week_counter,], GC_VDL_df[1,]), paste0(OutputFolder, "/GC_variable_draft.txt"), row.names=F, col.names=T, append=F)
 
 
 if (track_curtailment == 1) {

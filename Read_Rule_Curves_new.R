@@ -96,7 +96,7 @@ Read_Rule_Curves <- function() {
 	MIAssuredRelease_input <<- read.table(paste0(input_dir, "MicaECCandFC/MIAssuredRelease.txt"), header=T)
  
 	##### Energy #######
-	NonFirmFraction_input <<- read.table(paste0(input_dir, "Energy/NonFirmFraction.txt"), header=T)
+	NonFirmFraction_input <<- read.table(paste0(input_dir, "Energy/NonFirmFraction_new.txt"), header=T)
 	AltNonFirmLoad_input <<- read.table(paste0(input_dir, "Energy/AltNonFirmLoad.txt"), header=T)
 	HH_USBRmax_input <<- read.table(paste0(input_dir, "Energy/HH_USBRmax.txt"), header=T)
 	FirmFraction_input <<- read.table(paste0(input_dir, "FirmFraction.txt"), header=T)
