@@ -101,9 +101,11 @@ UseTotalEnergyContentForFirm <<- function() { # Default is 1
 	#Options:
 	#0--Allocate based on  ECC for Firm Energy.  Reservoir may release only to ECC after allocation.
 	#1-Allocate based on volume mid point between ECC and bottom of pool for Firm Energy.  Reservoir may release to bottom of pool after allocation.
-	UseTotalEnergyContentForFirm_o = 0
+	UseTotalEnergyContentForFirm_o <- 1
 	return(UseTotalEnergyContentForFirm_o)
 }
+
+CriticalCurveSw <<- 2
 
 Estimated_Efficiency <<- 0.8 # Estimated combined efficiency for all plants.  This efficiency is used for estimating energy content only.
 

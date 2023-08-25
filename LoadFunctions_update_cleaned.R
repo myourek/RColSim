@@ -74,13 +74,13 @@ MIAssuredRelease <- function() { ## target minimum release
 	MIAssuredRelease_o <- MIAssuredRelease_input$target[week_in_year]
 	return(MIAssuredRelease_o)
 }
-MIGuranteedRefill <- function() {
-	MIGuranteedRefill_o <- MIGuranteedRefill_input[week_in_year,2]
-	return(MIGuranteedRefill_o)
+MIMinRefill <- function() {
+	MIMinRefill_o <- MIMinRefillCurve
+	return(MIMinRefill_o)
 }
 MIMinReq <- function() {
 	MIAvgMin <- 3000 # Minimum allowable release from Mica (cfs), FCOP 2003
-	MIMinReq_o <- min(max(Mica() + MIIn() - MIGuranteedRefill(), MIAvgMin * cfsTOafw), MIAssuredRelease() * cfsTOafw)
+	MIMinReq_o <- min(max(Mica() + MIIn() - max(MIMinRefill(), MICriticalCurveMin()), MIAvgMin * cfsTOafw), MIAssuredRelease() * cfsTOafw)
 	return(MIMinReq_o)
 }
 MIDamProtectRel <- function() { # The release required to keep the dam from filling above the full pool volume.  Units acre-ft.
@@ -122,7 +122,8 @@ MI_CurFC <- function() {
 	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 8E6 || MIRunoffMayAug > 7.5E6)) {
 		MI_CurFC_o <- MIFlood_input$MIFlood6[week_in_year] - (MIFlood_input$MIFlood6[week_in_year] - MIFlood_input$MIFlood7[week_in_year]) / (10E6 - 8E6) * (MIRunoffAprAug - 8E6)
 	} else if (DARunoffAprAug >= 80.0E6) {
-		MI_CurFC_o <- MIFlood_input$MIFlood5[week_in_year] - (MIFlood_input$MIFlood5[week_in_year] - MIFlood_input$MIFlood6[week_in_year]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)
+		#MI_CurFC_o <- MIFlood_input$MIFlood5[week_in_year] - (MIFlood_input$MIFlood5[week_in_year] - MIFlood_input$MIFlood6[week_in_year]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)
+		MI_CurFC_o <- MIFlood_input$MIFlood5[week_in_year]
 	} else if (DARunoffAprAug >= 75.0E6) {
 		MI_CurFC_o <- MIFlood_input$MIFlood4[week_in_year] - (MIFlood_input$MIFlood4[week_in_year] - MIFlood_input$MIFlood5[week_in_year]) / (80E6 - 75E6) * (DARunoffAprAug - 75E6)
 	} else if (DARunoffAprAug >= 70.0E6) {
@@ -150,36 +151,13 @@ MITopVol <- function() { # storage volume prescribed by flood curve
 	}
 	return(MITopVol_o)
 }
-MI_April_Evac_Target <- function() { # Release to meet March 31 flood target
-	if (DARunoffAprAug >= 111E6 && MIRunoffAprAug > 19.3E6) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood12[36]
-	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 18E6 || MIRunoffMayAug > 17.5E6)) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood11[36] - (MIFlood_input$MIFlood11[36] - MIFlood_input$MIFlood12[36]) / (19.3E6 - 18E6) * (MIRunoffAprAug - 18E6)
-	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 16E6 || MIRunoffMayAug > 15.50E6)) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood10[36] - (MIFlood_input$MIFlood10[36] - MIFlood_input$MIFlood11[36]) / (18E6 - 16E6) * (MIRunoffAprAug - 16E6)
-	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 14E6 || MIRunoffMayAug > 13.50E6)) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood9[36] - (MIFlood_input$MIFlood9[36] - MIFlood_input$MIFlood10[36]) / (16E6 - 14E6) * (MIRunoffAprAug - 14E6) 
-	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 12E6 || MIRunoffMayAug > 11.50E6)) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood8[36] - (MIFlood_input$MIFlood8[36] - MIFlood_input$MIFlood9[36]) / (14E6 - 12E6) * (MIRunoffAprAug - 12E6) 
-	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 10E6 || MIRunoffMayAug > 9.5E6)) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood7[36] - (MIFlood_input$MIFlood7[36] - MIFlood_input$MIFlood8[36]) / (12E6 - 10E6) * (MIRunoffAprAug - 10E6)
-	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 8E6 || MIRunoffMayAug > 7.5E6)) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood6[36] - (MIFlood_input$MIFlood6[36] - MIFlood_input$MIFlood7[36]) / (10E6 - 8E6) * (MIRunoffAprAug - 8E6)
-	} else if (DARunoffAprAug >= 80.0E6) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood5[36] - (MIFlood_input$MIFlood5[36] - MIFlood_input$MIFlood6[36]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)
-	} else if (DARunoffAprAug >= 75.0E6) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood4[36] - (MIFlood_input$MIFlood4[36] - MIFlood_input$MIFlood5[36]) / (80E6 - 75E6) * (DARunoffAprAug - 75E6)
-	} else if (DARunoffAprAug >= 70.0E6) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood3[36] - (MIFlood_input$MIFlood3[36] - MIFlood_input$MIFlood4[36]) / (75E6 - 70E6) * (DARunoffAprAug - 70E6)
-	} else if (DARunoffAprAug >= 65.0E6) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood2[36] - (MIFlood_input$MIFlood2[36] - MIFlood_input$MIFlood3[36]) / (70E6 - 65E6) * (DARunoffAprAug - 65E6)
-	} else if (DARunoffAprAug >= 62.0E6) {
-		MI_AprilFC_o <- MIFlood_input$MIFlood1[36] - (MIFlood_input$MIFlood1[36] - MIFlood_input$MIFlood2[36]) / (65E6 - 62E6) * (DARunoffAprAug - 62E6)
-	} else {
-		MI_AprilFC_o <- MIFlood_input$MIFlood1[36]
-	}
-	MI_April_Evac_Target_o <- GlobalFloodEvacMult * (MIFullPoolVol - MI_AprilFC_o)
-	return(MI_April_Evac_Target_o)
+MI_AprilOperatingCurve <- function() {
+	MI_AprilOperatingCurve_0 <- MIOperatingRuleCurve_Apr
+	return(MI_AprilOperatingCurve_0)
+}
+MI_JanOperatingCurve <- function() {
+	MI_AprilOperatingCurve_0 <- MIOperatingRuleCurve_Jan
+	return(MI_AprilOperatingCurve_0)
 }
 MIRuleReq <- function() { # required release according to flood curve
 	MIRuleReq_1 <- max(Mica() + MIIn() - MITopVol(), 0)
@@ -199,8 +177,16 @@ MICriticalCurve <- function() { # Minimum storage to meet firm hydropower in a d
 	return(MICriticalCurve_o)
 }
 MICriticalCurveMin <- function() {
-	MICriticalCurve_o <- MICriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
-	return(MICriticalCurve_o)
+	if (CriticalCurveSw == 1) {
+		MICriticalCurveMin_o <- MICriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		MICriticalCurveMin_o <- MICriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		MICriticalCurveMin_o <- MICriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		MICriticalCurveMin_o <- MICriticalCurve_input$CRC4[week_in_year]
+	}
+	return(MICriticalCurveMin_o)
 }
 MIAssuredRefill <- function() { # Assured refill curve based on historical Assured refill
 	MIAssuredRefill_o <- MIAssuredRefill_input[week_in_year,2]
@@ -265,7 +251,7 @@ MIPreEnergy <- function() { # Initial estimate of energy production (MW-hr), con
 	return(MIPreEnergy_o)
 }
 MISharedWater <- function() { # Active storage remaining after allocating water to meet minimum release and fish target objectives
-	MISharedWater_o <- max(Mica() + MIIn() - MIPrelim() - MIMcNarySup() - max(MIGuranteedRefill(), MICriticalCurveMin()), 0) 
+	MISharedWater_o <- max(Mica() + MIIn() - MIPrelim() - MIMcNarySup() - max(MIMinRefill(), MICriticalCurveMin()), 0) 
 	return(MISharedWater_o)
 }
 MIDownStreamHead <- function() {
@@ -538,13 +524,13 @@ ARAssuredRelease <- function() {
 	ARAssuredRelease_o <- ARAssuredRelease_input$target[week_in_year]
 	return(ARAssuredRelease_o)
 }
-ARGuranteedRefill <- function() {
-	ARGuranteedRefill_o <- ARGuranteedRefill_input[week_in_year,2]
-	return(ARGuranteedRefill_o)
+ARMinRefill <- function() {
+	ARMinRefill_o <- ARMinRefillCurve
+	return(ARMinRefill_o)
 }
 ARMinReq <- function() {
 	ARAvgMin <- 5000 # FCOP 2003
-	ARMinReq_o <- min(max(Arrow() + ARIn() - ARGuranteedRefill(), ARAvgMin * cfsTOafw), ARAssuredRelease() * cfsTOafw)
+	ARMinReq_o <- min(max(Arrow() + ARIn() - max(ARMinRefill(), ARCriticalCurveMin()), ARAvgMin * cfsTOafw), ARAssuredRelease() * cfsTOafw)
 	return(ARMinReq_o)
 }
 ARDamProtectRel <- function() {
@@ -556,7 +542,7 @@ ARRelLimit <- function() {
 	return(ARRelLimit_o)
 }
 ARAvailAfter <- function() {
-	ARAvailAfter_o <- max(0, Arrow() + ARIn() - ARBotVol)
+	ARAvailAfter_o <- max(Arrow() + ARIn() - ARBotVol, 0)
 	return(ARAvailAfter_o)
 }
 
@@ -569,7 +555,8 @@ AR_CurFC <- function() {
 	if (DARunoffAprAug >= 111E6) {
 		AR_CurFC_o <- ARFlood_input$ARFlood6[week_in_year]
 	} else if (DARunoffAprAug >= 80E6) {
-		AR_CurFC_o <- ARFlood_input$ARFlood5[week_in_year] - (ARFlood_input$ARFlood5[week_in_year] - ARFlood_input$ARFlood6[week_in_year]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)		
+		#AR_CurFC_o <- ARFlood_input$ARFlood5[week_in_year] - (ARFlood_input$ARFlood5[week_in_year] - ARFlood_input$ARFlood6[week_in_year]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)		
+		AR_CurFC_o <- ARFlood_input$ARFlood5[week_in_year]
 	} else if (DARunoffAprAug >= 75E6) {
 		AR_CurFC_o <- ARFlood_input$ARFlood4[week_in_year] - (ARFlood_input$ARFlood4[week_in_year] - ARFlood_input$ARFlood5[week_in_year]) / (80E6 - 75E6) * (DARunoffAprAug - 75E6)
 	} else if (DARunoffAprAug >= 70E6) {
@@ -597,32 +584,13 @@ ARTopVol <- function() {
 	}
 	return(ARTopVol_o)
 }
-AR_April_FloodCurve <- function() {
-	if (DARunoffAprAug >= 111E6) {
-		AR_AprilFC_o <- ARFlood_input$ARFlood6[36]		
-	} else if (DARunoffAprAug >= 80E6) {
-		AR_AprilFC_o <- ARFlood_input$ARFlood5[36] - (ARFlood_input$ARFlood5[36] - ARFlood_input$ARFlood6[36]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)		
-	} else if (DARunoffAprAug >= 75E6) {
-		AR_AprilFC_o <- ARFlood_input$ARFlood4[36] - (ARFlood_input$ARFlood4[36] - ARFlood_input$ARFlood5[36]) / (80E6 - 75E6) * (DARunoffAprAug - 75E6)
-	} else if (DARunoffAprAug >= 70E6) {
-		AR_AprilFC_o <- ARFlood_input$ARFlood3[36] - (ARFlood_input$ARFlood3[36] - ARFlood_input$ARFlood4[36]) / (75E6 - 70E6) * (DARunoffAprAug - 70E6)
-	} else if (DARunoffAprAug >= 65E6) {
-		AR_AprilFC_o <- ARFlood_input$ARFlood2[36] - (ARFlood_input$ARFlood2[36] - ARFlood_input$ARFlood3[36]) / (70E6 - 65E6) * (DARunoffAprAug - 65E6)
-	} else if (DARunoffAprAug >= 64E6) {
-		AR_AprilFC_o <- ARFlood_input$ARFlood1[36] - (ARFlood_input$ARFlood1[36] - ARFlood_input$ARFlood2[36]) / (65E6 - 64E6) * (DARunoffAprAug - 64E6)
-	} else {
-		AR_AprilFC_o <- ARFlood_input$ARFlood1[36]
-	}
-	AR_April_FloodCurve_o <- ARFullPoolVol - GlobalFloodEvacMult * (ARFullPoolVol - AR_AprilFC_o)
-	return(AR_April_FloodCurve_o)
+AR_AprilOperatingCurve <- function() {
+	AR_AprilOperatingCurve_0 <- AROperatingRuleCurve_Apr
+	return(AR_AprilOperatingCurve_0)
 }
-AR_April_ECC <- function() {
-	AR_April_AssuredRefill = ARAssuredRefill_input[36,2]
-	AR_April_CriticalCurve = ARCriticalCurve_input$CRC1[36]
-	AR_April_VariableRefill = input_file$ARVariableRefillCurve[week_counter + num_lines_to_skip + (36 - week_in_year)]
-	AR_April_LowerLimit = lower_limit_input$Arrow[36]
-	AR_April_ECC_o <- min(max(min(max(AR_April_AssuredRefill, AR_April_CriticalCurve), AR_April_VariableRefill), AR_April_LowerLimit), AR_April_FloodCurve())
-	return(AR_April_ECC_o)
+AR_JanOperatingCurve <- function() {
+	AR_JanOperatingCurve_0 <- AROperatingRuleCurve_Jan
+	return(AR_JanOperatingCurve_0)
 }
 ARRuleReq <- function() {
 	ARRuleReq_o <- max(Arrow() + ARIn() - ARTopVol(), 0)
@@ -641,8 +609,16 @@ ARCriticalCurve <- function() {
 	return(ARCriticalCurve_o)
 }
 ARCriticalCurveMin <- function() {
-	ARCriticalCurve_o <- ARCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
-	return(ARCriticalCurve_o)
+	if (CriticalCurveSw == 1) {
+		ARCriticalCurveMin_o <- ARCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		ARCriticalCurveMin_o <- ARCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		ARCriticalCurveMin_o <- ARCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		ARCriticalCurveMin_o <- ARCriticalCurve_input$CRC4[week_in_year]
+	}
+	return(ARCriticalCurveMin_o)
 }
 ARAssuredRefill <- function() { 
 	ARAssuredRefill_o <- ARAssuredRefill_input[week_in_year,2]
@@ -704,7 +680,7 @@ ARPreEnergy <- function() { # Initial estimate of energy production (MW-hr), con
 	return(ARPreEnergy_o)
 }
 ARSharedWater <- function() {
-	ARSharedWater_o <- max(Arrow() + ARIn() - ARPrelim() - ARMcNarySup() - max(ARGuranteedRefill(), ARCriticalCurveMin()), 0)
+	ARSharedWater_o <- max(Arrow() + ARIn() - ARPrelim() - ARMcNarySup() - max(ARMinRefill(), ARCriticalCurveMin()), 0)
 	return(ARSharedWater_o)
 }
 AREnergyContent <- function() {
@@ -858,9 +834,9 @@ DUInflow <- function() {
 
 ################## Duncan max and min releases ##################################
 
-DUGuranteedRefill <- function() {
-	DUGuranteedRefill_o <- DUGuranteedRefill_input[week_in_year,2]
-	return(DUGuranteedRefill_o)
+DUMinRefill <- function() {
+	DUMinRefill_o <- DUMinRefill_input[week_in_year,2]
+	return(DUMinRefill_o)
 }
 DUMinReq <- function() {
 	DUAvgMin <- 100 # FCOP 2003
@@ -911,20 +887,13 @@ DUTopVol <- function() {
 	}
 	return(DUTopVol_o)
 }
-Duncan_April_Evac_Target <- function() {
-	if (DURunoffAprAug < 1.4E6) {
-		DU_April_o <- DUFlood_input$DUFlood1[36]
-	} else if (DURunoffAprAug < 1.6E6) {
-		DU_April_o <- DUFlood_input$DUFlood1[36] - (DUFlood_input$DUFlood1[36] - DUFlood_input$DUFlood2[36]) / (1.6E6 - 1.4E6) * (DURunoffAprAug - 1.4E6)
-	} else if (DURunoffAprAug < 1.8E6) {
-		DU_April_o <- DUFlood_input$DUFlood2[36] - (DUFlood_input$DUFlood2[36] - DUFlood_input$DUFlood3[36]) / (1.8E6 - 1.6E6) * (DURunoffAprAug - 1.6E6)
-	} else if (DURunoffAprAug < 2.0E6) {
-		DU_April_o <- DUFlood_input$DUFlood3[36] - (DUFlood_input$DUFlood3[36] - DUFlood_input$DUFlood4[36]) / (2.0E6 - 1.8E6) * (DURunoffAprAug - 1.8E6)
-	} else {
-		DU_April_o <- DUFlood_input$DUFlood5[36]
-	}
-	Duncan_April_Evac_Target_o <- GlobalFloodEvacMult * (DUFullPoolVol - DU_April_o)
-	return(Duncan_April_Evac_Target_o)
+DU_AprilOperatingCurve <- function() {
+	DU_AprilOperatingCurve_0 <- DUOperatingRuleCurve_Apr
+	return(DU_AprilOperatingCurve_0)
+}
+DU_JanOperatingCurve <- function() {
+	DU_JanOperatingCurve_0 <- DUOperatingRuleCurve_Jan
+	return(DU_JanOperatingCurve_0)
 }
 DURuleReq <- function() {
 	DURuleReq_o <- max(Duncan() + DUIn() - DUTopVol(), 0)
@@ -943,8 +912,16 @@ DUCriticalCurve <- function() {
 	return(DUCriticalCurve_o)
 }
 DUCriticalCurveMin <- function() {
-	DUCriticalCurve_o <- DUCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
-	return(DUCriticalCurve_o)
+	if (CriticalCurveSw == 1) {
+		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC4[week_in_year]
+	}
+	return(DUCriticalCurveMin_o)
 }
 DUAssuredRefill <- function() {
 	DUAssuredRefill_o <- DUAssuredRefill_input[week_in_year, 2]
@@ -1007,7 +984,7 @@ DUMcNarySupEnergy <- function() {
 	return(DUMcNarySupEnergy_o)
 }
 DUSharedWater <- function() {
-	DUSharedWater_o <- max(Duncan() + DUIn() - DUPrelim() - DUMcNarySup() - max(MIGuranteedRefill(), MICriticalCurveMin()), 0)
+	DUSharedWater_o <- max(Duncan() + DUIn() - DUPrelim() - DUMcNarySup() - max(MIMinRefill(), MICriticalCurveMin()), 0)
 	return(DUSharedWater_o)
 }
 DUEnergyContent <- function() {
@@ -1163,9 +1140,9 @@ LBInflow <- function() {
 
 ############ Libby max and min releases ################### 
 
-LBGuranteedRefill <- function() {
-	LBGuranteedRefill_o <- LBGuranteedRefill_input[week_in_year,2]
-	return(LBGuranteedRefill_o)
+LBMinRefill <- function() {
+	LBMinRefill_o <- LBMinRefillCurve
+	return(LBMinRefill_o)
 }
 LBAvgMin <- 4000 # FCOP, 2003
 LBMinReq <- function() {
@@ -1173,7 +1150,7 @@ LBMinReq <- function() {
 	if (fish_over_refill == 1) {
 		LBMinReq_o <- LBMinReq_1
 	} else {
-		LBMinReq_o <- min(max(Libby() + LBIn() - LBGuranteedRefill(), LBAvgMin * cfsTOafw), LBMinReq_1)
+		LBMinReq_o <- min(max(Libby() + LBIn() - max(LBMinRefill(), LBCriticalCurveMin()), LBAvgMin * cfsTOafw), LBMinReq_1)
 	}
 	return(LBMinReq_o)
 }
@@ -1223,22 +1200,13 @@ LBTopVol <- function() {
 	}
 	return(LBTopVol_o)
 }
-Libby_April_Evac_Target <- function() {
-	if (LBRunoffAprAug < 4.5E6) {
-		LB_AprilFC_o <- LBFlood_input$LBFlood1[36]
-	} else if (LBRunoffAprAug < 5.5E6) {
-		LB_AprilFC_o <- LBFlood_input$LBFlood1[36] - (LBFlood_input$LBFlood1[36] - LBFlood_input$LBFlood2[36]) / (5.5E6 - 4.5E6) * (LBRunoffAprAug - 4.5E6)
-	} else if (LBRunoffAprAug < 6.5E6) {
-		LB_AprilFC_o <- LBFlood_input$LBFlood2[36] - (LBFlood_input$LBFlood2[36] - LBFlood_input$LBFlood3[36]) / (6.5E6 - 5.5E6) * (LBRunoffAprAug - 5.5E6)
-	} else if (LBRunoffAprAug < 7.5E6) {
-		LB_AprilFC_o <- LBFlood_input$LBFlood3[36] - (LBFlood_input$LBFlood3[36] - LBFlood_input$LBFlood4[36]) / (7.5E6 - 6.5E6) * (LBRunoffAprAug - 6.5E6)
-	} else if (LBRunoffAprAug < 8.0E6) {
-		LB_AprilFC_o <- LBFlood_input$LBFlood4[36] - (LBFlood_input$LBFlood4[36] - LBFlood_input$LBFlood5[36]) / (8.0E6 - 7.5E6) * (LBRunoffAprAug - 7.5E6)
-	} else {
-		LB_AprilFC_o <- LBFlood_input$LBFlood5[36]
-	}
-	Libby_April_Evac_Target_o <- GlobalFloodEvacMult * (LBFullPoolVol - LB_AprilFC_o)
-	return(Libby_April_Evac_Target_o)
+LB_AprilOperatingCurve <- function() {
+	LB_AprilOperatingCurve_0 <- LBOperatingRuleCurve_Apr
+	return(LB_AprilOperatingCurve_0)
+}
+LB_JanOperatingCurve <- function() {
+	LB_JanOperatingCurve_0 <- LBOperatingRuleCurve_Jan
+	return(LB_JanOperatingCurve_0)
 }
 LBRuleReq <- function() {
 	LBRuleReq_o <- max(Libby() + LBIn() - LBTopVol(), 0)
@@ -1257,19 +1225,23 @@ LBCriticalCurve <- function() {
 	return(LBCriticalCurve_o)
 }
 LBCriticalCurveMin <- function() {
-	LBCriticalCurve_o <- LBCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
-	return(LBCriticalCurve_o)
+	if (CriticalCurveSw == 1) {
+		LBCriticalCurveMin_o <- LBCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		LBCriticalCurveMin_o <- LBCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		LBCriticalCurveMin_o <- LBCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		LBCriticalCurveMin_o <- LBCriticalCurve_input$CRC4[week_in_year]
+	}
+	return(LBCriticalCurveMin_o)
 }
 LBAssuredRefill <- function() {
 	LBAssuredRefill_o <- LBAssuredRefill_input[week_in_year, 2]
 	return(LBAssuredRefill_o)
 }
 LBVariableRefill <- function() {
-	if (RefillSwitch() == 1) {
-		RefillCurve_o <- LBAssuredRefill()
-	} else if (RefillSwitch() == 2) {
-		RefillCurve_o <- LBVariableRefillCurve
-	} 
+	RefillCurve_o <- LBVariableRefillCurve
 	return(RefillCurve_o)
 }
 LBECC <- function() {
@@ -1380,7 +1352,7 @@ LibbyPreEnergy <- function() {
 	return(LibbyPreEnergy_o)
 }
 LBSharedWater <- function() {
-	LBSharedWater_o <- max(Libby() + LBIn() - LBPrelim() - LBMcNarySup() - max(LBGuranteedRefill(), LBCriticalCurveMin()), 0)
+	LBSharedWater_o <- max(Libby() + LBIn() - LBPrelim() - LBMcNarySup() - max(LBMinRefill(), LBCriticalCurveMin()), 0)
 	return(LBSharedWater_o)
 }
 LBDownStreamHead <- function() {
@@ -1476,7 +1448,7 @@ LBRelReducReq <- function() {
 ############# Libby final release ############################
 
 LBRelease <- function() {
-	LBRelease_o <- max(min(max(LBAvgMin * cfsTOafw, LBPrelim() + LBCombSup() - LBRelReducReq()), LBRelLimit()), LBDamProtectRel())
+	LBRelease_o <- max(min(LBPrelim() + LBCombSup() - LBRelReducReq(), LBRelLimit()), LBDamProtectRel())
 	return(LBRelease_o)
 }
 LBOutflow <- function() {
@@ -1623,9 +1595,13 @@ CLTopVol <- function() {
 	}
 	return(CLTopVol_o)
 }
-CL_April_Target <- function(x) {
-	CL_April_Target_o <- CLFlood_input[36, 2] # Rule curve at end of March. Changed from 245000 on 5/26/23 
-	return(CL_April_Target_o)
+CL_AprilOperatingCurve <- function() {
+	CL_AprilOperatingCurve_0 <- CLOperatingRuleCurve_Apr
+	return(CL_AprilOperatingCurve_0)
+}
+CL_JanOperatingCurve <- function() {
+	CL_JanOperatingCurve_0 <- CLOperatingRuleCurve_Jan
+	return(CL_JanOperatingCurve_0)
 }
 CLRuleReq <- function() {
 	CLRuleReq_o <- max(CorraLinn() + CLIn() - CLTopVol(), 0)
@@ -1635,7 +1611,19 @@ CLPrelim <- function() {
 	CLPrelim_o <- min(CLAvailAfter(), max(CLRuleReq(), CLMinReq()))
 	return(CLPrelim_o)
 }
-CLCriticalCurve <- function() { 
+CLCriticalCurveMin <- function() {
+	if (CriticalCurveSw == 1) {
+		CLCriticalCurveMin_o <- CLCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		CLCriticalCurveMin_o <- CLCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		CLCriticalCurveMin_o <- CLCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		CLCriticalCurveMin_o <- CLCriticalCurve_input$CRC4[week_in_year]
+	}
+	return(CLCriticalCurveMin_o)
+}
+CLCriticalCurve <- function() {
 	CLCriticalCurve_o <- CLCriticalCurve_input$CRC1[week_in_year]
 	return(CLCriticalCurve_o)
 }
@@ -1813,13 +1801,17 @@ HHInflow <- function() {
 
 ############ Hungry Horse max and min releases ###################
 
+HHMinRefill <- function() {
+	HHMinRefill_o <- HHMinRefillCurve
+	return(HHMinRefill_o)
+}
 HHAvgMin <- 400 # FCOP, 2003
 HHMinReq <- function() {
 	HHMinReq_1 <- max(HHFishMin() * cfsTOafw, HHRelForColFalls())
 	if (fish_over_refill == 1) {
 		HHMinReq_o <- HHMinReq_1
 	} else {
-		HHMinReq_o <- min(max(HungryHorse() + HHIn() - HHGuranteedRefill(), HHAvgMin * cfsTOafw), HHMinReq_1)
+		HHMinReq_o <- min(max(HungryHorse() + HHIn() - max(HHCriticalCurveMin(), HHMinRefill()), HHAvgMin * cfsTOafw), HHMinReq_1)
 	}
 	return(HHMinReq_o)
 }
@@ -1886,28 +1878,13 @@ HHTopVol <- function() {
 	} 
 	return(HHTopVol_o)
 }
-HHorse_April_Evac_Target <- function() {
-	if (HHRunoffMaySep < 1.0E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood1[36]
-	} else if (HHRunoffMaySep < 1.4E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood1[36] - (HHFlood_input$HHFlood1[36] - HHFlood_input$HHFlood2[36]) / (1.4E6 - 1.0E6) * (HHRunoffMaySep - 1.0E6)
-	} else if (HHRunoffMaySep < 1.6E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood2[36] - (HHFlood_input$HHFlood2[36] - HHFlood_input$HHFlood3[36]) / (1.6E6 - 1.4E6) * (HHRunoffMaySep - 1.4E6)
-	} else if (HHRunoffMaySep < 2.0E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood3[36] - (HHFlood_input$HHFlood3[36] - HHFlood_input$HHFlood4[36]) / (2.0E6 - 1.6E6) * (HHRunoffMaySep - 1.6E6)
-	} else if (HHRunoffMaySep < 2.2E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood4[36] - (HHFlood_input$HHFlood4[36] - HHFlood_input$HHFlood5[36]) / (2.2E6 - 2.0E6) * (HHRunoffMaySep - 2.0E6)
-	} else if (HHRunoffMaySep < 2.5E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood5[36] - (HHFlood_input$HHFlood5[36] - HHFlood_input$HHFlood6[36]) / (2.5E6 - 2.2E6) * (HHRunoffMaySep - 2.2E6)
-	} else if (HHRunoffMaySep < 2.8E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood6[36] - (HHFlood_input$HHFlood6[36] - HHFlood_input$HHFlood7[36]) / (2.8E6 - 2.5E6) * (HHRunoffMaySep - 2.5E6)
-	} else if (HHRunoffMaySep < 3.6E6) {
-		HH_AprilFC_o <- HHFlood_input$HHFlood7[36] - (HHFlood_input$HHFlood7[36] - HHFlood_input$HHFlood8[36]) / (3.6E6 - 2.8E6) * (HHRunoffMaySep - 2.8E6)
-	} else {
-		HH_AprilFC_o <- HHFlood_input$HHFlood8[36]
-	}
-	HHorse_April_Evac_Target_o <- GlobalFloodEvacMult * (HHFullPoolVol - HH_AprilFC_o)
-	return(HHorse_April_Evac_Target_o)
+HH_AprilOperatingCurve <- function() {
+	HH_AprilOperatingCurve_0 <- HHOperatingRuleCurve_Apr
+	return(HH_AprilOperatingCurve_0)
+}
+HH_JanOperatingCurve <- function() {
+	HH_JanOperatingCurve_0 <- HHOperatingRuleCurve_Jan
+	return(HH_JanOperatingCurve_0)
 }
 HHRuleReq <- function() {
 	HHRuleReq_o <- max(HungryHorse() + HHIn() - HHTopVol(), 0)
@@ -1926,8 +1903,16 @@ HHCriticalCurve <- function() {
 	return(HHCriticalCurve_o)
 }
 HHCriticalCurveMin <- function() {
-	HHCriticalCurve_o <- HHCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
-	return(HHCriticalCurve_o)
+	if (CriticalCurveSw == 1) {
+		HHCriticalCurveMin_o <- HHCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		HHCriticalCurveMin_o <- HHCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		HHCriticalCurveMin_o <- HHCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		HHCriticalCurveMin_o <- HHCriticalCurve_input$CRC4[week_in_year]
+	}
+	return(HHCriticalCurveMin_o)
 }
 HHAssuredRefill <- function() { 
 	HHAssuredRefill_o <- HHAssuredRefill_input[week_in_year, 2]
@@ -2046,7 +2031,7 @@ HungryHorsePreEnergy <- function() {
 	return(HungryHorsePreEnergy_o)
 }
 HHSharedWater <- function() {
-	HHSharedWater_o <- max(HungryHorse() + HHIn() - HHPrelim() - HHMcNarySup() - max(HHGuranteedRefill(), HHCriticalCurveMin()), 0)
+	HHSharedWater_o <- max(HungryHorse() + HHIn() - HHPrelim() - HHMcNarySup() - max(HHMinRefill(), HHCriticalCurveMin()), 0)
 	return(HHSharedWater_o)
 }
 HHDownStreamHead <- function() {
@@ -2149,7 +2134,7 @@ HHRelReducReq <- function() {
 ############# Hungry Horse final release ############################
 
 HHRelease <- function() {
-	HHRelease_o <- max(min(max(HHAvgMin * cfsTOafw, HHPrelim() + HHCombSup() - HHRelReducReq()), HHRelLimit()), HHDamProtectRel())
+	HHRelease_o <- max(min(HHPrelim() + HHCombSup() - HHRelReducReq(), HHRelLimit()), HHDamProtectRel())
 	return(HHRelease_o)
 }
 HHOutflow <- function() {
@@ -2248,18 +2233,14 @@ KEInflow <- function() {
 
 ################# Kerr max and min releases ####################################
 
-KECriticalCurveMin <- function() {
-	KECriticalCurve_o <- KECriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
-	return(KECriticalCurve_o)
+KEMinRefill <- function() {
+	KEMinRefill_o <- KEMinRefillCurve
+	return(KEMinRefill_o)
 }
 KEMinReq <- function() {
 	KEAvgMin <- 3000
 	KEMinReq_1 <- Article_56() * cfsTOafw
-	if (fish_over_refill == 1) {
-		KEMinReq_o <- KEMinReq_1
-	} else {
-		KEMinReq_o <- min(max(Kerr() + KEIn() - KECriticalCurveMin(), KEAvgMin * cfsTOafw), KEMinReq_1)
-	}
+	KEMinReq_o <- min(max(Kerr() + KEIn() - KEMinRefill(), KEAvgMin * cfsTOafw), KEMinReq_1)
 	return(KEMinReq_o)
 }
 KEDamProtectRel <- function() {
@@ -2281,9 +2262,13 @@ KEFloodCurve <- function() {
 	KEFlood_o <- KEFlood_input[week_in_year, 2] # 1965 Memorandum of Understanding between Montana Power Company and U.S.A.C.E. (Montana Power Co., 35 F.P.C. 250 (1966)) 
 	return(KEFlood_o)
 }
-Kerr_April_Target <- function() {
-	Kerr_April_Target_o <- KEFlood_input[36, 2]
-	return(Kerr_April_Target_o)
+KE_AprilOperatingCurve <- function() {
+	KE_AprilOperatingCurve_0 <- KEOperatingRuleCurve_Apr
+	return(KE_AprilOperatingCurve_0)
+}
+KE_JanOperatingCurve <- function() {
+	KE_JanOperatingCurve_0 <- KEOperatingRuleCurve_Jan
+	return(KE_JanOperatingCurve_0)
 }
 KETopVol <- function() {
 	if (KerrTopVolSw == 0) {
@@ -2305,6 +2290,18 @@ KEPrelim <- function() {
 KECriticalCurve <- function() { 
 	KECriticalCurve_o <- KECriticalCurve_input$CRC1[week_in_year]
 	return(KECriticalCurve_o)
+}
+KECriticalCurveMin <- function() {
+	if (CriticalCurveSw == 1) {
+		KECriticalCurveMin_o <- KECriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		KECriticalCurveMin_o <- KECriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		KECriticalCurveMin_o <- KECriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		KECriticalCurveMin_o <- KECriticalCurve_input$CRC4[week_in_year]
+	}
+	return(KECriticalCurveMin_o)
 }
 KEAssuredRefill <- function() { 
 	KEAssuredRefill_o <- KEAssuredRefill_input[week_in_year, 2]
@@ -2336,7 +2333,7 @@ KerrGrPreEnergy <- function() {
 	return(KerrGrPreEnergy_o)
 }
 KESharedWater <- function() {
-	KESharedWater_o <- max(0, Kerr() + KEIn() - KEPrelim() - LBCriticalCurveMin())
+	KESharedWater_o <- max(Kerr() + KEIn() - KEPrelim() - max(KEMinRefill(), KECriticalCurveMin()), 0)
 	return(KESharedWater_o)
 }
 KEDownStreamHead <- function() {
@@ -2613,13 +2610,17 @@ AFInflow <- function() {
 
 ############ Albeni Falls max and min releases ################### 
 
+AFMinRefill <- function() {
+	AFMinRefill_o <- AFMinRefillCurve
+	return(AFMinRefill_o)
+}
 AFMinReq <- function() {
 	AFAvgMin <- 4000 # cfs
 	AFMinReq_o <- AFAvgMin * cfsTOafw
 	return(AFMinReq_o)
 }
 AFDamProtectRel <- function() {
-	AFDamProtectRel_o <- max(0, AlbeniFalls() + AFInflow() - AFFullPoolVol)
+	AFDamProtectRel_o <- max(AlbeniFalls() + AFInflow() - AFFullPoolVol, 0)
 	return(AFDamProtectRel_o)
 }
 AFRelLimit <- function() {
@@ -2647,9 +2648,13 @@ AFTopVol <- function() {
 	}
 	return(AFTopVol_o)
 }
-AFalls_April_Target <- function() {
-	AFalls_April_Target_o <- AFFlood_input$Max[36]
-	return(AFalls_April_Target_o)
+AF_AprilOperatingCurve <- function() {
+	AF_AprilOperatingCurve_0 <- AFOperatingRuleCurve_Apr
+	return(AF_AprilOperatingCurve_0)
+}
+AF_JanOperatingCurve <- function() {
+	AF_JanOperatingCurve_0 <- AFOperatingRuleCurve_Jan
+	return(AF_JanOperatingCurve_0)
 }
 AFRuleReq <- function() {
 	AFRuleReq_o <- max(AlbeniFalls() + AFIn() - AFTopVol(), 0)
@@ -2663,6 +2668,18 @@ AFPrelim <- function() {
 AFCriticalCurve <- function() { 
 	AFCriticalCurve_o <- AFCriticalCurve_input$CRC1[week_in_year]
 	return(AFCriticalCurve_o)
+}
+AFCriticalCurveMin <- function() {
+	if (CriticalCurveSw == 1) {
+		AFCriticalCurveMin_o <- AFCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		AFCriticalCurveMin_o <- AFCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		AFCriticalCurveMin_o <- AFCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		AFCriticalCurveMin_o <- AFCriticalCurve_input$CRC4[week_in_year]
+	}
+	return(AFCriticalCurveMin_o)
 }
 AFAssuredRefill <- function() { 
 	AFAssuredRefill_o <- AFAssuredRefill_input[week_in_year, 2]
@@ -2687,7 +2704,7 @@ AFPreEnergy <- function() {
 	return(AFPreEnergy_o)
 }
 AFSharedWater <- function() {
-	AFSharedWater_o <- max(0, AlbeniFalls() + AFIn() - AFPrelim() - AFBotVol)
+	AFSharedWater_o <- max(AlbeniFalls() + AFIn() - AFPrelim() - max(AFMinRefill(), AFCriticalCurveMin()), 0)
 	return(AFSharedWater_o)
 }
 AFDownStreamHead <- function() {
@@ -2931,17 +2948,13 @@ GCInflow <- function() {
 
 ################## Grand Coulee max and min releases #################################### 
 
-GCAssumedRelease <- function() {
-	GCAssumedRelease_o <- 30000 # Reported in Assured Operating Plans (AOPs)
-	return(GCAssumedRelease_o)
+GCMinRefill <- function() {
+	GCMinRefill_o <- GCMinRefillCurve
+	return(GCMinRefill_o)
 }
 GCMinReq <- function() {
 	GCAvgMin <- 30000 # Reported in Assured Operating Plans (AOPs)
-	if (RefillMinSw() == 1) {
-		GCMinReq_o <- GCAssumedRelease() * cfsTOafw
-	} else {
-		GCMinReq_o <- GCAvgMin * cfsTOafw
-	}
+	GCMinReq_o <- GCAvgMin * cfsTOafw
 	return(GCMinReq_o)
 }
 GCDamProtectRel <- function() {
@@ -2960,68 +2973,37 @@ GCAvailAfter <- function() {
 ################## Grand Coulee rule curves ####################################
 
 AprilUpstreamFloodEvacGC <- function() {
-	AprilUpstreamFloodEvacGC_o <- (AFFullPoolVol - AFalls_April_Target()) + AR_April_Evac_Target() + (CLFullPoolVol - CL_April_Target()) + Duncan_April_Evac_Target() + HHorse_April_Evac_Target() +
-		(KEFullPoolVol - Kerr_April_Target()) + Libby_April_Evac_Target() + MI_April_Evac_Target()
+	AprilUpstreamFloodEvacGC_o <- (AF_JanOperatingCurve() - AF_AprilOperatingCurve()) + (AR_JanOperatingCurve() - AR_AprilOperatingCurve()) + 
+	(CL_JanOperatingCurve() - CL_AprilOperatingCurve()) + (DU_JanOperatingCurve() - DU_AprilOperatingCurve()) + (HH_JanOperatingCurve() - HH_AprilOperatingCurve()) + 
+	(KE_JanOperatingCurve() - KE_AprilOperatingCurve()) + (LB_JanOperatingCurve() - LB_AprilOperatingCurve()) + (MI_JanOperatingCurve() - MI_AprilOperatingCurve())
 	return(AprilUpstreamFloodEvacGC_o)
-}
-CorrectedDARunoff <- function() { # Dalles runoff minus the total storage space available in upstream reservoirs
-	CorrectedDARunoff_o <- DARunoffAprAug - AprilUpstreamFloodEvacGC()
-	return(CorrectedDARunoff_o)
 }
 # 2015 flood control curve.
 GC_CurFC <- function() {
-	if (CorrectedDARunoff() < 57E6) {
+	if (CorrectedDARunoffAprAug < 57E6) {
 		GC_CurFC_o <- GCFlood_input$GCFlood1[week_in_year]
-	} else if (CorrectedDARunoff() < 60E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood1[week_in_year] - (GCFlood_input$GCFlood1[week_in_year] - GCFlood_input$GCFlood2[week_in_year]) / (60E6 - 57E6) * (CorrectedDARunoff() - 57E6)
-	} else if (CorrectedDARunoff() < 63.25E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood2[week_in_year] - (GCFlood_input$GCFlood2[week_in_year] - GCFlood_input$GCFlood3[week_in_year]) / (63.25E6 - 60E6) * (CorrectedDARunoff() - 60E6)
-	} else if (CorrectedDARunoff() < 65E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood3[week_in_year] - (GCFlood_input$GCFlood3[week_in_year] - GCFlood_input$GCFlood4[week_in_year]) / (65E6 - 63.25E6) * (CorrectedDARunoff() - 63.25E6)
-	} else if (CorrectedDARunoff() < 67.66E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood4[week_in_year] - (GCFlood_input$GCFlood4[week_in_year] - GCFlood_input$GCFlood5[week_in_year]) / (67.66E6 - 65E6) * (CorrectedDARunoff() - 65E6)
-	} else if (CorrectedDARunoff() < 71.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood5[week_in_year] - (GCFlood_input$GCFlood5[week_in_year] - GCFlood_input$GCFlood6[week_in_year]) / (71.0E6 - 67.66E6) * (CorrectedDARunoff() - 67.66E6)
-	} else if (CorrectedDARunoff() < 75.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood6[week_in_year] - (GCFlood_input$GCFlood6[week_in_year] - GCFlood_input$GCFlood7[week_in_year]) / (75.0E6 - 71.0E6) * (CorrectedDARunoff() - 71.0E6)
-	} else if (CorrectedDARunoff() < 80.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood7[week_in_year] - (GCFlood_input$GCFlood7[week_in_year] - GCFlood_input$GCFlood8[week_in_year]) / (80.0E6 - 75.0E6) * (CorrectedDARunoff() - 75.0E6)
-	} else if (CorrectedDARunoff() <= 95.0E6) {
+	} else if (CorrectedDARunoffAprAug < 60E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood1[week_in_year] - (GCFlood_input$GCFlood1[week_in_year] - GCFlood_input$GCFlood2[week_in_year]) / (60E6 - 57E6) * (CorrectedDARunoffAprAug - 57E6)
+	} else if (CorrectedDARunoffAprAug < 63.25E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood2[week_in_year] - (GCFlood_input$GCFlood2[week_in_year] - GCFlood_input$GCFlood3[week_in_year]) / (63.25E6 - 60E6) * (CorrectedDARunoffAprAug - 60E6)
+	} else if (CorrectedDARunoffAprAug < 65E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood3[week_in_year] - (GCFlood_input$GCFlood3[week_in_year] - GCFlood_input$GCFlood4[week_in_year]) / (65E6 - 63.25E6) * (CorrectedDARunoffAprAug - 63.25E6)
+	} else if (CorrectedDARunoffAprAug < 67.66E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood4[week_in_year] - (GCFlood_input$GCFlood4[week_in_year] - GCFlood_input$GCFlood5[week_in_year]) / (67.66E6 - 65E6) * (CorrectedDARunoffAprAug - 65E6)
+	} else if (CorrectedDARunoffAprAug < 71.0E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood5[week_in_year] - (GCFlood_input$GCFlood5[week_in_year] - GCFlood_input$GCFlood6[week_in_year]) / (71.0E6 - 67.66E6) * (CorrectedDARunoffAprAug - 67.66E6)
+	} else if (CorrectedDARunoffAprAug < 75.0E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood6[week_in_year] - (GCFlood_input$GCFlood6[week_in_year] - GCFlood_input$GCFlood7[week_in_year]) / (75.0E6 - 71.0E6) * (CorrectedDARunoffAprAug - 71.0E6)
+	} else if (CorrectedDARunoffAprAug < 80.0E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood7[week_in_year] - (GCFlood_input$GCFlood7[week_in_year] - GCFlood_input$GCFlood8[week_in_year]) / (80.0E6 - 75.0E6) * (CorrectedDARunoffAprAug - 75.0E6)
+	} else if (CorrectedDARunoffAprAug <= 95.0E6) {
 		GC_CurFC_o <- GCFlood_input$GCFlood8[week_in_year]
-	} else if (CorrectedDARunoff() < 100.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood8[week_in_year] - (GCFlood_input$GCFlood8[week_in_year] - GCFlood_input$GCFlood9[week_in_year]) / (100.0E6 - 95.0E6) * (CorrectedDARunoff() - 95.0E6)	
-	} else if (CorrectedDARunoff() <= 115.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood9[week_in_year] - (GCFlood_input$GCFlood9[week_in_year] - GCFlood_input$GCFlood10[week_in_year]) / (115.0E6 - 100.0E6) * (CorrectedDARunoff() - 100.0E6)			
+	} else if (CorrectedDARunoffAprAug < 100.0E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood8[week_in_year] - (GCFlood_input$GCFlood8[week_in_year] - GCFlood_input$GCFlood9[week_in_year]) / (100.0E6 - 95.0E6) * (CorrectedDARunoffAprAug - 95.0E6)	
+	} else if (CorrectedDARunoffAprAug <= 115.0E6) {
+		GC_CurFC_o <- GCFlood_input$GCFlood9[week_in_year] - (GCFlood_input$GCFlood9[week_in_year] - GCFlood_input$GCFlood10[week_in_year]) / (115.0E6 - 100.0E6) * (CorrectedDARunoffAprAug - 100.0E6)			
 	} else {
 		GC_CurFC_o <- GCFlood_input$GCFlood10[week_in_year]
-	}
-	return(GC_CurFC_o)
-}
-GC_CurFC_next <- function() {
-	if (CorrectedDARunoff() < 57E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood1[week_in_year+1]
-	} else if (CorrectedDARunoff() < 60E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood1[week_in_year+1] - (GCFlood_input$GCFlood1[week_in_year+1] - GCFlood_input$GCFlood2[week_in_year+1]) / (60E6 - 57E6) * (CorrectedDARunoff() - 57E6)
-	} else if (CorrectedDARunoff() < 63.25E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood2[week_in_year+1] - (GCFlood_input$GCFlood2[week_in_year+1] - GCFlood_input$GCFlood3[week_in_year+1]) / (63.25E6 - 60E6) * (CorrectedDARunoff() - 60E6)
-	} else if (CorrectedDARunoff() < 65E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood3[week_in_year+1] - (GCFlood_input$GCFlood3[week_in_year+1] - GCFlood_input$GCFlood4[week_in_year+1]) / (65E6 - 63.25E6) * (CorrectedDARunoff() - 63.25E6)
-	} else if (CorrectedDARunoff() < 67.66E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood4[week_in_year+1] - (GCFlood_input$GCFlood4[week_in_year+1] - GCFlood_input$GCFlood5[week_in_year+1]) / (67.66E6 - 65E6) * (CorrectedDARunoff() - 65E6)
-	} else if (CorrectedDARunoff() < 71.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood5[week_in_year+1] - (GCFlood_input$GCFlood5[week_in_year+1] - GCFlood_input$GCFlood6[week_in_year+1]) / (71.0E6 - 67.66E6) * (CorrectedDARunoff() - 67.66E6)
-	} else if (CorrectedDARunoff() < 75.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood6[week_in_year+1] - (GCFlood_input$GCFlood6[week_in_year+1] - GCFlood_input$GCFlood7[week_in_year+1]) / (75.0E6 - 71.0E6) * (CorrectedDARunoff() - 71.0E6)
-	} else if (CorrectedDARunoff() < 80.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood7[week_in_year+1] - (GCFlood_input$GCFlood7[week_in_year+1] - GCFlood_input$GCFlood8[week_in_year+1]) / (80.0E6 - 75.0E6) * (CorrectedDARunoff() - 75.0E6)
-	} else if (CorrectedDARunoff() <= 95.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood8[week_in_year+1]
-	} else if (CorrectedDARunoff() < 100.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood8[week_in_year+1] - (GCFlood_input$GCFlood8[week_in_year+1] - GCFlood_input$GCFlood9[week_in_year+1]) / (100.0E6 - 95.0E6) * (CorrectedDARunoff() - 95.0E6)	
-	} else if (CorrectedDARunoff() <= 115.0E6) {
-		GC_CurFC_o <- GCFlood_input$GCFlood9[week_in_year+1] - (GCFlood_input$GCFlood9[week_in_year+1] - GCFlood_input$GCFlood10[week_in_year+1]) / (115.0E6 - 100.0E6) * (CorrectedDARunoff() - 100.0E6)			
-	} else {
-		GC_CurFC_o <- GCFlood_input$GCFlood10[week_in_year+1]
 	}
 	return(GC_CurFC_o)
 }
@@ -3031,10 +3013,6 @@ GCFloodEvacMult <- function() {
 }
 GCFloodCurve <- function() {
 	GCFloodCurve_o <- GCFullPoolVol - GCFloodEvacMult() * GlobalFloodEvacMult * (GCFullPoolVol - (GC_CurFC()))
-	return(GCFloodCurve_o)
-}
-GCFloodCurve_next <- function() {
-	GCFloodCurve_o <- GCFullPoolVol - GCFloodEvacMult() * GlobalFloodEvacMult * (GCFullPoolVol - (GC_CurFC_next()))
 	return(GCFloodCurve_o)
 }
 GCTopVol <- function() {
@@ -3073,7 +3051,10 @@ GC_April_Target <- function() {
 	} else {
 		GC_AprilFC_o <- GCFlood_input$GCFlood10[36]
 	}
-	GC_April_Target_o <- GCFullPoolVol - GCFloodEvacMult() * GlobalFloodEvacMult * (GCFullPoolVol - GC_AprilFC_o)
+	GCAssuredRefill_o <- GCAssuredRefill_input$GrandCoulee[36]
+	GCCriticalCurve_o <- GCCriticalCurve_input$CRC1[36]
+	#GC_April_Target_o <- min(max(GCAssuredRefill_o, GCCriticalCurve_o), GC_AprilFC_o)
+	GC_April_Target_o <- GC_AprilFC_o
 	return(GC_April_Target_o)
 }
 GCRuleReq <- function() {
@@ -3088,6 +3069,18 @@ GCLowerLimit <- function() {
 	GCLL_o <- lower_limit_input$GrandCoulee[week_in_year]
 	return(GCLL_o)
 }
+GCCriticalCurveMin <- function() {
+	if (CriticalCurveSw == 1) {
+		GCCriticalCurveMin_o <- GCCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		GCCriticalCurveMin_o <- GCCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		GCCriticalCurveMin_o <- GCCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		GCCriticalCurveMin_o <- GCCriticalCurve_input$CRC1[week_in_year]
+	}
+	return(GCCriticalCurveMin_o)
+}
 GCCriticalCurve <- function() {
 	GCCriticalCurve_o <- GCCriticalCurve_input$CRC1[week_in_year]
 	return(GCCriticalCurve_o)
@@ -3097,10 +3090,10 @@ GCAssuredRefill <- function() {
 	return(GCAssuredRefill_o)
 }	
 GCVariableRefill <- function() {
-	if (RefillSwitch() == 1) {
-		GCRefillCurve_o <- GCAssuredRefill()
-	} else if (RefillSwitch() == 2) {
+	if (week_in_year > 39) {
 		GCRefillCurve_o <- GCVariableRefillCurve
+	} else {
+		GCRefillCurve_o <- GCFullPoolVol
 	}
 	return(GCRefillCurve_o)
 }
@@ -3114,34 +3107,27 @@ GC_VDL_LowerLimit <- function() {
 	GCLowerLimit_o <- GC_VDLL_input[week_in_year,2]
 	return(GCLowerLimit_o)
 }
+#UpstreamFloodEvacGC <- function() {
+#	UpstreamFloodEvacGC_1 <- (AFRelease_c - AFInflow()) + (ARRelease_c - ARInflow()) + (CLRelease_c - CLInflow()) + (DURelease_c - DUInflow()) +
+#		(HHRelease_c - HHInflow()) + (KERelease_c - KEInflow()) +(LBRelease_c - LBInflow()) + (MIRelease_c - MIInflow())
+#	UpstreamFloodEvacGC_2 <- water_df$UpstreamFloodEvacGC[week_counter-1]
+#	if (week_in_year == 23) {
+#		UpstreamFloodEvacGC_c <<- 0
+#	} else {
+#		UpstreamFloodEvacGC_c <<- UpstreamFloodEvacGC_1 + UpstreamFloodEvacGC_2
+#	}
+#	water_df$UpstreamFloodEvacGC[week_counter] <<- UpstreamFloodEvacGC_c
+#	return(UpstreamFloodEvacGC_c)
+#}
 UpstreamFloodEvacGC <- function() {
-	UpstreamFloodEvacGC_1 <- (AFFullPoolVol - AFFloodCurve()) + (ARFullPoolVol - ARFloodCurve()) + (CLFullPoolVol - CLFloodCurve()) + (DUFullPoolVol - DUFloodCurve())  + 
-	(HHFullPoolVol - HHFloodCurve()) + (KEFullPoolVol - KEFloodCurve()) + (LBFullPoolVol - LBFloodCurve()) + (MIFullPoolVol - MIFloodCurve())
-	UpstreamFloodEvacGC_2 <- water_df$UpstreamFloodEvacGC[week_counter-1]
-	if (week_in_year == 23) {
-		UpstreamFloodEvacGC_c <<- 0
+	if (week_in_year %in% 23:36) {
+		UpstreamFloodEvacGC_o <- (AF_JanOperatingCurve() - AFOperatingRuleCurve) + (AR_JanOperatingCurve() - AROperatingRuleCurve) + 	
+		(CL_JanOperatingCurve() - CLOperatingRuleCurve) + (DU_JanOperatingCurve() - DUOperatingRuleCurve) + (HH_JanOperatingCurve() - HHOperatingRuleCurve) + 
+		(KE_JanOperatingCurve() - KEOperatingRuleCurve) + (LB_JanOperatingCurve() - LBOperatingRuleCurve) + (MI_JanOperatingCurve() - MIOperatingRuleCurve)
 	} else {
-		UpstreamFloodEvacGC_c <<- CurrentUpstreamFloodEvacGC_1 + CurrentUpstreamFloodEvacGC_2
+		UpstreamFloodEvacGC_o <- 0
 	}
-	water_df$UpstreamFloodEvacGC[week_counter] <<- UpstreamFloodEvacGC_c
-	return(UpstreamFloodEvacGC_c)
-}
-CurrentUpstreamSpace <- function() {
-	CurrentUpstreamSpace_o <- (AFFullPoolVol - AlbeniFalls()) + (ARFullPoolVol - Arrow()) + (CLFullPoolVol - CorraLinn()) + (DUFullPoolVol - Duncan())  + 
-	(HHFullPoolVol - HungryHorse()) + (KEFullPoolVol - Kerr()) + (LBFullPoolVol - Libby()) + (MIFullPoolVol - Mica())
-	return(CurrentUpstreamSpace_o)
-}
-UpstreamFloodEvacGC <- function() {
-	UpstreamFloodEvacGC_1 <- (AFRelease_c - AFInflow()) + (ARRelease_c - ARInflow()) + (CLRelease_c - CLInflow()) + (DURelease_c - DUInflow()) +
-		(HHRelease_c - HHInflow()) + (KERelease_c - KEInflow()) +(LBRelease_c - LBInflow()) + (MIRelease_c - MIInflow())
-	UpstreamFloodEvacGC_2 <- water_df$UpstreamFloodEvacGC[week_counter-1]
-	if (week_in_year == 23) {
-		UpstreamFloodEvacGC_c <<- 0
-	} else {
-		UpstreamFloodEvacGC_c <<- UpstreamFloodEvacGC_1 + UpstreamFloodEvacGC_2
-	}
-	water_df$UpstreamFloodEvacGC[week_counter] <<- UpstreamFloodEvacGC_c
-	return(UpstreamFloodEvacGC_c)
+	return(UpstreamFloodEvacGC_o)
 }
 ## April 10 GC flood curve elevation - date to April 10 inflow + date to April 10 discharge for Vernita Bar - date to April 10 upstream flood evacuation
 GCVariableDraftLimit <- function() {
@@ -3152,7 +3138,6 @@ GCVariableDraftLimit <- function() {
 		#GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - (GCResidualInflowJanMar - GCBdgtForVB() + (AprilUpstreamFloodEvacGC() - CurrentUpstreamSpace()))) # 2009 Columbia River Water Management Plan		
 		in_o <- GCResidualInflowJanMar + (AprilUpstreamFloodEvacGC() - UpstreamFloodEvacGC())
 		out_o <-  GCBdgtForVB()
-		#out_o <- VernitaBarFlowTarget() * cfsTOafw
 		GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - in_o + out_o)
 	} else {
 		GCVariableLimit_o <- GCFullPoolVol
@@ -3163,7 +3148,7 @@ GCVariableDraftLimit <- function() {
 GC_VDL <- function() {
 	#GC_VDL_o <- min(GCTopVol(), max(GCVariableDraftLimit(), GC_VDL_LowerLimit(), GCBotVol, GCFerryLimit()))
 	#GC_VDL_o <- min(max(GCVariableDraftLimit(), GC_VDL_LowerLimit(), GCLowerLimit()), GCFloodCurve())
-	GC_VDL_o <- min(max(GCVariableDraftLimit(), GC_VDL_LowerLimit()), GCFloodCurve())
+	GC_VDL_o <- min(max(GCVariableDraftLimit(), GCLowerLimit()), GCFloodCurve())
 	#GC_VDL_o <- min(max(GC_VDL_LowerLimit()), GCFloodCurve())
 	if (is.na(GC_VDL_df$GCOUL[week_counter])) {
 		GC_VDL_df$GCOUL[week_counter] <<- GC_VDL_o
@@ -3182,10 +3167,8 @@ GCRecLimit <- function() {
 	return(GCRecLimit_o)
 }
 GCECC <- function() {
-	#GCECC_o <- min(max(min(max(GCAssuredRefill(), GCCriticalCurve()), GCVariableRefill()), GCRecLimit(), GCLowerLimit()), GCFloodCurve(), GCSummerDraftLimit(), GC_VDL())
 	GCECC_o <- min(max(min(max(GCAssuredRefill(), GCCriticalCurve()), GCVariableRefill()), GCLowerLimit(), GCRecLimit(), GCFerryLimit()), GCSummerDraftLimit(), GC_VDL())
-	#GCECC_o <- min(max(GCVariableRefill(), GCCriticalCurve(), GCRecLimit(), GCLowerLimit(), GCFerryLimit()), GCSummerDraftLimit(), GC_VDL())
-	#GCECC_o <- min(max(GCCriticalCurve(), GCRecLimit(), GCFerryLimit()), GCSummerDraftLimit(), GCFloodCurve())
+	#GCECC_o <- min(max(GCAssuredRefill(), GCCriticalCurve(), GCLowerLimit(), GCRecLimit(), GCFerryLimit()), GCSummerDraftLimit(), GC_VDL())
 	return(GCECC_o)
 }
 
@@ -3271,7 +3254,7 @@ GCPreEnergy <- function() {
 	return(GCPreEnergy_o)
 }
 GCSharedWater <- function() {
-	GCSharedWater_o <- max(0, GrandCoulee() + GCIn_c - GCPrelim() - max(GCMcNarySup(), GCSupForVernitaBar()) - GCBotVol)
+	GCSharedWater_o <- max(0, GrandCoulee() + GCIn_c - GCPrelim() - max(GCMcNarySup(), GCSupForVernitaBar()) - max(GCMinRefill(), GCCriticalCurveMin()))
 	return(GCSharedWater_o)
 }
 GCDownStreamHead <- function() {
@@ -3356,13 +3339,18 @@ GCCombUpSup <- function() {
 	}
 	return(GCCombUpSup_o)
 }
+GCMcNaryBONSup <- function() {
+	GCMcNaryBONSup_o <- max(GCMcNarySup(), GCSupForVernitaBar(), BONFlowDeficit())
+	return(GCMcNaryBONSup_o)
+}
 GCCombSup <- function() {
-	GCCombSup_o <- max(GCMcNarySup(), GCSupForVernitaBar()) + GCCombUpSup() + GCEnergySup()
+	GCCombSup_o <- GCMcNaryBONSup() + GCCombUpSup() + GCEnergySup()
 	GCCombSup_c <<- GCCombSup_o
 	return(GCCombSup_o)
 }
+
 GCMcNaryBONSupEnergy <- function() { # Energy produced by releasing water to meet fish targets at McNary, Vernita Bar, and Bonneville
-	GCMcNaryBONSupEnergy_o <- max(GCMcNarySup(), GCSupForVernitaBar(), BONFlowDeficit()) * TotalGCHead() * Estimated_Efficiency * MWhr_per_ftAcFt
+	GCMcNaryBONSupEnergy_o <- GCMcNaryBONSup() * TotalGCHead() * Estimated_Efficiency * MWhr_per_ftAcFt
 	return(GCMcNaryBONSupEnergy_o)
 }
 
@@ -3607,7 +3595,7 @@ WEPenLimit <- function() {
 	return(WEPenLimit_o)
 }
 WEPrelim <- function() {
-	WEPrelim_o <- GCPrelim() + WellsFlowData() - GrandCouleeFlowData()
+	WEPrelim_o <- CJPrelim() + WEInc()
 	return(WEPrelim_o)
 }
 WENetHead <- function() {
@@ -3664,7 +3652,7 @@ RRPenLimit <- function() {
 	return(RRPenLimit_o)
 }
 RRPrelim <- function() {
-	RRPrelim_o <- GCPrelim() + RockyReachFlowData() - GrandCouleeFlowData()
+	RRPrelim_o <- WEPrelim() + CHPrelim() + RRInc()
 	return(RRPrelim_o)
 }
 RRNetHead <- function() {
@@ -3676,7 +3664,7 @@ RRPreEnergy <- function() {
 	return(RRPreEnergy_o)
 }
 RRIn <- function() {
-	RRIn_o <- WEOut() + RRInc()
+	RRIn_o <- WEOut() + CHOutflow() + RRInc()
 	return(RRIn_o)
 }
 RROut <- function() {
@@ -3725,7 +3713,7 @@ RINetHead <- function() {
 	return(RINetHead_o)
 }
 RIPrelim <- function() {
-	RIPrelim_o <- GCPrelim() + RockIslandFlowData() - GrandCouleeFlowData()
+	RIPrelim_o <- RRPrelim() + RIInc()
 	return(RIPrelim_o)
 }
 RIPreEnergy <- function() {
@@ -3779,7 +3767,7 @@ WAPenLimit <- function() {
 	return(WAPenLimit_o)
 }
 WAPrelim <- function() {
-	WAPrelim_o <- GCPrelim() + WanapumFlowData() - GrandCouleeFlowData()
+	WAPrelim_o <- RIPrelim() + WAInc()
 	return(WAPrelim_o)
 }
 WANetHead <- function() {
@@ -3837,7 +3825,7 @@ PRPenLimit <- function() {
 	return(PRPenLimit_o)
 }
 PRPrelim <- function() {
-	PRPrelim_o <- GCPrelim() + PriestRapidsFlowData() - GrandCouleeFlowData()
+	PRPrelim_o <- WAPrelim() + PRInc()
 	return(PRPrelim_o)
 }
 PRNetHead <- function() {
@@ -4895,17 +4883,17 @@ BRInflow <- function() {
 
 ################## Brownlee max and min releases ####################################
 
+BRMinRefill <- function() {
+	BRMinRefill_o <- BRMinRefillCurve
+	return(BRMinRefill_o)
+}
 BRMinReq <- function() {
 	BRAvgMin <- 5850 # 2016-2017 assured operating plan
 	BRMinReq_1 <- max(BRRelForJBandLP(), BRAvgMin * cfsTOafw)
 	if (fish_over_refill == 1) {
 		BRMinReq_o <- BRMinReq_1
 	} else {
-		if (week_in_year %in% c(23,52)) {
-			BRMinReq_o <- min(max(Brownlee() + BRIn() - BRECC(), BRAvgMin * cfsTOafw), BRMinReq_1)
-		} else {
-			BRMinReq_o <- BRMinReq_1
-		}
+		BRMinReq_o <- min(max(Brownlee() + BRIn_c + max(BRMinRefill(), BRCriticalCurveMin()), BRAvgMin * cfsTOafw), BRMinReq_1)
 	}
 	return(BRMinReq_o)
 }
@@ -5048,6 +5036,10 @@ BRPrelim <- function() {
 	BRPrelim_o <- min(BRAvailAfter(), max(BRRuleReq(), BRMinReq()))
 	return(BRPrelim_o)
 }
+BRCriticalCurveMin <- function() {
+	BRCriticalCurve_o <- BRCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
+	return(BRCriticalCurve_o)
+}
 BRCriticalCurve <- function() { # Minimum storage to meet firm hydropower in a dry year (1928-1932 critical water period)
 	BRCriticalCurve_o <- BRCriticalCurve_input$CRC1[week_in_year] # year 1 critical curve
 	return(BRCriticalCurve_o)
@@ -5164,7 +5156,7 @@ BRPreEnergy <- function() {
 	return(BRPreEnergy_o)
 }
 BRSharedWater <- function() {
-	BRSharedWater_o <- max(0, Brownlee() + BRIn_c - BRPrelim_c - BRLGSup() - BRBotVol)
+	BRSharedWater_o <- max(Brownlee() + BRIn_c - BRPrelim_c - BRLGSup() - max(BRMinRefill(), BRCriticalCurveMin()), 0)
 	return(BRSharedWater_o)
 }
 BRDownStreamHead <- function() {
@@ -5397,13 +5389,13 @@ DWInflow <- function() {
 
 ############ Dworshak max and min releases ###################
 
-DWAvgMin <- 1300 
+DWMinRefill <- function() {
+	DWMinRefill_o <- DWMinRefillCurve
+	return(DWMinRefill_o)
+}
 DWMinReq <- function() {
-	if (RefillMinSw() == 1) {
-		DWMinReq_o <- DWAvgMin * cfsTOafw
-	} else {
-		DWMinReq_o <- DWAvgMin * cfsTOafw
-	}
+	DWAvgMin <- 1300 
+	DWMinReq_o <- DWAvgMin * cfsTOafw
 	return(DWMinReq_o)
 }
 DWDamProtectRel <- function() {
@@ -5474,6 +5466,10 @@ DWPrelim <- function() {
 DWLowerLimit <- function() {
 	DWLL_o <- lower_limit_input$Dworshak[week_in_year]
 	return(DWLL_o)
+}
+DWCriticalCurveMin <- function() {
+	DWCriticalCurve_o <- DWCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
+	return(DWCriticalCurve_o)
 }
 DWCriticalCurve <- function() {
 	DWCriticalCurve_o <- DWCriticalCurve_input$CRC1[week_in_year]
@@ -5559,7 +5555,7 @@ DWPreEnergy <- function() {
 	return(DWPreEnergy_o)
 }
 DWSharedWater <- function() {
-	DWSharedWater_o <- max(0, Dworshak() + DWIn() - DWPrelim() - DWLGSup() - DWBotVol)
+	DWSharedWater_o <- max(Dworshak() + DWIn() - DWPrelim() - DWLGSup() - max(DWMinRefill(), DWCriticalCurveMin()), 0)
 	return(DWSharedWater_o)
 }
 DWDownStreamHead <- function() {
@@ -6186,12 +6182,22 @@ TotalEnergyFromLGSups <- function() {
 	TotalEnergyFromLGSups_o <- DWLGSupEnergy() + BRLGSupEnergy()
 	return(TotalEnergyFromLGSups_o)
 }
+TotalFishSup <- function() {
+	TotalFishRel_o <- DWLGSup() + BRLGSup() + MIMcNarySup() + DUMcNarySup() + ARMcNarySup() + GCMcNaryBONSup() +
+		HHMcNarySup() + LBMcNarySup()
+	return(TotalFishRel_o)
+}
+TotalEnergySup <- function() {
+	TotalEnergySup_o <- AREnergySup() + DUEnergySup() + LBEnergySup() + CLEnergySup() + HHEnergySup() + KerrEnergySup() +
+		AFEnergySup() + GCEnergySup() + BREnergySup() + DWEnergySup() 
+	return(TotalEnergySup_o)
+}	
 TotalFloodSpace <- function() {
 	TotalFloodSpace_o <- MIFloodMult * MIFloodSpace() + ARFloodSpace() + GCFloodSpace() + LBFloodMult * LBFloodSpace() + HHFloodSpace()
 	return(TotalFloodSpace_o)
 }
 TotalRelReducReq <- function() {
-	TotalRelReducReq_o <- max(0, (DAPrelim() - (DAFloodTarget() * cfsTOafw)))
+	TotalRelReducReq_o <- max(0, DAPrelim() + TotalFishSup() + TotalEnergySup() - (DAFloodTarget() * cfsTOafw))
 	if (is.na(water_df$TotalRelReducReq[week_counter])) {
 		water_df$TotalRelReducReq[week_counter] <<- TotalRelReducReq_o
 	}
@@ -6248,8 +6254,8 @@ FirmFraction <- function() { # Adjustment to the average firm energy load throug
 	return(FirmFraction_o)
 }
 AvgFirmLoad <- function() { # Average firm energy requirement
-	#AvgFirmLoad_o <- 1.20E+06
-	AvgFirmLoad_o <- 1984816 # MW-hr/wk
+	AvgFirmLoad_o <- 1.12e6 # Step2 studies
+	#AvgFirmLoad_o <- 1984816 # MW-hr/wk, Step1 studies
 	return(AvgFirmLoad_o)
 }
 # Average firm energy target. This value is multiplied by the seasonal fraction to yield the firm energy target for each month.  Units MW-hr/week.
@@ -6273,7 +6279,8 @@ NonFirmEnergyDeficit <- function() {
 	return(NonFirmEnergyDeficit_c)
 }
 NonFirmFraction <- function() { # Fraction of the average non-firm energy load.
-	NonFirmFraction_o <- NonFirmFraction_input[week_in_year, 2]
+	#NonFirmFraction_o <- NonFirmFraction_input[week_in_year, 2]
+	NonFirmFraction_o <- FirmFraction()
 	return(NonFirmFraction_o)
 }
 AltNonFirmLoad <- function() {
@@ -6288,7 +6295,7 @@ AvgNonFirmLoad <- function() {
 	# for some reason the output of this function is different in the original ColSim the value is always
 	# 2.9 * 10^6
 	#AvgNonFirmLoad_o <- 2.9 * 10^6
-	AvgNonFirmLoad_o <- AvgFirmLoad()
+	AvgNonFirmLoad_o <- 1.98e6 - AvgFirmLoad()
 	return(AvgNonFirmLoad_o)
 }
 NonFirmEnergyTarget <- function() {
@@ -6474,9 +6481,4 @@ MaxSystemEnergy <- function() { # Hydropower production for entire CRB, excludin
 		AlbeniFallsGroupEnergy() + GrandCouleeGroupEnergy() + DworshakGroupEnergy() + LowerColumbiaEnergy()  + 
 		BrownleeGroupEnergy() + CHEnergyProduction() + PELEnergyProduction()
 	return(MaxSystemEnergy_o)
-}
-TotalEnergySup <- function() {
-	TotalEnergySup_o <- AREnergySup() + DUEnergySup() + LBEnergySup() + CLEnergySup() + HHEnergySup() + KerrEnergySup() +
-		AFEnergySup() + GCEnergySup() + BREnergySup() + DWEnergySup() 
-	return(TotalEnergySup_o)
 }

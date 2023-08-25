@@ -25,13 +25,13 @@ Read_Rule_Curves <- function() {
 	#### Brownlee #######
 	BRFlood_input <<- read.table(paste0(input_dir, "BRL/BRFlood_1998.txt"), header=T)
 	BRCriticalCurve_input <<- read.table(paste0(input_dir, "BRL/BRCriticalCurve.txt"), header=T)
-	BRAssuredRefill_input <<- read.table(paste0(input_dir, "BRL/BR1931Refill.txt"), header=T)	
+	BRAssuredRefill_input <<- read.table(paste0(input_dir, "BRL/BR1931Refill_med.txt"), header=T)	
 	BR_elev_input <<- read.table(paste0(input_dir, "BRL/BR_storage_elevation.txt"), header=T)
 
 	####### Libby ########
 	LBFlood_input <<- read.table(paste0(input_dir, "Libby/LBFlood_1998.txt"), header=T)
 	LBCriticalCurve_input <<- read.table(paste0(input_dir, "Libby/LBCriticalCurve_new.txt"), header=T)
-	LBAssuredRefill_input <<- read.table(paste0(input_dir, "Libby/LB1931Refill.txt"), header=T)
+	LBAssuredRefill_input <<- read.table(paste0(input_dir, "Libby/LB1931Refill_med.txt"), header=T)
 	LibbyBiOpDraftLimit_input <<- read.table(paste0(input_dir, "Libby/LBBiOpDraftLimit.txt"), header=T)
 	LB_elev_input <<- read.table(paste0(input_dir, "Libby/LB_storage_elevation.txt"), header=T)
 
@@ -47,7 +47,7 @@ Read_Rule_Curves <- function() {
 	##### Hungary Horse ########
 	HHFlood_input <<- read.table(paste0(input_dir, "HH/HHFlood_1998.txt"), header=T)
 	HHCriticalCurve_input <<- read.table(paste0(input_dir, "HH/HHCriticalCurve_new.txt"), header=T)
-	HHAssuredRefill_input <<- read.table(paste0(input_dir, "HH/HH1931Refill_new.txt"), header=T)
+	HHAssuredRefill_input <<- read.table(paste0(input_dir, "HH/HH1931Refill_med.txt"), header=T)
 	HHBiOpDraftLimit_input <<- read.table(paste0(input_dir, "HH/HHBiOpDraftLimit_new.txt"), header=T)
 	HH_elev_input <<- read.table(paste0(input_dir, "HH/HH_storage_elevation.txt"), header=T)
 	
@@ -71,7 +71,7 @@ Read_Rule_Curves <- function() {
 	### Grand Coulee #######
 	GCFlood_input <<- read.table(paste0(input_dir, "GC/GCFlood_2015.txt"), header=T)
 	GCCriticalCurve_input <<- read.table(paste0(input_dir, "GC/GCCriticalCurve_new.txt"), header=T)
-	GCAssuredRefill_input <<- read.table(paste0(input_dir, "GC/GC1931Refill.txt"), header=T)
+	GCAssuredRefill_input <<- read.table(paste0(input_dir, "GC/GC1931Refill_med.txt"), header=T)
 	GC_VDLL_input <<- read.table(paste0(input_dir, "GC/GC_VDLL.txt"), header=T)
 	GC_elev_input <<- read.table(paste0(input_dir, "GC/GC_storage_elevation.txt"), header=T)
 	GCSummerDraft_input <<- read.table(paste0(input_dir, "GC/GCSummerDraft.txt"), header=T)
@@ -79,19 +79,19 @@ Read_Rule_Curves <- function() {
 	##### Duncan ##########
 	DUFlood_input <<- read.table(paste0(input_dir, "DUECCandFC/DUFlood_new.txt"), header=T)
 	DUCriticalCurve_input <<- read.table(paste0(input_dir, "DUECCandFC/DUCriticalCurve_new.txt"), header=T)
-	DUAssuredRefill_input <<- read.table(paste0(input_dir, "DUECCandFC/DU1931Refill_new.txt"), header=T)
+	DUAssuredRefill_input <<- read.table(paste0(input_dir, "DUECCandFC/DU1931Refill_med.txt"), header=T)
 
 	###### Arrow ##########
 	ARFlood_input <<- read.table(paste0(input_dir, "ARECCandFC/ARFlood_new.txt"), header=T)
 	ARCriticalCurve_input <<- read.table(paste0(input_dir, "ARECCandFC/ARCriticalCurve_new.txt"), header=T)
-	ARAssuredRefill_input <<- read.table(paste0(input_dir, "ARECCandFC/AR1931Refill_new.txt"), header=T)
+	ARAssuredRefill_input <<- read.table(paste0(input_dir, "ARECCandFC/AR1931Refill_med.txt"), header=T)
 	AR_elev_input <<- read.table(paste0(input_dir, "ARECCandFC/AR_storage_elevation.txt"), header=T)
 	ARAssuredRelease_input <<- read.table(paste0(input_dir, "ARECCandFC/ARAssuredRelease.txt"), header=T)
 
 	#### Mica ###########
 	MIFlood_input <<- read.table(paste0(input_dir, "MicaECCandFC/MIFlood_new.txt"), header=T)
 	MICriticalCurve_input <<- read.table(paste0(input_dir, "MicaECCandFC/MICriticalCurve_new.txt"), header=T)
-	MIAssuredRefill_input <<- read.table(paste0(input_dir, "MicaECCandFC/MI1931Refill_new.txt"), header=T)
+	MIAssuredRefill_input <<- read.table(paste0(input_dir, "MicaECCandFC/MI1931Refill_med.txt"), header=T)
  	MI_elev_input <<- read.table(paste0(input_dir, "MicaECCandFC/MI_storage_elevation.txt"), header=T)
 	MIAssuredRelease_input <<- read.table(paste0(input_dir, "MicaECCandFC/MIAssuredRelease.txt"), header=T)
  
