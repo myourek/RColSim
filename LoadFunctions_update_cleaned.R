@@ -814,13 +814,13 @@ Duncan <- function() {
 DuncanFlowData <- function() {
 	return(FlowDU)
 }
-DPALufaceArea <- function() {
-	DPALufaceArea_o <- (-1.21281443E-13 * (Duncan() / 1000)^4 + 1.53692112E-09 * (Duncan() / 1000)^3 - 6.75961255E-06 * (Duncan() / 1000)^2 + 1.87278268E-02 * (Duncan() / 1000) + 2.30403996) * 1000
-	return(DPALufaceArea_o)
+DUSurfaceArea <- function() {
+	DUSurfaceArea_o <- (-1.21281443E-13 * (Duncan() / 1000)^4 + 1.53692112E-09 * (Duncan() / 1000)^3 - 6.75961255E-06 * (Duncan() / 1000)^2 + 1.87278268E-02 * (Duncan() / 1000) + 2.30403996) * 1000
+	return(DUSurfaceArea_o)
 }
 DUEvap <- function() {
 	DUEvapData <- 0
-	DUEvap_o <- DPALufaceArea() * DUEvapData * 0.5042 / 12
+	DUEvap_o <- DUSurfaceArea() * DUEvapData * 0.5042 / 12
 	return(DUEvap_o)
 }
 DUIn <- function() {
@@ -860,7 +860,9 @@ DUAvailAfter <- function() {
 
 # Flood evacuation period is 1 December to 29 February
 DU_CurFC <- function() {
-	if (DURunoffAprAug < 1.4E6) {
+	if (DARunoffAprAug > 111E6) {
+		DU_CurFC_o <- DUFlood_input$DUFlood5[week_in_year]
+	} else if (DURunoffAprAug < 1.4E6) {
 		DU_CurFC_o <- DUFlood_input$DUFlood1[week_in_year]
 	} else if (DURunoffAprAug < 1.6E6) {
 		DU_CurFC_o <- DUFlood_input$DUFlood1[week_in_year] - (DUFlood_input$DUFlood1[week_in_year] - DUFlood_input$DUFlood2[week_in_year]) / (1.6E6 - 1.4E6) * (DURunoffAprAug - 1.4E6)
@@ -869,7 +871,7 @@ DU_CurFC <- function() {
 	} else if (DURunoffAprAug < 2.0E6) {
 		DU_CurFC_o <- DUFlood_input$DUFlood3[week_in_year] - (DUFlood_input$DUFlood3[week_in_year] - DUFlood_input$DUFlood4[week_in_year]) / (2.0E6 - 1.8E6) * (DURunoffAprAug - 1.8E6)
 	} else {
-		DU_CurFC_o <- DUFlood_input$DUFlood5[week_in_year]
+		DU_CurFC_o <- DUFlood_input$DUFlood4[week_in_year]
 	}
 	return(DU_CurFC_o)
 }
@@ -3090,7 +3092,7 @@ GCAssuredRefill <- function() {
 	return(GCAssuredRefill_o)
 }	
 GCVariableRefill <- function() {
-	if (week_in_year > 39) {
+	if (week_in_year > 36) {
 		GCRefillCurve_o <- GCVariableRefillCurve
 	} else {
 		GCRefillCurve_o <- GCFullPoolVol
@@ -3132,10 +3134,6 @@ UpstreamFloodEvacGC <- function() {
 ## April 10 GC flood curve elevation - date to April 10 inflow + date to April 10 discharge for Vernita Bar - date to April 10 upstream flood evacuation
 GCVariableDraftLimit <- function() {
 	if (week_in_year>=23 && week_in_year<=36) {
-		#GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - GCRunoffJanApr + GCEnvirQBdgt() - (AprilUpstreamFloodEvacGC() - CurrentUpstreamFloodEvacGC())) # 2009 Columbia River Water Management Plan
-		#GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - (PRResidualInflowJanMar - GCBdgtForVB() + (AprilUpstreamFloodEvacGC() - CurrentUpstreamFloodEvacGC()))) # 2009 Columbia River Water Management Plan		
-		#GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - (PRResidualInflowJanMar - GCBdgtForVB() + (AprilUpstreamFloodEvacGC() - CurrentUpstreamFloodEvacGC()))) # 2009 Columbia River Water Management Plan
-		#GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - (GCResidualInflowJanMar - GCBdgtForVB() + (AprilUpstreamFloodEvacGC() - CurrentUpstreamSpace()))) # 2009 Columbia River Water Management Plan		
 		in_o <- GCResidualInflowJanMar + (AprilUpstreamFloodEvacGC() - UpstreamFloodEvacGC())
 		out_o <-  GCBdgtForVB()
 		GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - in_o + out_o)
@@ -3377,8 +3375,54 @@ GCRelease <- function() {
 GCOutflow <- function() {
 	GCOutflow_o <- GCRelease_c
 	return(GCOutflow_o)
+}	
+ICF <- function() {
+	if (week_in_year == start_refill_wk) {
+		ICF_o <- InitialControlledFlow
+		InitialControlledFlow_previous <<- ICF_o
+		control_wk <<- week_counter
+	} else {
+		ICF_o <- InitialControlledFlow_previous
+	}
+	return(ICF_o)
 }
-
+Cat4FilledStorFrac <- function() {
+	if (control_wk == 9999) {
+		storage_o <- 0
+	} else {
+		storage_o <- max(0, 1.0 - (((GCFullPoolVol - GrandCoulee()) + (ARFullPoolVol - Arrow())) / 
+			((GCFullPoolVol - dams_out$GCOUL[control_wk]) + (ARFullPoolVol - dams_out$ARROW[control_wk]))))
+	}
+	return(storage_o)
+}
+ICF_adj <- function() {
+	if (DACorrectedResidualInflowAprAug < 40e6) {
+		colnum <- 2
+	} else if (DACorrectedResidualInflowAprAug < 50e6) {
+		colnum <- 3
+	} else {
+		colnum <- 4
+	}
+	upper_row <- which(ICF_adj_input$filled_perc >= Cat4FilledStorFrac())[1]
+	lower_row <- tail(which(ICF_adj_input$filled_perc <= Cat4FilledStorFrac()), 1)
+	upper_adj <- ICF_adj_input[upper_row,colnum]
+	lower_adj <- ICF_adj_input[lower_row,colnum]
+	upper_perc <- ICF_adj_input$filled_perc[upper_row]
+	lower_perc <- ICF_adj_input$filled_perc[lower_row]
+	if (Cat4FilledStorFrac() == 1) {
+		ICF_adj_o <- ICF_adj_input[1,colnum]
+	} else if (Cat4FilledStorFrac() == 0) {
+		ICF_adj_o <- 0
+	} else {
+		ICF_adj_o <- lower_adj + (upper_adj - lower_adj) / (upper_perc - lower_perc) * (Cat4FilledStorFrac - lower_perc)
+	}
+	return(ICF_adj_o)
+}
+			
+ControlledFlow <- function() {
+	ControlledFlow_o <- ICF() + ICF_adj()
+	return(ControlledFlow_o)
+}
 ################### CHIEF JOSEPH DAM ##############################
 
 ChiefJosephFlowData <- function() {
@@ -6197,7 +6241,7 @@ TotalFloodSpace <- function() {
 	return(TotalFloodSpace_o)
 }
 TotalRelReducReq <- function() {
-	TotalRelReducReq_o <- max(0, DAPrelim() + TotalFishSup() + TotalEnergySup() - (DAFloodTarget() * cfsTOafw))
+	TotalRelReducReq_o <- max(0, DAPrelim() + TotalFishSup() + TotalEnergySup() - (ControlledFlow() * cfsTOafw))
 	if (is.na(water_df$TotalRelReducReq[week_counter])) {
 		water_df$TotalRelReducReq[week_counter] <<- TotalRelReducReq_o
 	}
