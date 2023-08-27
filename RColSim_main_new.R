@@ -116,7 +116,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:41){
+for (I_Week in 1:48){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -138,7 +138,9 @@ for (I_Week in 1:41){
 		TotalCoordPreEnergy_c <- -9999
 		TotalNFEnergyContent_c <- -9999
 		NonFirmEnergyDeficit_c <- -9999
-		TotalMcNarySharedWater_c <- -9999		
+		TotalMcNarySharedWater_c <- -9999
+		TotalFloodRelSharedWater_c <- -9999
+		control_wk <- 9999
 		# ---------------- Initialize the model
 		source("~/RColSim/initialize_model_new.R")		
 	} else {
@@ -163,8 +165,8 @@ for (I_Week in 1:41){
 		TotalNFEnergyContent_c <- -9999
 		NonFirmEnergyDeficit_c <- -9999
 		TotalMcNarySharedWater_c <- -9999
+		TotalFloodRelSharedWater_c <- -9999
   
-		
 		MIRelease_c <- MIRelease()
 		dams_in$MICAA[week_counter] <- MIInflow()
 		dams_out$MICAA[week_counter] <- MIOutflow()

@@ -3,6 +3,7 @@ Read_Rule_Curves <- function() {
 	###### initial ##########
 	HistStor_input <<- read.table(paste0(input_dir, "HistStor.txt"), header=T, nrows=367)
 	lower_limit_input <<- read.table(paste0(input_dir, "rule_curve_lower_limits.txt"), header=T)
+	ICF_adj_input <<- read.table(paste0(input_dir, "ICF_adjustment.txt"), header=T)
 	
 	###### Dworshak Dam ######
 	DWFlood_input <<- read.table(paste0(input_dir, "DW/DWFlood_new.txt"), header=T)
@@ -99,7 +100,7 @@ Read_Rule_Curves <- function() {
 	NonFirmFraction_input <<- read.table(paste0(input_dir, "Energy/NonFirmFraction_new.txt"), header=T)
 	AltNonFirmLoad_input <<- read.table(paste0(input_dir, "Energy/AltNonFirmLoad.txt"), header=T)
 	HH_USBRmax_input <<- read.table(paste0(input_dir, "Energy/HH_USBRmax.txt"), header=T)
-	FirmFraction_input <<- read.table(paste0(input_dir, "FirmFraction.txt"), header=T)
+	FirmFraction_input <<- read.table(paste0(input_dir, "Energy/FirmFraction_new.txt"), header=T)
   
   	#### Flow targets ######
 	BonnevilleFlowTarget_input <<- read.table(paste0(input_dir, "BONN/BON_flow_target.txt"), header=T)

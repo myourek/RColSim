@@ -79,9 +79,9 @@ names_Output <- c("Week", "Month", "Day", "Year", "BRRunoffAprJul", "DARunoffApr
 	"HenryResidualInflowJanJun", "RirieResidualInflowJanJun", "PRResidualInflowJanMar", "GCResidualInflowJanMar", "RetVICWA", "RetVICPR", "RetVICMCN", "ARVariableRefillCurve", "DUVariableRefillCurve", 
 	"DWVariableRefillCurve", "GCVariableRefillCurve", "HHVariableRefillCurve", "LBVariableRefillCurve", "MIVariableRefillCurve", "AFMinRefillCurve", "ARMinRefillCurve", "BRMinRefillCurve", 
 	"CLMinRefillCurve", "DUMinRefillCurve", "DWMinRefillCurve", "GCMinRefillCurve", "HHMinRefillCurve", "KEMinRefillCurve", "LBMinRefillCurve", "MIMinRefillCurve", "AFOperatingRuleCurve", 
-	"AROperatingRuleCurve", "CLOperatingRuleCurve", "DUOperatingRuleCurve", "DWOperatingRuleCurve", "HHOperatingRuleCurve", "KEOperatingRuleCurve", 
+	"AROperatingRuleCurve", "BROperatingRuleCurve", "CLOperatingRuleCurve", "DUOperatingRuleCurve", "DWOperatingRuleCurve", "GCOperatingRuleCurve", "HHOperatingRuleCurve", "KEOperatingRuleCurve", 
 	"LBOperatingRuleCurve", "MIOperatingRuleCurve", paste0("Flow", c("LimePoint", stn_colsim[,2])), paste0("Dem", Dem_list), paste0("Curt", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), 
-	paste0("Iflow", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), "CorrectedDARunoffAprAug", "InitialControlledFlow", "start_refill_wk")
+	paste0("Iflow", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), "CorrectedDARunoffAprAug", "InitialControlledFlow", "start_refill_wk", "DACorrectedResidualInflowAprAug")
 Output_to_ColSim <- data.frame(matrix(ncol=length(names_Output), nrow=N))
 Output_to_ColSim[1:4] <- timeseries
 names(Output_to_ColSim) <- names_Output

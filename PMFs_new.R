@@ -151,7 +151,7 @@ DallesFlow_cfs <- function() {
 }
 DallesFloodMOP <- function() {
 	if(MOPControl==1)  {
-		DallesFloodMOP_o <- max(0, DallesFlow_cfs() - DAFloodTarget() * (1 + SensitivityFraction)) 
+		DallesFloodMOP_o <- max(0, DallesFlow_cfs() - ControlledFlow() * (1 + SensitivityFraction)) 
 	} else {
 		DallesFloodMOP_o <- 0
 	}
