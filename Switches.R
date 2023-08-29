@@ -39,7 +39,7 @@ year_from_weekly <<- function() {
 	year_from_weekly_o = week_counter %/% 52 + 1  
 	return(year_from_weekly_o)
 }
-
+gurantee_refill <<- 2
 ########## MOPControl
 #This control variable is used to track measures of performance only for specific climate conditions.
 #If this variable <<-1 in the timestep, then measures of performance are recorded, otherwise they are ignored.
