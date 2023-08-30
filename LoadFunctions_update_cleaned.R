@@ -968,6 +968,7 @@ ARRelReducReq <- function() { ##
 }
 ARMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
 	ARMinFloodRelReq_o <- min(ARFloodRelSharedWater(), MinFloodRelReq() * ARFloodRelFrac())
+	water_df$ARMinFloodRelReq[week_counter] <<- ARMinFloodRelReq_o
 	return(ARMinFloodRelReq_o)
 }
 
@@ -3349,7 +3350,7 @@ GCAssuredRefill <- function() {
 	return(GCAssuredRefill_o)
 }	
 GCVariableRefill <- function() {
-	if (week_in_year > 36) {
+	if (week_in_year > 39) {
 		GCRefillCurve_o <- GCVariableRefillCurve
 	} else {
 		GCRefillCurve_o <- GCFullPoolVol
@@ -3386,6 +3387,7 @@ UpstreamFloodEvacGC <- function() {
 	} else {
 		UpstreamFloodEvacGC_o <- 0
 	}
+	water_df$UpstreamFloodEvacGC[week_counter] <<- UpstreamFloodEvacGC_o
 	return(UpstreamFloodEvacGC_o)
 }
 ## April 10 GC flood curve elevation - date to April 10 inflow + date to April 10 discharge for Vernita Bar - date to April 10 upstream flood evacuation
@@ -3621,6 +3623,7 @@ GCFloodRelSharedWater <- function() {
 }
 GCMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
 	GCMinFloodRelReq_o <- min(GCFloodRelSharedWater(), MinFloodRelReq())
+	water_df$GCMinFloodRelReq[week_counter] <<- GCMinFloodRelReq_o
 	return(GCMinFloodRelReq_o)
 }
 ##################### Grand Coulee final release ###################################
@@ -3641,10 +3644,12 @@ ICF <- function() {
 	if (week_in_year == 1 || is.na(start_refill_wk)) {
 		InitialControlledFlow_previous <<- 1e10
 		ICF_o <- InitialControlledFlow_previous
-	} else if (week_in_year == start_refill_wk) {
+	} else if (week_in_year %in% start_refill_wk:45) {
 		ICF_o <- InitialControlledFlow
 		InitialControlledFlow_previous <<- ICF_o
-		control_wk <<- week_counter
+		if (week_in_year == start_refill_wk) {
+			control_wk <<- week_counter
+		}
 	} else {
 		ICF_o <- InitialControlledFlow_previous
 	}
@@ -3685,6 +3690,7 @@ ICF_adj <- function() {
 			
 ControlledFlow <- function() {
 	ControlledFlow_o <- ICF() + ICF_adj()
+	water_df$ControlledFlow[week_counter] <<- ControlledFlow_o
 	return(ControlledFlow_o)
 }
 ################### CHIEF JOSEPH DAM ##############################
@@ -5209,7 +5215,7 @@ BRMinReq <- function() {
 	if (fish_over_refill == 1) {
 		BRMinReq_o <- BRMinReq_1
 	} else {
-		BRMinReq_o <- min(max(Brownlee() + BRIn_c + max(BRMinRefill(), BRCriticalCurveMin()), BRAvgMin * cfsTOafw), BRMinReq_1)
+		BRMinReq_o <- min(max(Brownlee() + BRIn_c - BRMinRefill(), BRAvgMin * cfsTOafw), BRMinReq_1)
 	}
 	return(BRMinReq_o)
 }
@@ -5336,7 +5342,7 @@ BRFloodCurve <- function() {
 }
 BRTopVol <- function() {
 	if (TopRuleSw() == 0) {
-		BRTopVol_o <- BRFloodCurve()
+		BRTopVol_o <- min(BRFloodCurve(), BRFallChinookDraft())
 	} else if (TopRuleSw() == 1) {
 		BRTopVol_o <- BRFullPoolVol
 	} else if (TopRuleSw() == 2) {
@@ -5373,7 +5379,7 @@ BRVariableRefill <- function() { # Required refill to ensure dam is full by end 
 	return(BRRefillCurve_o)
 }
 BRECC <- function() {
-	BRECC_o <- min(max(BRAssuredRefill(), BRCriticalCurve()), BRFloodCurve())
+	BRECC_o <- min(max(BRAssuredRefill(), BRCriticalCurve()), BRFloodCurve(), BRFallChinookDraft())
 	return(BRECC_o)
 }
 
@@ -5463,6 +5469,18 @@ BRRelForJBandLP <- function() {
 		water_df$BRRelForJBandLP[week_counter] <<- BRRelForJBandLP_o
 	}
 	return(BRRelForJBandLP_o)
+}
+BRFallChinookDraft <- function() {
+	if (BRRunoffAprJul <= 4.26e6) {	# 20th percentile Apr--Jul inflow forecast for the period 1979-2015
+		BRFallChinookDraft_o <- BRFallChinookDraft_input$Low[week_in_year]
+	} else if (BRRunoffAprJul <= 7.32e6) {
+		BRFallChinookDraft_o <- BRFallChinookDraft_input$Low[week_in_year] + (BRFallChinookDraft_input$Medium[week_in_year] - BRFallChinookDraft_input$Low[week_in_year]) / (7.32e6 - 4.26e6)  * (BRRunoffAprJul - 4.26e6)
+	} else if (BRRunoffAprJul <= 13.2e6) {
+		BRFallChinookDraft_o <- BRFallChinookDraft_input$Medium[week_in_year] + (BRFallChinookDraft_input$High[week_in_year] - BRFallChinookDraft_input$Medium[week_in_year]) / (13.2e6 - 7.32e6)  * (BRRunoffAprJul - 7.32e6)
+	} else {
+		BRFallChinookDraft_o <- BRFallChinookDraft_input$High[week_in_year]
+	}
+	return(BRFallChinookDraft_o)
 }
 
 ############################# Brownlee energy ##########################

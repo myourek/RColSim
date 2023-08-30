@@ -155,7 +155,7 @@ get_rule_curves <- function(res) {
 		critical_o <- GCCriticalCurve()
 		assured_o <- GCAssuredRefill()
 		lower_o <- GCLowerLimit()
-		variable_o <- VariableRefillCurve$BROWN[row_num]
+		variable_o <- VariableRefillCurve$GCOUL[row_num]
 		BiOp_o <- GCFullPoolVol
 	}
 	return(c(flood_o, critical_o, assured_o, lower_o, BiOp_o, variable_o))
