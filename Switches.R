@@ -105,7 +105,7 @@ UseTotalEnergyContentForFirm <<- function() { # Default is 1
 	return(UseTotalEnergyContentForFirm_o)
 }
 
-CriticalCurveSw <<- 2
+CriticalCurveSw <<- 4
 
 Estimated_Efficiency <<- 0.8 # Estimated combined efficiency for all plants.  This efficiency is used for estimating energy content only.
 

@@ -285,6 +285,14 @@ Output_to_ColSim$InitialControlledFlow <- sapply(1:N, function(x) get_ICF(Output
 Output_to_ColSim$start_refill_wk[1:n_years] <- aggregate(modified_flow$DALLE, list(modified_flow$Year), function(x) which(x > 450000 * cfsTOafw)[1] - 3 + 22)[-1,2]
 
 
+start_refill_wk_GC = vector()
+for (y in 1:length(years)) {
+	ICF <- subset(Output_to_ColSim, Year == years[y] & Week == Output_to_ColSim$start_refill_wk[y])$InitialControlledFlow
+	wk_GC <- which(subset(modified_flow, Year == years[y])$DALLE >= ICF * cfsTOafw)[1] + 22
+	start_refill_wk_GC <- c(start_refill_wk_GC, wk_GC)
+}
+
+
 ########## Residual runoff
 
 runoff_remaining <- function(stn, start_wk, end_wk, flow) {
