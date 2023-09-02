@@ -487,6 +487,10 @@ MIEnergySup <- function() { # Water released to satisfy firm and non-firm power 
 }
 ### bottleneck
 MICombSup <- function() { # Total water to be released to meet fish and energy objectives
+	if (BRIn_c == -9999) {
+		BRIn_c <<- BRIn()
+		water_df$BRIn[week_counter] <<- BRIn_c
+	}
 	if (TotalEnergyContent_c == -9999) {
 		TotalEnergyContent_c <<- TotalEnergyContent()
 		energy_df$TotalEnergyContent[week_counter] <<- TotalEnergyContent_c
@@ -514,10 +518,6 @@ MICombSup <- function() { # Total water to be released to meet fish and energy o
 	if (TotalNFEnergyContent_c == -9999) {
 		TotalNFEnergyContent_c <<- TotalNFEnergyContent()
 		energy_df$TotalNFEnergyContent[week_counter] <<- TotalNFEnergyContent_c
-	}
-	if (BRIn_c == -9999) {
-		BRIn_c <<- BRIn()
-		water_df$BRIn[week_counter] <<- BRIn_c
 	}
 	if (GCIn_c == -9999) {
 		GCIn_c <<- GCIn()
@@ -3672,7 +3672,8 @@ GCFloodSpace <- function() {
 	return(GCFloodSpace_o)
 }
 GCFloodRelSharedWater <- function() {
-	GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCInflow() - GCPrelim() - GCCombSup_c - GCECC())
+	GCIn_o <- BDPrelim() + ARPrelim() + CLPrelim() + GCInc() + GCCombUpSup()
+	GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCIn_o - GCPrelim() - GCCombSup_c - GCECC())
 	return(GCFloodRelSharedWater_o)
 }
 GCMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
@@ -4295,7 +4296,7 @@ UpSnakeAgReq <- function() {
 	return(UpSnakeAgReq_o)
 }
 JLAgReq <- function() {
-	if (week_in_year %in% c(49:52, 1:14)) {
+	if (week_in_year %in% c(42:52, 1:14)) {
 		JLAgReq_o <- JLInflow() + UpSnakeAgReq() * Jackson() / (Palisades() + Jackson() + IslandPark() + Ririe())
 	} else {
 		JLAgReq_o <- 0
@@ -4336,6 +4337,10 @@ JLRelLimit <- function() {
 JLDamProtectRel <- function() {
 	JLDamProtectRel_o <- max(0, Jackson() + JLInflow() - JLFullPoolVol)
 	return(JLDamProtectRel_o)
+}
+JLDamProtectExcess <- function() {
+	JLDamProtectExcess_o <- max(0, JLDamProtectRel() - JLPrelim())
+	return(JLDamProtectExcess_o)
 }
 JLRelease <- function() {
   JLRelease_o <- max(JLDamProtectRel(), min(JLPrelim(), JLRelLimit()))
@@ -4413,7 +4418,7 @@ PALFloodCurve <- function() {
 	return(PALFloodCurve_o)
 }
 PALAgReq <- function() {
-	if (week_in_year %in% c(49:52,1:14)) {
+	if (week_in_year %in% c(42:52,1:14)) {
 		PALAgReq_o <- PALInflow() + UpSnakeAgReq() * Palisades() / (Palisades() + Jackson() + IslandPark() + Ririe())
 	} else {
 		PALAgReq_o <- 0
@@ -4455,8 +4460,16 @@ PALDamProtectRel <- function() {
 	PALDamProtectRel_o <- max(0, Palisades() + PALInflow() - PALFullPoolVol)
 	return(PALDamProtectRel_o)
 }
+PALCombUpProtect <- function() {
+	PALCombUpProtect_o <- max(0, Palisades() + PALIn() + JLDamProtectExcess() - PALPrelim() - PALTopVol())
+	return(PALCombUpProtect_o)
+}
+PALDamProtectExcess <- function() {
+	PALDamProtectExcess_o <- max(0, PALDamProtectRel() - PALPrelim() - PALCombUpProtect())
+	return(PALDamProtectExcess_o)
+}
 PALRelease <- function() {
-  PALRelease_o <- max(PALDamProtectRel(), min(PALPrelim(), PALRelLimit()))
+  PALRelease_o <- max(min(PALPrelim() + PALCombUpProtect(), PALRelLimit()), PALDamProtectRel())
   return(PALRelease_o)
 }
 PALOutflow <- function() {
@@ -4520,7 +4533,7 @@ IPFloodCurve <- function() {
 	return(IPFloodCurve_o)
 }
 IPAgReq <- function() {
-	if (week_in_year %in% c(49:52, 1:14)) {
+	if (week_in_year %in% c(45:52, 1:14)) {
 		IPAgReq_o <- IPInflow() + UpSnakeAgReq() * IslandPark() / (Palisades() + Jackson() + IslandPark() + Ririe())
 	} else {
 		IPAgReq_o <- 0
@@ -4561,6 +4574,10 @@ IPRelLimit <- function() {
 IPDamProtectRel <- function() {
 	IPDamProtectRel_o <- max(0, IslandPark() + IPInflow() - IPFullPoolVol)
 	return(IPDamProtectRel_o)
+}
+IPDamProtectExcess <- function() {
+	IPDamProtectExcess_o <- max(0, IPDamProtectRel() - IPPrelim())
+	return(IPDamProtectExcess_o)
 }
 IPRelease <- function() {
   IPRelease_o <- max(IPDamProtectRel(), min(IPPrelim(), IPRelLimit()))
@@ -4629,7 +4646,7 @@ RIRFloodCurve <- function() {
 	return(RIRFloodCurve_o)
 }
 RIRAgReq <- function() {
-	if (week_in_year %in% c(49:52, 1:14)) {
+	if (week_in_year %in% c(45:52, 1:14)) {
 		RIRAgReq_o <- RIRInflow() + UpSnakeAgReq() * Ririe() / (Palisades() + Jackson() + IslandPark() + Ririe())
 	} else {
 		RIRAgReq_o <- 0
@@ -4670,6 +4687,10 @@ RIRRelLimit <- function() {
 RIRDamProtectRel <- function() {
 	RIRDamProtectRel_o <- max(0, Ririe() + RIRInflow() - RIRFullPoolVol)
 	return(RIRDamProtectRel_o)
+}
+RIRDamProtectExcess <- function() {
+	RIRDamProtectExcess_o <- max(0, RIRDamProtectRel() - RIRPrelim())
+	return(RIRDamProtectExcess_o)
 }
 RIRRelease <- function() {
   RIRRelease_o <- max(RIRDamProtectRel(), min(RIRPrelim(), RIRRelLimit()))
@@ -4728,8 +4749,8 @@ MinidokaAgReq <- function() {
 	return(MinidokaAgReq_o)
 }
 AMAgReq <- function() {
-	if (week_in_year %in% c(49:52, 1:14)) {
-		AMAgReq_o <- MinidokaAgReq() + AMInflow() 
+	if (week_in_year %in% c(45:52, 1:14)) {
+		AMAgReq_o <- MinidokaAgReq() + AMIn() 
 	} else {
 		AMAgReq_o <- 0
 	}
@@ -4756,8 +4777,16 @@ AMDamProtectRel <- function() {
 	AMDamProtectRel_o <- max(0, AmericanFalls() + AMInflow() - AMFullPoolVol)
 	return(AMDamProtectRel_o)
 }
+AMCombUpProtect <- function() {
+	AMCombUpProtect_o <- IPDamProtectExcess() + PALDamProtectExcess() + RIRDamProtectExcess()
+	return(AMCombUpProtect_o)
+}
+AMDamProtectExcess <- function() {
+	AMDamProtectExcess_o <- max(0, AMDamProtectRel() - AMPrelim() - AMCombUpProtect())
+	return(AMDamProtectExcess_o)
+}
 AMRelease <- function() {
-  AMRelease_o <- max(AMDamProtectRel(), min(AMPrelim(), AMRelLimit()))
+  AMRelease_o <- max(AMDamProtectRel(), min(AMPrelim() + AMCombUpProtect(), AMRelLimit()))
   return(AMRelease_o)
 }
 AMOutflow <- function() {
@@ -4771,7 +4800,7 @@ AMOutflow <- function() {
 
 MINFullPoolVol <- 95180
 MINBotVol <- 0
-InitPALLink <- 70000
+InitMINLink <- 70000
 InitMIN <- function() {
 	MINHistStor_input <- HistStor_input$MINHistStor_input[week_counter]
 	if (InitialConditionSwitch == 0) {
@@ -4831,8 +4860,16 @@ MINDamProtectRel <- function() {
 	MINDamProtectRel_o <- max(0, Minidoka() + MINInflow() - MINFullPoolVol)
 	return(MINDamProtectRel_o)
 }
+MINDamProtectExcess <- function() {
+	MINDamProtectExcess_o <- max(0, MINDamProtectRel() - MINPrelim())
+	return(MINDamProtectExcess_o)
+}
+MINCombUpProtect <- function() {
+	MINCombUpProtect_o <- AMDamProtectExcess()
+	return(MINCombUpProtect_o)
+}
 MINRelease <- function() {
-  MINRelease_o <- max(MINDamProtectRel(), min(MINPrelim(), MINRelLimit()))
+  MINRelease_o <- max(MINDamProtectRel(), min(MINPrelim() + MINCombUpProtect(), MINRelLimit()))
   return(MINRelease_o)
 }
 MINOutflow <- function() {
@@ -4850,6 +4887,10 @@ MilnerFlowData <- function() {
 MILInc <- function() {
 	MILInc_o <- MilnerFlowData() - MinidokaFlowData()
 	return(MILInc_o)
+}
+MILPrelim <- function() {
+	MILPrelim_o <- MINPrelim() + MILInc()
+	return(MILPrelim_o)
 }
 MILIn <- function() {
 	MILIn_o <- MINOutflow() + MILInc()
@@ -4963,6 +5004,10 @@ BoiseDamProtectRel <- function() {
 	BoiseDamProtectRel_o <- max(0, Boise() + BoiseInflow() - BoiseFullPoolVol)
 	return(BoiseDamProtectRel_o)
 }
+BoiseDamProtectExcess <- function() {
+	BoiseDamProtectExcess_o <- max(0, BoiseDamProtectRel() - BoisePrelim())
+	return(BoiseDamProtectExcess_o)
+}
 BoiseRelease <- function() {
   BoiseRelease_o <- max(BoiseDamProtectRel(), min(BoisePrelim(), BoiseRelLimit()))
   return(BoiseRelease_o)
@@ -5071,6 +5116,10 @@ PayetteDamProtectRel <- function() {
 	PayetteDamProtectRel_o <- max(0, Payette() + PayetteInflow() - PayetteFullPoolVol)
 	return(PayetteDamProtectRel_o)
 }
+PayetteDamProtectExcess <- function() {
+	PayetteDamProtectExcess_o <- max(0, PayetteDamProtectRel() - PayettePrelim())
+	return(PayetteDamProtectExcess_o)
+}
 PayetteRelease <- function() {
   PayetteRelease_o <- max(PayetteDamProtectRel(), min(PayettePrelim(), PayetteRelLimit()))
   return(PayetteRelease_o)
@@ -5134,7 +5183,7 @@ OWYFloodCurve <- function() {
 OWYAgReq <- function() {
 	IrrigationDemand <- DemOwyhee
 	ConveyanceLossOWY <- 1.25
-	if (week_in_year %in% c(42:52, 1:14)) {
+	if (week_in_year %in% c(45:52, 1:14)) {
 		OWYAgReq_o <- OWYInflow() + IrrigationDemand * ConveyanceLossOWY
 	} else {
 		OWYAgReq_o <- 0
@@ -5175,6 +5224,10 @@ OWYRelLimit <- function() {
 OWYDamProtectRel <- function() {
 	OWYDamProtectRel_o <- max(0, Owyhee() + OWYInflow() - OWYFullPoolVol)
 	return(OWYDamProtectRel_o)
+}
+OWYDamProtectExcess <- function() {
+	OWYDamProtectExcess_o <- max(0, OWYDamProtectRel() - OWYPrelim())
+	return(OWYDamProtectExcess_o)
 }
 OWYRelease <- function() {
   OWYRelease_o <- max(OWYDamProtectRel(), min(OWYPrelim(), OWYRelLimit()))
@@ -5255,11 +5308,11 @@ BRPenLimit <- function() {
 	return(BRPenLimit_o)
 }
 BRIn <- function() {
-	BRIn_o <- PALPrelim() + BRInc() - BREvap()
+	BRIn_o <- PayettePrelim() + OWYPrelim() + BoisePrelim() + MILPrelim() + BRInc() - BREvap()
 	return(BRIn_o)
 }
 BRInflow <- function() {
-	BRInflow_o <- PALOutflow() + BRInc() - BREvap()
+	BRInflow_o <- PayetteOutflow() + OWYOutflow() + BoiseOutflow() + MILOut() + BRInc() - BREvap()
 	return(BRInflow_o)
 }
 
@@ -5278,7 +5331,7 @@ BRMinRefill <- function() {
 	return(BRMinRefill_o)
 }
 BRMinReq <- function() {
-	BRAvgMin <- 5850 # 2016-2017 assured operating plan
+	BRAvgMin <<- 5850 # 2016-2017 assured operating plan
 	BRMinReq_1 <- max(BRRelForJBandLP(), BRAvgMin * cfsTOafw)
 	if (fish_over_refill == 1) {
 		BRMinReq_o <- BRMinReq_1
@@ -5636,8 +5689,18 @@ BRLGSupEnergy <- function() {
 
 ############# Brownlee final release ############################
 
+BRCombUpProtect <- function() {
+	BRCombUpProtect_1 <- PayetteDamProtectExcess() + BoiseDamProtectExcess() + OWYDamProtectExcess() + MINDamProtectExcess()
+	BRCombUpProtect_o <- max(0, Brownlee() + BRIn_c + BRCombUpProtect_1 - BRPrelim() - BRCombSup() - BRECC())
+	return(BRCombUpProtect_o)
+}
+BRDamProtectExcess <- function() {
+	BRDamProtectExcess_o <- max(0, BRDamProtectRel() - BRPrelim() - BRCombSup() - BRCombUpProtect())
+	return(BRDamProtectExcess_o)
+}
+
 BRRelease <- function() {
-	BRRelease_o <- max(min(BRPrelim() + BRCombSup(), BRRelLimit()), BRDamProtectRel())
+	BRRelease_o <- max(min(BRPrelim() + BRCombSup() + BRCombUpProtect(), BRRelLimit()), BRDamProtectRel())
 	return(BRRelease_o)
 }
 BROutflow <- function() {
@@ -6574,7 +6637,7 @@ TotalMcNarySharedWater <- function() {
 	return(TotalMcNarySharedWater_o)
 }
 TotalEnergyFromMcNarySups <- function() { # Total hydropower generated by water released to meet fish flow targets
-	TotalEnergyFromMcNarySups_o <- MIMcNarySupEnergy() + DUMcNarySupEnergy() + ARMcNarySupEnergy() + GCMcNaryBONSupEnergy() + HHMcNarySupEnergy() + LBMcNarySupEnergy()
+	TotalEnergyFromMcNarySups_o <- MIMcNarySupEnergy() + DUMcNarySupEnergy() + ARMcNarySupEnergy() + HHMcNarySupEnergy() + LBMcNarySupEnergy()
 	return(TotalEnergyFromMcNarySups_o)
 }
 TotalEnergyFromLGSups <- function() {
@@ -6582,7 +6645,7 @@ TotalEnergyFromLGSups <- function() {
 	return(TotalEnergyFromLGSups_o)
 }
 TotalFishSup <- function() {
-	TotalFishRel_o <- DWLGSup() + BRLGSup() + MIMcNarySup() + DUMcNarySup() + ARMcNarySup() + GCMcNaryBONSup() +
+	TotalFishRel_o <- DWLGSup() + BRLGSup() + MIMcNarySup() + DUMcNarySup() + ARMcNarySup() + GCFishSup() +
 		HHMcNarySup() + LBMcNarySup()
 	return(TotalFishRel_o)
 }
@@ -6650,8 +6713,8 @@ KerrGroupPreEnergy <- function() {
 	KerrGroupPreEnergy_o <- KEPreEnergy() + TFPreEnergy() + NOXPreEnergy() + CBPreEnergy()
 	return(KerrGroupPreEnergy_o)
 }
-TotalCoordPreEnergy <- function() { # Hydropower that could be generated from prelinary releases at all dams
-	TotalCoordPreEnergy_o <- TotalEnergyFromMcNarySups() + TotalEnergyFromLGSups() + HungryHorsePreEnergy() + LibbyPreEnergy() + MicaGroupPreEnergy() + KerrGrPreEnergy() +
+TotalCoordPreEnergy <- function() { # Hydropower that could be generated from preliminary and fish flow releases at all dams
+	TotalCoordPreEnergy_o <- TotalEnergyFromMcNarySups() + TotalEnergyFromLGSups() + GCFishSupEnergy() + HungryHorsePreEnergy() + LibbyPreEnergy() + MicaGroupPreEnergy() + KerrGrPreEnergy() +
 		AlbeniFallsGroupPreEnergy() + GrandCouleeGroupPreEnergy() + DworshakGroupPreEnergy() + LowerColGroupPreEnergy() + 
 		BrownleeGroupPreEnergy() + CHPreEnergy() + PELPreEnergy()
 	return(TotalCoordPreEnergy_o)

@@ -26,7 +26,7 @@ Read_Rule_Curves <- function() {
 	#### Brownlee #######
 	BRFlood_input <<- read.table(paste0(input_dir, "BRL/BRFlood_1998.txt"), header=T)
 	BRCriticalCurve_input <<- read.table(paste0(input_dir, "BRL/BRCriticalCurve.txt"), header=T)
-	BRAssuredRefill_input <<- read.table(paste0(input_dir, "BRL/BR1931Refill_med.txt"), header=T)	
+	BRAssuredRefill_input <<- read.table(paste0(input_dir, "BRL/BR1931Refill_2011.txt"), header=T)	
 	BR_elev_input <<- read.table(paste0(input_dir, "BRL/BR_storage_elevation.txt"), header=T)
 	BRFallChinookDraft_input <<- read.table(paste0(input_dir, "BRL/BRFallChinookDraft.txt"), header=T)
 
