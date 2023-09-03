@@ -257,6 +257,7 @@ if (track_curtailment == 1) {
 dams_in$BONNE[1] <- BONIn()
 dams_out$BONNE[1] <- BONOut()
 BiOp$BONNE[1] <- BonnevilleFlowTarget()
+water_df$TotalDamProtectExcess[1] <- TotalDamProtectExcess()
 
 ######### STORAGE FOR THE FIRST TIME STEP
 for (res in names(reservoir_vol_df)) {

@@ -116,7 +116,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:N_of_TimeSteps){
+for (I_Week in 1:26){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -395,6 +395,7 @@ for (I_Week in 1:N_of_TimeSteps){
 		dams_in$BONNE[week_counter] <- BONIn()
 		dams_out$BONNE[week_counter] <- BONOut()
 		BiOp$BONNE[week_counter] <- BonnevilleFlowTarget()
+		water_df$TotalDamProtectExcess[week_counter] <- TotalDamProtectExcess()
     
 		##################################################################################################################
 		##################################################################################################################

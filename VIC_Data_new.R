@@ -22,8 +22,8 @@ VIC_Data <- function() {
 		var <- names(input_file)[i]
 		april <- paste0(names(input_file)[i], "_Apr")
 		jan <- paste0(names(input_file)[i], "_Jan")
-		assign(april, pos=1, input_file[which(input_file$Week == 36)[year_counter + num_years_to_skip],var])
-		assign(jan, pos=1, input_file[which(input_file$Week == 22)[year_counter + num_years_to_skip],var])	
+		assign(april, pos=1, input_file[which(input_file$Week == 35)[year_counter + num_years_to_skip],var])
+		assign(jan, pos=1, input_file[which(input_file$Week == 23)[year_counter + num_years_to_skip],var])	
 	}
 	start_refill_wk <<- input_file[year_counter + num_years_to_skip, "start_refill_wk"]
 }
