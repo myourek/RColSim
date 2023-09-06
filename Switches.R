@@ -16,6 +16,19 @@ Chum_Q_Switch <<- function() {
   return(Chum_Q_Switch_o)
 }  
 fish_over_refill <<- 0
+
+# gurantee refill switch
+# Options: 1 -- Use minimum refill curve and CriticalCurveMin for proportional draft
+#		   2 -- Use only CriticalCurveMin for proportional draft
+gurantee_refill <<- 2
+
+# refill for category IV dams (Arrow and Grand Coulee).
+# Options: 0--Do not use upstream release to fill to ECC curve
+#		   1--Use upstream release to fill to minimum ECC
+#		   2--Use upstream release to fill to ECC
+refill_cat4 <<- 0
+
+
 # Curtail option allows the user to select how mainstem curtailment should be calculated.
 # Options: 1--Calculate mainstem curtailment based on interruptible demand, 
 #          2--Calculate the minimum of total demand and instream flow deficit 
@@ -39,7 +52,6 @@ year_from_weekly <<- function() {
 	year_from_weekly_o = week_counter %/% 52 + 1  
 	return(year_from_weekly_o)
 }
-gurantee_refill <<- 2
 ########## MOPControl
 #This control variable is used to track measures of performance only for specific climate conditions.
 #If this variable <<-1 in the timestep, then measures of performance are recorded, otherwise they are ignored.
@@ -105,7 +117,7 @@ UseTotalEnergyContentForFirm <<- function() { # Default is 1
 	return(UseTotalEnergyContentForFirm_o)
 }
 
-CriticalCurveSw <<- 4
+CriticalCurveSw <<- 3
 
 Estimated_Efficiency <<- 0.8 # Estimated combined efficiency for all plants.  This efficiency is used for estimating energy content only.
 

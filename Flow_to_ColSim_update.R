@@ -72,16 +72,15 @@ if (simulate_demand == 1) {
 }
 
 ########################## data frames
-
+refill_names <- c("AR", "DU", "DW", "GC", "HH", "LB", "MI")
+min_refill_names <- c("AF", "AR", "BR", "CL", "DU", "DW", "GC", "HH", "LB", "MI", "KE")
 Dem_list <- c("BoiseSys", "Minidoka", "Owyhee", "Payette", "UpSnake", stn_colsim[match(mainstem_names, stn_colsim[,1]),2])
 names_Output <- c("Week", "Month", "Day", "Year", "BRRunoffAprJul", "DARunoffAprAug", "DARunoffAprSep", "DARunoffJanJul", "DURunoffAprAug", "DWRunoffAprJul", "HHRunoffAprAug", "HHRunoffMaySep",
 	"LBRunoffAprAug", "LGRunoffAprJul", "MIRunoffAprAug", "MIRunoffMayAug", "PayetteResidualInflowJanJun", "OwyheeResidualInflowJanMay", "BoiseResidualInflowJanJul", "HeiseResidualInflowJanJul", 
-	"HenryResidualInflowJanJun", "RirieResidualInflowJanJun", "PRResidualInflowJanMar", "GCResidualInflowJanMar", "RetVICWA", "RetVICPR", "RetVICMCN", "ARVariableRefillCurve", "DUVariableRefillCurve", 
-	"DWVariableRefillCurve", "GCVariableRefillCurve", "HHVariableRefillCurve", "LBVariableRefillCurve", "MIVariableRefillCurve", "AFMinRefillCurve", "ARMinRefillCurve", "BRMinRefillCurve", 
-	"CLMinRefillCurve", "DUMinRefillCurve", "DWMinRefillCurve", "GCMinRefillCurve", "HHMinRefillCurve", "KEMinRefillCurve", "LBMinRefillCurve", "MIMinRefillCurve", "AFOperatingRuleCurve", 
-	"AROperatingRuleCurve", "BROperatingRuleCurve", "CLOperatingRuleCurve", "DUOperatingRuleCurve", "DWOperatingRuleCurve", "GCOperatingRuleCurve", "HHOperatingRuleCurve", "KEOperatingRuleCurve", 
-	"LBOperatingRuleCurve", "MIOperatingRuleCurve", paste0("Flow", c("LimePoint", stn_colsim[,2])), paste0("Dem", Dem_list), paste0("Curt", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), 
-	paste0("Iflow", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), "CorrectedDARunoffAprAug", "InitialControlledFlow", "start_refill_wk", "DACorrectedResidualInflowAprAug")
+	"HenryResidualInflowJanJun", "RirieResidualInflowJanJun", "PRResidualInflowJanMar", "GCResidualInflowJanMar", "RetVICWA", "RetVICPR", "RetVICMCN", paste0(refill_names, "VariableRefillCurve"),
+	paste0(min_refill_names, "MinRefillCurve"), paste0(min_refill_names, "OperatingRuleCurve"), paste0(min_refill_names, "ECCurve"), paste0("Flow", c("LimePoint", stn_colsim[,2])), paste0("Dem", Dem_list), 
+	paste0(min_refill_names, "FloodCurve"), paste0("Curt", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), paste0("Iflow", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), "CorrectedDARunoffAprAug", 
+	"InitialControlledFlow", "start_refill_wk", "DACorrectedResidualInflowAprAug")
 Output_to_ColSim <- data.frame(matrix(ncol=length(names_Output), nrow=N))
 Output_to_ColSim[1:4] <- timeseries
 names(Output_to_ColSim) <- names_Output
@@ -212,7 +211,13 @@ OperatingRuleCurves.df$CORRA <- CLRuleCurves.df$OperatingRuleCurve
 OperatingRuleCurves.df$BROWN <- BRRuleCurves.df$OperatingRuleCurve
 
 FloodCurves.df <- data.frame(MIRuleCurves.df[1:5], MICAA=MIRuleCurves.df$Flood, ARROW=ARRuleCurves.df$Flood, LIBBY=LBRuleCurves.df$Flood, FLASF=HHRuleCurves.df$Flood,
-	DUNCA=DURuleCurves.df$Flood, DWORS=DWRuleCurves.df$Flood, BROWN=BRRuleCurves.df$Flood)
+	DUNCA=DURuleCurves.df$Flood, DWORS=DWRuleCurves.df$Flood, BROWN=BRRuleCurves.df$Flood, CORRA=CLRuleCurves.df$Flood, FLAPO=KERuleCurves.df$Flood, ALBEN=AFRuleCurves.df$Flood)
+ECC.df <- data.frame(MIRuleCurves.df[1:5], MICAA=pmin(pmax(MIRuleCurves.df$Critical, MIRuleCurves.df$AssuredRefill), MIRuleCurves.df$Flood), 
+	ARROW=pmin(pmax(ARRuleCurves.df$Critical, ARRuleCurves.df$AssuredRefill), ARRuleCurves.df$Flood), LIBBY=pmin(pmax(LBRuleCurves.df$Critical, LBRuleCurves.df$AssuredRefill), LBRuleCurves.df$Flood),
+	FLASF=pmin(pmax(HHRuleCurves.df$Critical, HHRuleCurves.df$AssuredRefill), HHRuleCurves.df$Flood), DUNCA=pmin(pmax(DURuleCurves.df$Critical, DURuleCurves.df$AssuredRefill), DURuleCurves.df$Flood),
+	DWORS=pmin(pmax(DWRuleCurves.df$Critical, DWRuleCurves.df$AssuredRefill), DWRuleCurves.df$Flood), BROWN=pmin(pmax(BRRuleCurves.df$Critical, BRRuleCurves.df$AssuredRefill), BRRuleCurves.df$Flood),
+	CORRA=pmin(CLRuleCurves.df$Critical, CLRuleCurves.df$Flood), FLAPO=pmin(pmax(KERuleCurves.df$Critical, KERuleCurves.df$AssuredRefill), KERuleCurves.df$Flood), 
+	ALBEN=pmin(pmax(AFRuleCurves.df$Critical, AFRuleCurves.df$AssuredRefill), AFRuleCurves.df$Flood))
 Mar_31s <- which(Output_to_ColSim$Week == 35)
 AprilDAUpstreamStorageGC <- pmin(4.08e6, (MIFullPoolVol - MIRuleCurves.df$Flood[Mar_31s])) + 
 	pmin(3.6e6, (ARFullPoolVol - ARRuleCurves.df$Flood[Mar_31s])) + (LBFullPoolVol - LBRuleCurves.df$Flood[Mar_31s]) + 
@@ -225,6 +230,7 @@ Output_to_ColSim$CorrectedDARunoffAprAug <- Output_to_ColSim$DARunoffAprAug - c(
 
 GCRuleCurves.df <- RuleCurve_df("GCOUL")
 FloodCurves.df$GCOUL <- GCRuleCurves.df$Flood
+ECC.df$GCOUL <- min(max(GCRuleCurves.df$Critical, GCRuleCurves.df$AssuredRefill), GCRuleCurves.df$Flood)
 OperatingRuleCurves.df$GCOUL <- GCRuleCurves.df$OperatingRuleCurve
 
 AprilDAUpstreamStorage <- c(AprilDAUpstreamStorageGC + (GCFullPoolVol - GCRuleCurves.df$Flood[Mar_31s]), rep(NA, N - n_years))
@@ -328,8 +334,12 @@ for (res in variable_refill_list) {
 }
 for (res in ListOfDams) {
 	abbrev <- paste0(stn_colsim[which(stn_colsim[,1]==res),2])
-	var <- paste0(abbrev, "MinRefillCurve")
-	Output_to_ColSim[,var] <- VariableRefillCurve_min[,res]
+	var1 <- paste0(abbrev, "MinRefillCurve")
+	var2 <- paste0(abbrev, "FloodCurve")
+	var3 <- paste0(abbrev, "ECCurve")
+	Output_to_ColSim[,var1] <- VariableRefillCurve_min[,res]
+	Output_to_ColSim[,var2] <- FloodCurves.df[,res]
+	Output_to_ColSim[,var3] <- ECC.df[,res]
 }
 for (res in names(OperatingRuleCurves.df)[-c(1:3)]) {
 	abbrev <- paste0(stn_colsim[which(stn_colsim[,1]==res),2])

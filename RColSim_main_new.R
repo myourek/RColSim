@@ -116,7 +116,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:26){
+for (I_Week in 1:N_of_TimeSteps){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -126,21 +126,14 @@ for (I_Week in 1:26){
 		###### READ INPUT DATA FOR WEEK week_counter
 		VIC_Data()
 		############### Common weekly variables
-		BRPrelim_c <- -9999
-		BRIn_c <- -9999
-		GCIn_c <- -9999
-		TotalFloodSpace_c <- -9999
-		ARFirmEngSupReq_c <- -9999
-		ARFirmEngSup_c <- -9999
-		TotalEnergyContent_c <- -9999
-		TotalECCEnergyContent_c <- -9999
-		FirmEnergyDeficit_c <- -9999
-		TotalCoordPreEnergy_c <- -9999
-		TotalNFEnergyContent_c <- -9999
-		NonFirmEnergyDeficit_c <- -9999
-		TotalMcNarySharedWater_c <- -9999
-		TotalFloodRelSharedWater_c <- -9999
-		control_wk <- 9999
+		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
+			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "DWCombSup_c", "CLCombSup_c", "GCCombSup_c", 
+			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
+			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
+			"TotalNFEnergyContent_c", "control_wk")
+		for (var in reset_variables) {
+			assign(var, -9999)
+		}
 		# ---------------- Initialize the model
 		source("~/RColSim/initialize_model_new.R")		
 	} else {
@@ -152,20 +145,14 @@ for (I_Week in 1:26){
 		###### READ INPUT DATA FOR EACH WEEK
 		VIC_Data()
 		############### COMMON WEEKLY VARIABLES
-		BRPrelim_c <- -9999
-		BRIn_c <- -9999
-		GCIn_c <- -9999
-		TotalFloodSpace_c <- -9999
-		ARFirmEngSupReq_c <- -9999
-		ARFirmEngSup_c <- -9999
-		TotalEnergyContent_c <- -9999
-		TotalECCEnergyContent_c <- -9999
-		FirmEnergyDeficit_c <- -9999
-		TotalCoordPreEnergy_c <- -9999
-		TotalNFEnergyContent_c <- -9999
-		NonFirmEnergyDeficit_c <- -9999
-		TotalMcNarySharedWater_c <- -9999
-		TotalFloodRelSharedWater_c <- -9999
+		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
+			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "DWCombSup_c", "CLCombSup_c", "GCCombSup_c", 
+			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
+			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
+			"TotalNFEnergyContent_c", "control_week")
+		for (var in reset_variables) {
+			assign(var, -9999)
+		}
   
 		MIRelease_c <- MIRelease()
 		dams_in$MICAA[week_counter] <- MIInflow()
