@@ -310,7 +310,7 @@ runoff_remaining <- function(stn, start_wk, end_wk, flow) {
 		year_flow <- subset(mod_flow, Year==y)
 		cumflow <- cumsum(year_flow[stn])[,1]
 		total_inflow <- sum(year_flow[stn])
-		mod_flow.df[which(mod_flow.df[,2]==y & mod_flow.df[,1] %in% start_wk:(end_wk+1)),3] <- c(total_inflow, pmax(0, total_inflow - cumflow))
+		mod_flow.df[which(mod_flow.df[,2]==y & mod_flow.df[,1] %in% start_wk:end_wk),3] <- pmax(0, total_inflow - cumflow)
 	}
 	return(mod_flow.df[,3])
 }

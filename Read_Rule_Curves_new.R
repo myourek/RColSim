@@ -77,6 +77,9 @@ Read_Rule_Curves <- function() {
 	GC_VDLL_input <<- read.table(paste0(input_dir, "GC/GC_VDLL.txt"), header=T)
 	GC_elev_input <<- read.table(paste0(input_dir, "GC/GC_storage_elevation.txt"), header=T)
 	GCSummerDraft_input <<- read.table(paste0(input_dir, "GC/GCSummerDraft.txt"), header=T)
+	GCResidualInflow_input <<- read.table(paste0(input_dir, "GC/GCResidual_inflow.txt"), header=T)
+	PRInc_inflow_input <<- read.table(paste0(input_dir, "GC/PRInc_inflow.txt"), header=T)
+	BONDraftLimit_input <<- read.table(paste0(input_dir, "GC/BonnevilleDraftLimit.txt"), header=T)
 
 	##### Duncan ##########
 	DUFlood_input <<- read.table(paste0(input_dir, "DUECCandFC/DUFlood_new.txt"), header=T)

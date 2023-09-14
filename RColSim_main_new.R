@@ -33,6 +33,7 @@
 #project_name <- commandArgs()[6]
 #scr <- commandArgs()[7]
 #run_type <- commandArgs()[8]
+if (length(ls()) > 0) { rm(list=ls()) }
 
 project_name <- "update_RColSim"
 scr = "Historical_baseline"
@@ -116,7 +117,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:N_of_TimeSteps){
+for (I_Week in 1:45){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -129,7 +130,7 @@ for (I_Week in 1:N_of_TimeSteps){
 		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
 			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "DWCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
-			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
+			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
 			"TotalNFEnergyContent_c", "control_wk")
 		for (var in reset_variables) {
 			assign(var, -9999)
@@ -148,7 +149,7 @@ for (I_Week in 1:N_of_TimeSteps){
 		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
 			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "DWCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
-			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
+			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
 			"TotalNFEnergyContent_c", "control_week")
 		for (var in reset_variables) {
 			assign(var, -9999)

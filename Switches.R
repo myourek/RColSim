@@ -26,7 +26,7 @@ gurantee_refill <<- 2
 # Options: 0--Do not use upstream release to fill to ECC curve
 #		   1--Use upstream release to fill to minimum ECC
 #		   2--Use upstream release to fill to ECC
-refill_cat4 <<- 0
+refill_cat4 <<- 1
 
 
 # Curtail option allows the user to select how mainstem curtailment should be calculated.
