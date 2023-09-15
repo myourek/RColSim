@@ -591,7 +591,7 @@ MIMinFloodRelReq <- function() { # Minimum release during refill period to ensur
 	return(MIMinFloodRelReq_o)
 }
 MIDamProtectExcess <- function() {
-	MIDamProtectExcess_o <- max(0, MIDamProtectRel() - MIPrelim() - MICombSup_c + MIRelReducReq_c)
+	MIDamProtectExcess_o <- max(0, MIDamProtectRel() - MIPrelim() - MICombSup_c)
 	return(MIDamProtectExcess_o)
 }
 
@@ -721,6 +721,10 @@ ARIn <- function() { # Preliminary inflow to Arrow
 	ARIn_o <- REVPrelim() + ARInc() - AREvap()
 	return(ARIn_o)
 }
+ARPreInflow <- function() {
+	ARPreInflow_o <- max(min(MIPrelim() + MICombSup(), MIRelLimit()), MIDamProtectRel()) + (ArrowFlowData() - MicaFlowData())
+	return(ARPreInflow_o)
+}
 ARInflow <- function() {
 	ARInflow_o <- REVOut() + ARInc() - AREvap()
 	return(ARInflow_o)
@@ -751,12 +755,12 @@ ARMinReq <- function() {
 }
 ARDamProtectRel <- function() {
 	#ARDamProtectRel_o <- max(0, Arrow() + ARInflow() - ARFullPoolVol)
-	ARDamProtectRel_o <- max(0, Arrow() + ARIn() + MICombSup() - ARFullPoolVol)
+	ARDamProtectRel_o <- max(0, Arrow() + ARPreInflow() - ARFullPoolVol)
 	return(ARDamProtectRel_o)
 }
 ARRelLimit <- function() {
 	#ARRelLimit_o <- max(Arrow() + ARInflow() - ARBotVol, 0)
-	ARRelLimit_o <- max(Arrow() + ARIn() + MICombSup() - ARBotVol, 0)
+	ARRelLimit_o <- max(Arrow() + ARPreInflow() - ARBotVol, 0)
 	return(ARRelLimit_o)
 }
 ARAvailAfter <- function() {
@@ -1057,7 +1061,7 @@ ARFloodSpace <- function() {
 }
 ARFloodRelSharedWater <- function() {
 	#ARFloodRelSharedWater_o <- max(0, Arrow() + ARInflow() - ARPrelim() - ARCombSup_c - ARECC())
-	ARFloodRelSharedWater_o <- max(0, Arrow() + ARIn() + MICombSup_c - ARPrelim() - ARCombSup_c - ARECC())
+	ARFloodRelSharedWater_o <- max(0, Arrow() + ARPreInflow() - ARPrelim() - ARCombSup() - ARECC())
 	return(ARFloodRelSharedWater_o)
 }
 ARFloodFrac <- function() { 
@@ -1096,21 +1100,20 @@ ARMinFloodRelReq <- function() { # Minimum release during refill period to ensur
 }
 ARCombUpProtect <- function() {
 	inflow <- ARIn() + ARCombUpSup() + MIDamProtectExcess()
-	outflow <- ARPrelim() + ARCombSup_c - ARRelReducReq() + ARMinFloodRelReq()
+	outflow <- ARPrelim() + ARCombSup_c
 	ARCombUpProtect_o <- max(min(MIDamProtectExcess(), Arrow() + inflow - outflow - ARECC()), 0)
 	ARCombUpProtect_c <<- ARCombUpProtect_o
 	return(ARCombUpProtect_o)
 }
 ARDamProtectExcess <- function() {
-	ARDamProtectExcess_o <- max(0, ARDamProtectRel() - ARPrelim() - ARCombSup_c + ARRelReducReq_c - 
-		ARMinFloodRelReq_c - ARCombUpProtect_c)
+	ARDamProtectExcess_o <- max(0, ARDamProtectRel() - ARPrelim() - ARCombSup_c - ARCombUpProtect_c)
 	return(ARDamProtectExcess_o)
 }
 
 ################### Arrow final release ###############################
  
 ARRelease <- function() { 
-	ARRelease_o <- max(min(ARPrelim() + ARCombSup_c - ARRelReducReq() + ARMinFloodRelReq() + ARCombUpProtect(), ARRelLimit()), ARDamProtectRel())
+	ARRelease_o <- max(min(ARPrelim() + ARCombSup_c - ARRelReducReq() + ARMinFloodRelReq_c + ARCombUpProtect(), ARRelLimit()), ARDamProtectRel())
 	return(ARRelease_o)
 }
 AROutflow <- function() {
@@ -1863,7 +1866,7 @@ LBMinFloodRelReq <- function() { # Minimum release during refill period to ensur
 	return(LBMinFloodRelReq_o)
 }
 LBDamProtectExcess <- function() {
-	LBDamProtectExcess_o <- max(0, LBDamProtectRel() - LBPrelim() - LBCombSup_c + LBRelReducReq())
+	LBDamProtectExcess_o <- max(0, LBDamProtectRel() - LBPrelim() - LBCombSup_c)
 	return(LBDamProtectExcess_o)
 }
 
@@ -1891,7 +1894,7 @@ BONFInc <- function() {
 	return(BONFInc_o)
 }
 BONFIn <- function() {
-	BONFIn_o <- LBOutflow() + BONFInc()
+	BONFIn_o <- LBRelease() + BONFInc()
 	return(BONFIn_o)
 }
 BONFOut <- function() {
@@ -1972,6 +1975,11 @@ CLIn <- function() {
 	CLIn_o <- DUPrelim() + LBPrelim() + (CorraLinnFlowData() - DuncanFlowData() - LibbyFlowData()) - CLEvap()
 	return(CLIn_o)
 }
+CLPreInflow <- function() {
+	CLPreInflow_o <- DURelease() + max(min(LBPrelim() + LBCombSup_c, LBRelLimit()), LBDamProtectRel()) + 
+		(CorraLinnFlowData() - LibbyFlowData() - DuncanFlowData())
+	return(CLPreInflow_o)
+}
 CLInflow <- function() {
 	CLInflow_o <- DUOutflow() + BONFOut() + CLInc() - CLEvap()
 	return(CLInflow_o)
@@ -1985,11 +1993,11 @@ CLMinReq <- function() {
 	return(CLMinReq_o)
 }
 CLDamProtectRel <- function() {
-	CLDamProtectRel_o <- max(0, CorraLinn() + CLInflow() - CLFullPoolVol)
+	CLDamProtectRel_o <- max(0, CorraLinn() + CLPreInflow() - CLFullPoolVol)
 	return(CLDamProtectRel_o)
 }
 CLRelLimit <- function() {
-	CLRelLimit_o <- max(CorraLinn() + CLInflow() - CLBotVol, 0)
+	CLRelLimit_o <- max(CorraLinn() + CLPreInflow() - CLBotVol, 0)
 	return(CLRelLimit_o)
 }
 CLAvailAfter <- function() {
@@ -2629,7 +2637,7 @@ HHMinFloodRelReq <- function() {
 	return(HHMinFloodRelReq_o)
 }
 HHDamProtectExcess <- function() {
-	HHDamProtectExcess_o <- max(0, HHDamProtectRel() - HHPrelim() - HHCombSup_c + HHRelReducReq())
+	HHDamProtectExcess_o <- max(0, HHDamProtectRel() - HHPrelim() - HHCombSup_c)
 	return(HHDamProtectExcess_o)
 }
 
@@ -2657,7 +2665,7 @@ COLInc <- function() {
 	return(COLInc_o)
 }
 COLIn <- function() {
-	COLIn_o <- HHOutflow() + COLInc()
+	COLIn_o <- HHRelease() + COLInc()
 	return(COLIn_o)
 }
 COLOut <- function() {
@@ -2729,6 +2737,10 @@ KEIn <- function() {
 	KEIn_o <- HHPrelim() + (KerrFlowData() - HungryHorseFlowData())
 	return(KEIn_o)
 }
+KEPreInflow <- function() {
+	KEPreInflow_o <- max(min(HHPrelim() + HHCombSup_c, HHRelLimit()), HHDamProtectRel()) + KerrFlowData() - HungryHorseFlowData()
+	return(KEPreInflow_o)
+}
 KEInflow <- function() {
 	KEInflow_o <- COLOut() + KEInc()
 	return(KEInflow_o)
@@ -2755,11 +2767,11 @@ KEMinReq <- function() {
 	return(KEMinReq_o)
 }
 KEDamProtectRel <- function() {
-	KEDamProtectRel_o <- max(0, KerrFlowData() + KEInflow() - KEFullPoolVol)
+	KEDamProtectRel_o <- max(0, KerrFlowData() + KEPreInflow() - KEFullPoolVol)
 	return(KEDamProtectRel_o)
 }
 KERelLimit <- function() {
-	KERelLimit_o <- max(Kerr() + KEInflow() - KEBotVol, 0)
+	KERelLimit_o <- max(Kerr() + KEPreInflow() - KEBotVol, 0)
 	return(KERelLimit_o)
 }
 KEAvailAfter <- function() {
@@ -2946,14 +2958,14 @@ KECombUpProtect <- function() {
 	return(KECombUpProtect_o)
 }
 KEDamProtectExcess <- function() {
-	KEDamProtectExcess_o <- max(0, KEDamProtectRel() - KEPrelim() - KECombSup_c - KECombUpProtect_c)
+	KEDamProtectExcess_o <- max(0, KEDamProtectRel() - KEPrelim() - KECombSup_c - KECombUpProtect())
 	return(KEDamProtectExcess_o)
 }
 
 ################ Kerr final release #####################
 
 KERelease <- function() {
-	KERelease_o <- max(min(KEPrelim() + KECombSup_c + KECombUpProtect(), KERelLimit()), KEDamProtectRel())
+	KERelease_o <- max(min(KEPrelim() + KECombSup_c + KECombUpProtect_c, KERelLimit()), KEDamProtectRel())
 	return(KERelease_o)
 }
 KEOutflow <- function() {  
@@ -2982,7 +2994,7 @@ TFPenLimit <- function() {
 	return(TFPenLimit_o)
 }
 TFIn <- function() {
-	TFIn_o <- KEOutflow() + TFInc()
+	TFIn_o <- KERelease() + TFInc()
 	return(TFIn_o)
 }
 TFPrelim <- function() {
@@ -3098,11 +3110,11 @@ AlbeniFalls <- function() {
 	}
 	return(AlbeniFalls_o)
 }
-AlbeniFallFlowData <- function() {
+AlbeniFallsFlowData <- function() {
 	return(FlowAF)
 }
 AFInc <- function() {
-	AFInc_o <- AlbeniFallFlowData() - CabinetFlowData()
+	AFInc_o <- AlbeniFallsFlowData() - CabinetFlowData()
 	return(AFInc_o)
 }
 AFSurfaceArea <- function() {
@@ -3146,6 +3158,10 @@ AFIn <- function() {
 	AFIn_o <- CBPrelim() + AFInc() - AFEvap()
 	return(AFIn_o)
 }
+AFPreInflow <- function() {
+	AFPreInflow_o <- KERelease() + AlbeniFallsFlowData() - KerrFlowData()
+	return(AFPreInflow_o)
+}
 AFInflow <- function() {
 	AFInflow_o <- CBOut() + AFInc() - AFEvap()
 	return(AFInflow_o)
@@ -3171,11 +3187,11 @@ AFMinReq <- function() {
 	return(AFMinReq_o)
 }
 AFDamProtectRel <- function() {
-	AFDamProtectRel_o <- max(AlbeniFalls() + AFInflow() - AFFullPoolVol, 0)
+	AFDamProtectRel_o <- max(AlbeniFalls() + AFPreInflow() - AFFullPoolVol, 0)
 	return(AFDamProtectRel_o)
 }
 AFRelLimit <- function() {
-	AFRelLimit_o <- max(AlbeniFalls() + AFInflow() - AFBotVol, 0)	
+	AFRelLimit_o <- max(AlbeniFalls() + AFPreInflow() - AFBotVol, 0)	
 	return(AFRelLimit_o)
 }
 AFAvailAfter <- function() {
@@ -3372,7 +3388,7 @@ BoxCanyonFlowData <- function() {
 	return(FlowBC)
 }
 BCInc <- function() {
-	BCInc_o <- BoxCanyonFlowData() - AlbeniFallFlowData() 
+	BCInc_o <- BoxCanyonFlowData() - AlbeniFallsFlowData() 
 	return(BCInc_o)
 }
 BCPenLimit <- function() {
@@ -3385,7 +3401,7 @@ BCNetHead <- function() {
 	return(BCNetHead_o)
 }
 BCIn <- function() {
-	BCIn_o <- AFOutflow() + BCInc()
+	BCIn_o <- AFRelease() + BCInc()
 	return(BCIn_o)
 }
 BCPrelim <- function() {
@@ -3512,9 +3528,10 @@ GCIn <- function() { # We do not calculate Prelim() for the immediately upstream
 	GCIn_o <- BDPrelim() + ARPrelim() + CLPrelim() + GCInc() - GCEvap()
 	return(GCIn_o)
 }
-Canada_Outflows <- function() {
-	CanadaOutflows_o <- AROutflow() + CLOutflow()
-	return(CanadaOutflows_o)
+GCPreInflow <- function() {
+	GCPreInflow_o <- AFRelease() + max(min(ARPrelim() + ARCombSup_c + ARCombUpProtect(), ARRelLimit()), ARDamProtectRel()) +
+		CLRelease() + (GrandCouleeFlowData() - ArrowFlowData() - CorraLinnFlowData() - AlbeniFallsFlowData())
+	return(GCPreInflow_o)
 }
 GCInflow <- function() {
 	GCInflow_o <- BDOut() + AROutflow() + CLOutflow() + GCInc() - GCEvap()
@@ -3541,11 +3558,11 @@ GCMinReq <- function() {
 	return(GCMinReq_o)
 }
 GCDamProtectRel <- function() {
-	GCDamProtectRel_o <- max(0, GrandCoulee() + GCInflow() - GCFullPoolVol)
+	GCDamProtectRel_o <- max(0, GrandCoulee() + GCPreInflow() - GCFullPoolVol)
 	return(GCDamProtectRel_o)
 }
 GCRelLimit <- function() {
-	GCRelLimit_o <- max(GrandCoulee() + GCInflow() - GCBotVol, 0)
+	GCRelLimit_o <- max(GrandCoulee() + GCPreInflow() - GCBotVol, 0)
 	return(GCRelLimit_o)
 }
 GCAvailAfter <- function() {
@@ -4053,11 +4070,11 @@ GCFloodSpace <- function() {
 }
 GCFloodRelSharedWater <- function() {
 	GCIn_o <- BDPrelim() + ARPrelim() + CLPrelim() + GCInc() + GCCombUpSup()
-	GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCIn_o - GCPrelim() - GCCombSup_c - GCECC())
+	GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCIn_o - GCPrelim() - GCCombSup() - GCECC())
 	return(GCFloodRelSharedWater_o)
 }
 GCMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
-	GCMinFloodRelReq_o <- min(GCFloodRelSharedWater(), MinFloodRelReq_c)
+	GCMinFloodRelReq_o <- min(GCFloodRelSharedWater(), MinFloodRelReq())
 	GCMinFloodRelReq_c <<- GCMinFloodRelReq_o
 	water_df$GCMinFloodRelReq[week_counter] <<- GCMinFloodRelReq_c
 	return(GCMinFloodRelReq_o)
@@ -4065,12 +4082,12 @@ GCMinFloodRelReq <- function() { # Minimum release during refill period to ensur
 GCCombUpProtect <- function() {
 	excess <- AFDamProtectExcess() + ARDamProtectExcess() + CLDamProtectExcess() + AFCombUpProtect_c + ARCombUpProtect_c + CLCombUpProtect_c
 	inflow <- GCIn_c + GCCombUpSup()
-	outflow <- GCPrelim() + GCCombSup_c - TotalRelReducReq_c + GCMinFloodRelReq_c
+	outflow <- GCPrelim() + GCCombSup_c
 	GCCombUpProtect_o <- max(min(GrandCoulee() + inflow - outflow - GCECC(), excess), 0)
 	return(GCCombUpProtect_o)
 }
 GCDamProtectExcess <- function() {
-	GCDamProtectExcess_o <- max(0, GCDamProtectRel() - GCPrelim() - GCCombSup_c + TotalRelReducReq_c - GCMinFloodRelReq() - GCCombUpProtect())
+	GCDamProtectExcess_o <- max(0, GCDamProtectRel() - GCPrelim() - GCCombSup_c - GCCombUpProtect())
 	return(GCDamProtectExcess_o)
 }
 
@@ -4081,7 +4098,7 @@ GCLimitedStorage <- function() {
 	return(GCLimitedStorage_o)
 }
 GCRelease <- function() {
-	GCRelease_o <- max(min(GCPrelim() + GCCombSup_c - TotalRelReducReq_c + GCMinFloodRelReq() + GCCombUpProtect(), GCRelLimit()), GCDamProtectRel())
+	GCRelease_o <- max(min(GCPrelim() + GCCombSup_c - TotalRelReducReq_c + GCMinFloodRelReq_c + GCCombUpProtect(), GCRelLimit()), GCDamProtectRel())
 	return(GCRelease_o)
 }
 GCOutflow <- function() {
@@ -4201,7 +4218,7 @@ CJPreEnergy <- function() {
 	return(CJPreEnergy_o)
 }
 CJIn <- function() {
-	CJIn_o <- GCOutflow() + CJInc()
+	CJIn_o <- GCRelease_c + CJInc()
 	return(CJIn_o)
 }
 CJOut <- function() {
@@ -4439,7 +4456,7 @@ RRPreEnergy <- function() {
 	return(RRPreEnergy_o)
 }
 RRIn <- function() {
-	RRIn_o <- WEOut() + CHOutflow() + RRInc()
+	RRIn_o <- WEOut() + CHRelease_c + RRInc()
 	return(RRIn_o)
 }
 RROut <- function() {
@@ -4781,7 +4798,7 @@ PALIn <- function() {
 	return(PALIn_o)
 }
 PALInflow <- function() {
-	PALInflow_o <- JLOutflow() + PALInc()
+	PALInflow_o <- JLRelease() + PALInc()
 	return(PALInflow_o)
 }
 # The Upper Snake flood rule curve is based on the storage reservation diagram for Palisades and Jackson Lake reservoirs. The curve is multiplied by the ratio of total Upper Snake storage (4135695 AF) 
@@ -4860,11 +4877,11 @@ PALCombUpProtect <- function() {
 	return(PALCombUpProtect_o)
 }
 PALDamProtectExcess <- function() {
-	PALDamProtectExcess_o <- max(0, PALDamProtectRel() - PALPrelim() - PALCombUpProtect_c)
+	PALDamProtectExcess_o <- max(0, PALDamProtectRel() - PALPrelim() - PALCombUpProtect())
 	return(PALDamProtectExcess_o)
 }
 PALRelease <- function() {
-  PALRelease_o <- max(min(PALPrelim() + PALCombUpProtect(), PALRelLimit()), PALDamProtectRel())
+  PALRelease_o <- max(min(PALPrelim() + PALCombUpProtect_c, PALRelLimit()), PALDamProtectRel())
   return(PALRelease_o)
 }
 PALOutflow <- function() {
@@ -5134,7 +5151,7 @@ AMIn <- function() {
 	return(AMIn_o)
 }
 AMInflow <- function() {
-	AMInflow_o <- IPOutflow() + PALOutflow() + RIROutflow() + AMInc()
+	AMInflow_o <- IPRelease() + PALRelease() + RIRRelease() + AMInc()
 	return(AMInflow_o)
 }
 MinidokaAgReq <- function() {
@@ -5228,7 +5245,7 @@ MINIn <- function() {
 	return(MINIn_o)
 }
 MINInflow <- function() {
-	MINInflow_o <- AMOutflow() + MINInc()
+	MINInflow_o <- AMRelease() + MINInc()
 	return(MINInflow_o)
 }
 MINAgReq <- function() {
@@ -5290,7 +5307,7 @@ MILPrelim <- function() {
 	return(MILPrelim_o)
 }
 MILIn <- function() {
-	MILIn_o <- MINOutflow() + MILInc()
+	MILIn_o <- MINRelease() + MILInc()
 	return(MILIn_o)
 }
 MILOut <- function() {
@@ -5709,7 +5726,7 @@ BRIn <- function() {
 	return(BRIn_o)
 }
 BRInflow <- function() {
-	BRInflow_o <- PayetteOutflow() + OWYOutflow() + BoiseOutflow() + MILOut() + BRInc() - BREvap()
+	BRInflow_o <- PayetteRelease() + OWYRelease() + BoiseRelease() + MILOut() + BRInc() - BREvap()
 	return(BRInflow_o)
 }
 
@@ -6096,11 +6113,11 @@ BRCombUpProtect <- function() {
 	return(BRCombUpProtect_o)
 }
 BRDamProtectExcess <- function() {
-	BRDamProtectExcess_o <- max(0, BRDamProtectRel() - BRPrelim() - BRCombSup_c - BRCombUpProtect_c)
+	BRDamProtectExcess_o <- max(0, BRDamProtectRel() - BRPrelim() - BRCombSup_c - BRCombUpProtect())
 	return(BRDamProtectExcess_o)
 }
 BRRelease <- function() {
-	BRRelease_o <- max(min(BRPrelim() + BRCombSup() + BRCombUpProtect(), BRRelLimit()), BRDamProtectRel())
+	BRRelease_o <- max(min(BRPrelim() + BRCombSup() + BRCombUpProtect_c, BRRelLimit()), BRDamProtectRel())
 	return(BRRelease_o)
 }
 BROutflow <- function() {
@@ -6125,7 +6142,7 @@ OXPenLimit <- function() {
 	return(OXPenLimit_o)
 }
 OXIn <- function() {
-	OXIn_o <- BROutflow()
+	OXIn_o <- BRRelease()
 	return(OXIn_o)
 }
 OXPrelim <- function() {
@@ -6542,7 +6559,7 @@ LGPenLimit <- function() {
 	return(LGPenLimit_o)
 }
 LGIn <- function() {
-	LGIn_o <- DWOutflow() + HCOut() + LGInc()
+	LGIn_o <- DWRelease() + HCOut() + LGInc()
 	return(LGIn_o)
 }
 LGPrelim <- function() {
@@ -6945,7 +6962,7 @@ DANetHead <- function() {
 	return(DANetHead_o)
 }
 DAIn <- function() {
-	DAIn_o <- JDOut() + PELOutflow() + DAInc()
+	DAIn_o <- JDOut() + PELRelease_c + DAInc()
 	return(DAIn_o)
 }
 DACurtail <- function() {
@@ -7088,8 +7105,8 @@ TotalFloodRelSharedWater <- function() {
 	return(TotalFloodRelSharedWater_o)
 }
 TotalRelReducReq <- function() {
-	#TotalRelReducReq_o <- max(0, DAPrelim() + TotalFishSup() + TotalEnergySup() + TotalDamProtectExcess() - ControlledFlow() * cfsTOafw)
-	TotalRelReducReq_o <- max(0, DAPrelim() + TotalFishSup() + TotalEnergySup() - ControlledFlow() * cfsTOafw)
+	TotalRelReducReq_o <- max(0, DAPrelim() + TotalFishSup() + TotalEnergySup() + TotalDamProtectExcess() + TotalFloodRelease() - ControlledFlow() * cfsTOafw)
+	#TotalRelReducReq_o <- max(0, DAPrelim() + TotalFishSup() + TotalEnergySup() - ControlledFlow() * cfsTOafw)
 	TotalRelReducReq_c <<- TotalRelReducReq_o
 	if (is.na(water_df$TotalRelReducReq[week_counter])) {
 		water_df$TotalRelReducReq[week_counter] <<- TotalRelReducReq_c
@@ -7100,8 +7117,8 @@ MinFloodRelReq <- function() {
 	if (is.na(start_refill_wk)) {
 		MinFloodRelReq_o <- 0
 	} else if (week_in_year %in% start_refill_wk:52) {
-#		MinFloodRelReq_o <- max(ControlledFlow() * cfsTOafw - DAPrelim() - TotalFishSup() - TotalEnergySup() - TotalDamProtectExcess(),0)
-		MinFloodRelReq_o <- max(ControlledFlow() * cfsTOafw - DAPrelim() - TotalFishSup() - TotalEnergySup(),0)
+		MinFloodRelReq_o <- max(ControlledFlow() * cfsTOafw - DAPrelim() - TotalFishSup() - TotalEnergySup() - TotalDamProtectExcess_c,0)
+		#MinFloodRelReq_o <- max(ControlledFlow() * cfsTOafw - DAPrelim() - TotalFishSup() - TotalEnergySup(),0)
 	} else {
 		MinFloodRelReq_o <- 0
 	}
@@ -7111,6 +7128,7 @@ MinFloodRelReq <- function() {
 TotalDamProtectExcess <- function() {
 	TotalDamProtectExcess_o <- GCDamProtectExcess() + GCCombUpProtect() + BRDamProtectExcess() + 
 		BRCombUpProtect() + DWDamProtectExcess() 
+	TotalDamProtectExcess_c <<- TotalDamProtectExcess_o
 	return(TotalDamProtectExcess_o)
 }
 TotalFloodRelease <- function() {

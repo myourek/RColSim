@@ -29,6 +29,7 @@ VIC_Data <- function() {
 		}
 	}
 	start_refill_wk <<- input_file[year_counter + num_years_to_skip, "start_refill_wk"]
+	start_refill_wk_GC <<- input_file[year_counter + num_years_to_skip, "start_refill_wk_GC"]
 }
 
 

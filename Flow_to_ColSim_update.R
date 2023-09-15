@@ -80,7 +80,7 @@ names_Output <- c("Week", "Month", "Day", "Year", "BRRunoffAprJul", "DARunoffApr
 	"HenryResidualInflowJanJun", "RirieResidualInflowJanJun", "PRResidualInflowJanMar", "GCResidualInflowJanMar", "RetVICWA", "RetVICPR", "RetVICMCN", paste0(refill_names, "VariableRefillCurve"),
 	paste0(min_refill_names, "MinRefillCurve"), paste0(min_refill_names, "OperatingRuleCurve"), paste0(min_refill_names, "ECCurve"), paste0("Flow", c("LimePoint", stn_colsim[,2])), paste0("Dem", Dem_list), 
 	paste0(min_refill_names, "FloodCurve"), paste0("Curt", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), paste0("Iflow", stn_colsim[match(mainstem_names, stn_colsim[,1]),2]), "CorrectedDARunoffAprAug", 
-	"InitialControlledFlow", "start_refill_wk", "DACorrectedResidualInflowAprAug")
+	"InitialControlledFlow", "start_refill_wk", "start_refill_wk_GC", "DACorrectedResidualInflowAprAug")
 Output_to_ColSim <- data.frame(matrix(ncol=length(names_Output), nrow=N))
 Output_to_ColSim[1:4] <- timeseries
 names(Output_to_ColSim) <- names_Output
@@ -297,7 +297,7 @@ for (y in 1:length(years)) {
 	wk_GC <- which(subset(modified_flow, Year == years[y])$DALLE >= ICF * cfsTOafw)[1] + 22
 	start_refill_wk_GC <- c(start_refill_wk_GC, wk_GC)
 }
-
+Output_to_ColSim$start_refill_wk_GC <- c(start_refill_wk_GC, rep(NA, N - n_years))
 
 ########## Residual runoff
 

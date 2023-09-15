@@ -82,7 +82,7 @@ N_of_TimeSteps <- length(date_hist_sim[,1])
 # 5 files need to be loaded in the following order: 1- LoadFunctions.R 2- Read_Rule_Curves.R 3- Switches.R  4- dataframes.R 5- Measures of performance
 
 # 1- LOAD ALL FUNCTIONS
-source("~/RColSim/LoadFunctions_update_cleaned.R") 
+source("~/RColSim/LoadFunctions_update_cleaned2.R") 
 # 2- READ ALL INPUT FILES
 source("~/RColSim/Read_Rule_Curves_new.R")
 Read_Rule_Curves()
@@ -117,7 +117,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:45){
+for (I_Week in 1:42	){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -128,7 +128,7 @@ for (I_Week in 1:45){
 		VIC_Data()
 		############### Common weekly variables
 		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
-			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "DWCombSup_c", "CLCombSup_c", "GCCombSup_c", 
+			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
 			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
 			"TotalNFEnergyContent_c", "control_wk")
@@ -147,7 +147,7 @@ for (I_Week in 1:45){
 		VIC_Data()
 		############### COMMON WEEKLY VARIABLES
 		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
-			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "DWCombSup_c", "CLCombSup_c", "GCCombSup_c", 
+			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
 			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
 			"TotalNFEnergyContent_c", "control_week")
