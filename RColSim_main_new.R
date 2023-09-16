@@ -117,7 +117,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:42	){
+for (I_Week in 1:8){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -127,7 +127,7 @@ for (I_Week in 1:42	){
 		###### READ INPUT DATA FOR WEEK week_counter
 		VIC_Data()
 		############### Common weekly variables
-		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
+		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "CJIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
 			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
 			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
@@ -146,7 +146,7 @@ for (I_Week in 1:42	){
 		###### READ INPUT DATA FOR EACH WEEK
 		VIC_Data()
 		############### COMMON WEEKLY VARIABLES
-		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
+		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "CJIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
 			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
 			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
@@ -154,7 +154,7 @@ for (I_Week in 1:42	){
 		for (var in reset_variables) {
 			assign(var, -9999)
 		}
-  
+		#rm(CLCombSup_c)
 		MIRelease_c <- MIRelease()
 		dams_in$MICAA[week_counter] <- MIInflow()
 		dams_out$MICAA[week_counter] <- MIOutflow()
@@ -176,9 +176,9 @@ for (I_Week in 1:42	){
 		flood_curve_df$FLASF[week_counter] <- HHFloodCurve()
 		energy_curve_df$FLASF[week_counter] <- HHECC()
 
-		KERelease_c <- KERelease()
+		#KERelease_c <- KERelease()
 		dams_in$FLAPO[week_counter] <- KEInflow()
-		dams_out$FLAPO[week_counter] <- KEOutflow()
+		dams_out$FLAPO[week_counter] <- KERelease_c 
 		flood_curve_df$FLAPO[week_counter] <- KEFloodCurve()
 		energy_curve_df$FLAPO[week_counter] <- KerrECC()
 
@@ -191,9 +191,9 @@ for (I_Week in 1:42	){
 		dams_in$CABIN[week_counter] <- CBIn()
 		dams_out$CABIN[week_counter] <- CBOut()
 
-		AFRelease_c <- AFRelease()
+		#AFRelease_c <- AFRelease()
 		dams_in$ALBEN[week_counter] <- AFInflow()
-		dams_out$ALBEN[week_counter] <- AFOutflow()
+		dams_out$ALBEN[week_counter] <- AFRelease_c
 		flood_curve_df$ALBEN[week_counter] <- AFFloodCurve()
 		energy_curve_df$ALBEN[week_counter] <- AFECC()
 
@@ -212,25 +212,25 @@ for (I_Week in 1:42	){
 		dams_in$BONFE[week_counter] <- BONFIn()
 		dams_out$BONFE[week_counter] <- BONFOut()
 
-		DURelease_c <- DURelease() 
+		#DURelease_c <- DURelease() 
 		dams_in$DUNCA[week_counter] <- DUInflow()
-		dams_out$DUNCA[week_counter] <- DUOutflow()
+		dams_out$DUNCA[week_counter] <- DURelease_c
 		flood_curve_df$DUNCA[week_counter] <- DUFloodCurve()
 		energy_curve_df$DUNCA[week_counter] <- DUECC()
 
-		CLRelease_c <- CLRelease() 
+		#CLRelease_c <- CLRelease() 
 		dams_in$CORRA[week_counter] <- CLInflow()
-		dams_out$CORRA[week_counter] <- CLOutflow()
+		dams_out$CORRA[week_counter] <- CLRelease_c
 		flood_curve_df$CORRA[week_counter] <- CLFloodCurve()
 		energy_curve_df$CORRA[week_counter] <- CLECC()
 
-		GCRelease_c <- GCRelease()
+		#GCRelease_c <- GCRelease()
 		dams_in$GCOUL[week_counter] <- GCInflow()
-		dams_out$GCOUL[week_counter] <- GCOutflow()
+		dams_out$GCOUL[week_counter] <- GCRelease_c
 		flood_curve_df$GCOUL[week_counter] <- GCFloodCurve()
 		energy_curve_df$GCOUL[week_counter] <- GCECC()
-
-		dams_in$CHIEF[week_counter] <- CJIn()
+		
+		dams_in$CHIEF[week_counter] <- CJIn_c
 		dams_out$CHIEF[week_counter] <- CJOut()
 		if (track_curtailment == week_counter) {
 			mainstem_curtailments$CHIEF[week_counter] <- CJCurtail()
@@ -415,7 +415,7 @@ for (I_Week in 1:42	){
 		MOP_df$BelowFCC[week_counter] <- BelowFCC() # Excess flood storage space
 		MOP_df$FirmEnergySales[week_counter] <- FirmEnergySales()
 		#MOP_df$NonFirmSpotSales[week_counter] <- NonFirmSpotSales()
-		MOP_df$TotalSysEnergy[week_counter] <- MaxSystemEnergy()
+		MOP_df$TotalSysEnergy[week_counter] <- MaxSystemEnergy_c
 		
 		print(paste0("Simulation date = ", as.Date(date_hist_sim[week_counter,1])))
 		print(Sys.time())
@@ -437,7 +437,7 @@ for (I_Week in 1:42	){
 			write.table(cbind(date_hist_sim[week_counter,], mainstem_curtailments[week_counter,]), paste0(OutputFolder, "/mainstem_curtailment.txt"), row.names=F, col.names=F, append=T)
 		}
 	}
-	#print(AprilUpstreamFloodEvacGC())
+	print(CJPrelim() + GCCombSup() + GCCombUpProtect() + GCMinFloodRelReq() - CJOut())
 }
 
 

@@ -50,9 +50,9 @@ dams_out$FLASF[1] <- HHOutflow()
 flood_curve_df$FLASF[1] <- HHFloodCurve()
 energy_curve_df$FLASF[1] <- HHECC()
 
-KERelease_c <- KERelease()
+#KERelease_c <- KERelease()
 dams_in$FLAPO[1] <- KEInflow()
-dams_out$FLAPO[1] <- KEOutflow()
+dams_out$FLAPO[1] <- KERelease_c
 flood_curve_df$FLAPO[1] <- KEFloodCurve()
 energy_curve_df$FLAPO[1] <- KerrECC()
 
@@ -65,9 +65,9 @@ dams_out$NOXON[1] <- NOXOut()
 dams_in$CABIN[1] <- CBIn()
 dams_out$CABIN[1] <- CBOut()
 
-AFRelease_c <- AFRelease()
+#AFRelease_c <- AFRelease()
 dams_in$ALBEN[1] <- AFInflow()
-dams_out$ALBEN[1] <- AFOutflow()
+dams_out$ALBEN[1] <- AFRelease_c
 flood_curve_df$ALBEN[1] <- AFFloodCurve()
 energy_curve_df$ALBEN[1] <- AFECC()
 
@@ -86,25 +86,26 @@ energy_curve_df$LIBBY[1] <- LBECC()
 dams_in$BONFE[1] <- BONFIn()
 dams_out$BONFE[1] <- BONFOut()
 
-DURelease_c <- DURelease() 
+#DURelease_c <- DURelease() 
 dams_in$DUNCA[1] <- DUInflow()
-dams_out$DUNCA[1] <- DUOutflow()
+dams_out$DUNCA[1] <- DURelease_c
 flood_curve_df$DUNCA[1] <- DUFloodCurve()
 energy_curve_df$DUNCA[1] <- DUECC()
 
-CLRelease_c <- CLRelease() 
+#CLRelease_c <- CLRelease() 
 dams_in$CORRA[1] <- CLInflow()
-dams_out$CORRA[1] <- CLOutflow()
+dams_out$CORRA[1] <- CLRelease_c
 flood_curve_df$CORRA[1] <- CLFloodCurve()
 energy_curve_df$CORRA[1] <- CLECC()
 
-GCRelease_c <- GCRelease()
+#GCRelease_c <- GCRelease()
 dams_in$GCOUL[1] <- GCInflow()
-dams_out$GCOUL[1] <- GCOutflow()
+dams_out$GCOUL[1] <- GCRelease_c
 flood_curve_df$GCOUL[1] <- GCFloodCurve()
 energy_curve_df$GCOUL[1] <- GCECC()
 
-dams_in$CHIEF[1] <- CJIn()
+
+dams_in$CHIEF[1] <- CJIn_c
 dams_out$CHIEF[1] <- CJOut()
 if (track_curtailment == 1) {
 	mainstem_curtailments$CHIEF[1] <- CJCurtail()

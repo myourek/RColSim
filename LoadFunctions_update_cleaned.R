@@ -4053,7 +4053,8 @@ GCFloodSpace <- function() {
 }
 GCFloodRelSharedWater <- function() {
 	GCIn_o <- BDPrelim() + ARPrelim() + CLPrelim() + GCInc() + GCCombUpSup()
-	GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCIn_o - GCPrelim() - GCCombSup_c - GCECC())
+	#GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCIn_o - GCPrelim() - GCCombSup_c - GCECC())
+	GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCIn_o - GCPrelim() - GCCombSup_c - GCCriticalCurve())
 	return(GCFloodRelSharedWater_o)
 }
 GCMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
