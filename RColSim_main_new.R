@@ -117,7 +117,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:8){
+for (I_Week in 1:52){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -127,7 +127,7 @@ for (I_Week in 1:8){
 		###### READ INPUT DATA FOR WEEK week_counter
 		VIC_Data()
 		############### Common weekly variables
-		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "CJIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
+		reset_variables <- c("BRPrelim_c", "BRIn_c", "BRPrelim_c", "GCIn_c", "CJIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
 			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
 			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
@@ -139,6 +139,7 @@ for (I_Week in 1:8){
 		source("~/RColSim/initialize_model_new.R")		
 	} else {
 		# FIND THE RIGHT TIME STEP
+		rm(GCRelease_c)
 		week_counter <- I_Week
 		print(paste0("time step = ", week_counter))
 		week_in_year <- input_file$Week[week_counter]
@@ -146,7 +147,7 @@ for (I_Week in 1:8){
 		###### READ INPUT DATA FOR EACH WEEK
 		VIC_Data()
 		############### COMMON WEEKLY VARIABLES
-		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "CJIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
+		reset_variables <- c("BRPrelim_c", "BRIn_c", "GCIn_c", "BRPrelim_c", "CJIn_c", "AFCombSup_c", "MICombSup_c", "ARCombSup_c", "DUCombSup_c",
 			"LBCombSup_c", "KECombSup_c", "HHCombSup_c", "BRCombSup_c", "CLCombSup_c", "GCCombSup_c", 
 			"TotalFloodSpace_c", "TotalEnergyContent_c", "TotalECCEnergyContent_c", "FirmEnergyDeficit_c", 
 			"NonFirmEnergyDeficit_c", "TotalMcNarySharedWater_c", "TotalBONSharedWater_c", "TotalFloodRelSharedWater_c", "TotalCoordPreEnergy_c",
@@ -224,13 +225,13 @@ for (I_Week in 1:8){
 		flood_curve_df$CORRA[week_counter] <- CLFloodCurve()
 		energy_curve_df$CORRA[week_counter] <- CLECC()
 
-		#GCRelease_c <- GCRelease()
+		GCRelease_c <- GCRelease()
 		dams_in$GCOUL[week_counter] <- GCInflow()
-		dams_out$GCOUL[week_counter] <- GCRelease_c
+		dams_out$GCOUL[week_counter] <- GCOutflow()
 		flood_curve_df$GCOUL[week_counter] <- GCFloodCurve()
 		energy_curve_df$GCOUL[week_counter] <- GCECC()
 		
-		dams_in$CHIEF[week_counter] <- CJIn_c
+		dams_in$CHIEF[week_counter] <- CJIn()
 		dams_out$CHIEF[week_counter] <- CJOut()
 		if (track_curtailment == week_counter) {
 			mainstem_curtailments$CHIEF[week_counter] <- CJCurtail()
@@ -437,7 +438,8 @@ for (I_Week in 1:8){
 			write.table(cbind(date_hist_sim[week_counter,], mainstem_curtailments[week_counter,]), paste0(OutputFolder, "/mainstem_curtailment.txt"), row.names=F, col.names=F, append=T)
 		}
 	}
-	print(CJPrelim() + GCCombSup() + GCCombUpProtect() + GCMinFloodRelReq() - CJOut())
+	#print(TotalRelReducReq_c)
+	#print(DAPreOutflow() + TotalFloodRelease() - DAOut())
 }
 
 

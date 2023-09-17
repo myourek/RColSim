@@ -98,9 +98,9 @@ dams_out$CORRA[1] <- CLRelease_c
 flood_curve_df$CORRA[1] <- CLFloodCurve()
 energy_curve_df$CORRA[1] <- CLECC()
 
-#GCRelease_c <- GCRelease()
+GCRelease_c <- GCRelease()
 dams_in$GCOUL[1] <- GCInflow()
-dams_out$GCOUL[1] <- GCRelease_c
+dams_out$GCOUL[1] <- GCOutflow()
 flood_curve_df$GCOUL[1] <- GCFloodCurve()
 energy_curve_df$GCOUL[1] <- GCECC()
 
