@@ -110,9 +110,36 @@ if (refill_option < 3) {
 }
 PDR_lower <- read.table("~/Step_4/AssumedRelease_min.txt", header=T)
 
+PDR_80$GrandCoulee[40:44] <- PDR_80$GrandCoulee[40:44] + 0
+PDR_95$GrandCoulee[40:44] <- PDR_95$GrandCoulee[40:44] + 0
+PDR_110$GrandCoulee[40:44] <- PDR_110$GrandCoulee[40:44] + 0 
+
+PDR_80$GrandCoulee[45:48] <- PDR_80$GrandCoulee[45:48] + 20000
+PDR_95$GrandCoulee[45:48] <- PDR_95$GrandCoulee[45:48] + 80000
+PDR_110$GrandCoulee[45:48] <- PDR_110$GrandCoulee[45:48] + 90000
+
+PDR_80$GrandCoulee[49:50] <- PDR_80$GrandCoulee[49:50] + 20000
+PDR_95$GrandCoulee[49:50] <- PDR_95$GrandCoulee[49:50] + 80000
+PDR_110$GrandCoulee[49:50] <- PDR_110$GrandCoulee[49:50] + 90000
+
+PDR_80$Duncan[49:52] <- PDR_80$Duncan[49:52] - 2000
+PDR_95$Duncan[49:52] <- PDR_95$Duncan[49:52] - 2000
+PDR_110$Duncan[49:52] <- PDR_110$Duncan[49:52] - 2000
+
+PDR_80$Duncan[45:48] <- PDR_80$Duncan[45:48] - 1500
+PDR_95$Duncan[45:48] <- PDR_95$Duncan[45:48] - 1500
+PDR_110$Duncan[45:48] <- PDR_110$Duncan[45:48] - 1500
+
+PDR_80$Arrow[49:52] <- PDR_80$Arrow[49:52] + 0
+PDR_95$Arrow[49:52] <- PDR_95$Arrow[49:52] + 10000
+PDR_110$Arrow[49:52] <- PDR_110$Arrow[49:52] + 20000 ### MI refill end Aug
+
+
+
+
 #### Set the target refill Week
 
-target_refill_week <- data.frame(Dam=ListOfDams, Week=c(52, 52, 52, 48, 48, 48, 52, 48, 52, 52, 5))
+target_refill_week <- data.frame(Dam=ListOfDams, Week=c(5, 52, 52, 48, 50, 48, 50, 48, 52, 52, 5))
 July31s <- data.frame(matrix(nrow=n_years, ncol=length(ListOfDams)))
 nws <- data.frame(matrix(nrow=n_years, ncol=length(ListOfDams)))
 names(July31s) <- ListOfDams
@@ -223,7 +250,25 @@ AprilDAUpstreamStorageGC <- pmin(4.08e6, (MIFullPoolVol - MIRuleCurves.df$Flood[
 	pmin(3.6e6, (ARFullPoolVol - ARRuleCurves.df$Flood[Mar_31s])) + (LBFullPoolVol - LBRuleCurves.df$Flood[Mar_31s]) + 
 	(HHFullPoolVol - HHRuleCurves.df$Flood[Mar_31s]) + (DUFullPoolVol - DURuleCurves.df$Flood[Mar_31s]) + 
 	(DWFullPoolVol - DWRuleCurves.df$Flood[Mar_31s]) + (BRFullPoolVol - BRRuleCurves.df$Flood[Mar_31s])
+	
+#AprilDAUpstreamStorageGC2 <- (MIFullPoolVol - OperatingRuleCurves.df$MICAA[Mar_31s]) + 
+#	(ARFullPoolVol - OperatingRuleCurves.df$ARROW[Mar_31s]) + (LBFullPoolVol - OperatingRuleCurves.df$LIBBY[Mar_31s]) + 
+#	(HHFullPoolVol - OperatingRuleCurves.df$FLASF[Mar_31s]) + (DUFullPoolVol - OperatingRuleCurves.df$DUNCA[Mar_31s]) + 
+#	(DWFullPoolVol - OperatingRuleCurves.df$DWORS[Mar_31s]) + (BRFullPoolVol - OperatingRuleCurves.df$BROWN[Mar_31s]) + 
+#	(CLFullPoolVol - OperatingRuleCurves.df$CORRA[Mar_31s]) + (KEFullPoolVol - OperatingRuleCurves.df$FLAPO[Mar_31s]) +
+#	(AFFullPoolVol - OperatingRuleCurves.df$ALBEN[Mar_31s])
+	
+AprilDAUpstreamStorageGC2 <- pmin(4.08e6, MIFullPoolVol - OperatingRuleCurves.df$MICAA[Mar_31s]) + 
+	pmin(3.6e6, ARFullPoolVol - OperatingRuleCurves.df$ARROW[Mar_31s]) + (LBFullPoolVol - OperatingRuleCurves.df$LIBBY[Mar_31s]) + 
+	(HHFullPoolVol - OperatingRuleCurves.df$FLASF[Mar_31s]) + (DUFullPoolVol - OperatingRuleCurves.df$DUNCA[Mar_31s]) + 
+	(DWFullPoolVol - OperatingRuleCurves.df$DWORS[Mar_31s]) + (BRFullPoolVol - OperatingRuleCurves.df$BROWN[Mar_31s]) + 
+	(CLFullPoolVol - OperatingRuleCurves.df$CORRA[Mar_31s]) + (KEFullPoolVol - OperatingRuleCurves.df$FLAPO[Mar_31s]) +
+	(AFFullPoolVol - OperatingRuleCurves.df$ALBEN[Mar_31s])	
+	
+CorrectedDARunoffAprAug <- Output_to_ColSim$DARunoffAprAug - c(AprilDAUpstreamStorageGC, rep(NA, N - n_years)) 
+CorrectedDARunoffAprAug2 <- Output_to_ColSim$DARunoffAprAug - c(AprilDAUpstreamStorageGC2, rep(NA, N - n_years)) 
 Output_to_ColSim$CorrectedDARunoffAprAug <- Output_to_ColSim$DARunoffAprAug - c(AprilDAUpstreamStorageGC, rep(NA, N - n_years))
+#Output_to_ColSim$CorrectedDARunoffAprAug2 <- Output_to_ColSim$DARunoffAprAug - c(AprilDAUpstreamStorageGC2, rep(NA, N - n_years))
 
 
 ###### Corrected residual inflow at The Dalles for initial controlled flow computation
@@ -231,9 +276,13 @@ Output_to_ColSim$CorrectedDARunoffAprAug <- Output_to_ColSim$DARunoffAprAug - c(
 GCRuleCurves.df <- RuleCurve_df("GCOUL")
 FloodCurves.df$GCOUL <- GCRuleCurves.df$Flood
 ECC.df$GCOUL <- min(max(GCRuleCurves.df$Critical, GCRuleCurves.df$AssuredRefill), GCRuleCurves.df$Flood)
-OperatingRuleCurves.df$GCOUL <- GCRuleCurves.df$OperatingRuleCurve
+OperatingRuleCurves.df$GCOUL <- GCRuleCurves.df$Flood
+write.table(OperatingRuleCurves.df, "~/Step_4/OperatingRuleCurves.txt", row.names=F, col.names=T, quote=F)
 
 AprilDAUpstreamStorage <- c(AprilDAUpstreamStorageGC + (GCFullPoolVol - GCRuleCurves.df$Flood[Mar_31s]), rep(NA, N - n_years))
+AprilDAUpstreamStorage2 <- c(AprilDAUpstreamStorageGC2 + (GCFullPoolVol - GCRuleCurves.df$Flood[Mar_31s]), rep(NA, N - n_years))
+
+
 
 evacuation_end <- c(MICAA=35, ARROW=35, LIBBY=39, FLASF=39, DUNCA=35, DWORS=37, BROWN=39, GCOUL=39)
 full_pool <- c(MICAA=MIFullPoolVol, ARROW=ARFullPoolVol, LIBBY=LBFullPoolVol, FLASF=HHFullPoolVol, DUNCA=DUFullPoolVol, DWORS=DWFullPoolVol, BROWN=BRFullPoolVol, GCOUL=GCFullPoolVol)
@@ -251,9 +300,23 @@ for (res in names(evacuation_end)) {
 }
 DAUpStreamStorage$Sum <- apply(DAUpStreamStorage[-c(1:4)], 1, sum)
 
-DACorrectedResidualInflow <- function() {
+full_pool2 <- c(MICAA=MIFullPoolVol, ARROW=ARFullPoolVol, LIBBY=LBFullPoolVol, FLASF=HHFullPoolVol, DUNCA=DUFullPoolVol, DWORS=DWFullPoolVol, BROWN=BRFullPoolVol, GCOUL=GCFullPoolVol, FLAPO=KEFullPoolVol, ALBEN=AFFullPoolVol, CORRA=CLFullPoolVol)
+min_storage2 <- c(MICAA=4.08e6, ARROW=3.6e6, LIBBY=4.98e6, FLASF=3.07e6, DUNCA=1.27e6, DWORS=2015200, BROWN=975000, GCOUL=5.19e6, FLAPO=1.22e6, CORRA=6.72e6, ALBEN=1.12e6)
+DAUpStreamStorage2 <- data.frame(matrix(nrow=N, ncol=length(ListOfDams) + 4, 0))
+DAUpStreamStorage2[1:4] <- modified_flow[1:4]
+names(DAUpStreamStorage2) = c("Week", "Month", "Day", "Year", ListOfDams)
+for (res in ListOfDams) {
+	if (res == "GCOUL") {
+		DAUpStreamStorage2[,res] <- pmin(min_storage2[res], full_pool2[res] - FloodCurves.df$GCOUL)
+	} else {
+		DAUpStreamStorage2[,res] <- pmin(min_storage2[res], full_pool2[res] - OperatingRuleCurves.df[,res])
+	}
+}
+DAUpStreamStorage2$Sum <- apply(DAUpStreamStorage2[-c(1:4)], 1, sum)
+
+DACorrectedResidualInflow <- function(S) {
 	mod_flow <- subset(modified_flow, Month %in% 4:8)[c("Week", "Month", "Day", "Year", "DALLE")]
-	storage <- subset(DAUpStreamStorage, Month %in% 4:8)[c("Week", "Month", "Day", "Year", "Sum")]
+	storage <- subset(S, Month %in% 4:8)[c("Week", "Month", "Day", "Year", "Sum")]
 	mod_flow.df <- data.frame(matrix(nrow=nrow(Output_to_ColSim), ncol=3))
 	mod_flow.df[1:2] <- Output_to_ColSim[c("Month", "Year")]
 	mod_flow.df[3] <- 0
@@ -267,7 +330,9 @@ DACorrectedResidualInflow <- function() {
 	}
 	return(mod_flow.df[,3])
 }
-Output_to_ColSim$DACorrectedResidualInflowAprAug <- DACorrectedResidualInflow()
+Output_to_ColSim$DACorrectedResidualInflowAprAug <- DACorrectedResidualInflow(DAUpStreamStorage2)
+#Output_to_ColSim$DACorrectedResidualInflowAprAug2 <- DACorrectedResidualInflow(DAUpStreamStorage2)
+
 
 ##### Initial controlled flow 
 
@@ -288,6 +353,8 @@ get_ICF <- function(res_inflow, wk) {
 }
 
 Output_to_ColSim$InitialControlledFlow <- sapply(1:N, function(x) get_ICF(Output_to_ColSim$DACorrectedResidualInflowAprAug[x], timeseries$Week[x]))
+#Output_to_ColSim$InitialControlledFlow2 <- sapply(1:N, function(x) get_ICF(Output_to_ColSim$DACorrectedResidualInflowAprAug2[x], timeseries$Week[x]))
+
 Output_to_ColSim$start_refill_wk[1:n_years] <- aggregate(modified_flow$DALLE, list(modified_flow$Year), function(x) which(x > 450000 * cfsTOafw)[1] - 3 + 22)[-1,2]
 
 

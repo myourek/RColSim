@@ -117,8 +117,9 @@ UseTotalEnergyContentForFirm <<- function() { # Default is 1
 	return(UseTotalEnergyContentForFirm_o)
 }
 
-CriticalCurveSw <<- 3
-
+CriticalCurveSw <<- 1
+MICriticalCurveSw <<- 3
+DUCriticalCurveSw <<- 3
 Estimated_Efficiency <<- 0.8 # Estimated combined efficiency for all plants.  This efficiency is used for estimating energy content only.
 
 # ---- Refill curve selection switches

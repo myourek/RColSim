@@ -230,8 +230,8 @@ MIMinRefill <- function() {
 	}
 	return(MIMinRefill_o)
 }
+MIAvgMin <- 3000 # Minimum allowable release from Mica (cfs), FCOP 2003
 MIMinReq <- function() {
-	MIAvgMin <- 3000 # Minimum allowable release from Mica (cfs), FCOP 2003
 	MIMinReq_1 <- min(max(Mica() + MIIn() - max(MIMinRefill(), MICriticalCurveMin()), MIAvgMin * cfsTOafw), MIAssuredRelease() * cfsTOafw)
 	MIMinReq_2 <- min(max(Mica() + MIIn() - max(MIMinRefill(), MICriticalCurve()), MIAvgMin * cfsTOafw), MITargetRelease() * cfsTOafw)
 	MIMinReq_o <- max(MIMinReq_1, MIMinReq_2)
@@ -321,6 +321,10 @@ MI_AprilECC <- function() {
 	MI_AprilECC_o <- min(max(MICriticalCurve_input[36,2], MIAssuredRefill_input[36,2]), MIFloodCurve_Apr)
 	return(MI_AprilECC_o)
 }
+MIApril_1 <- function() {
+	MIApril_1_o <- reservoir_vol_df$MICAA[which(input_file$Week == 35)][year_counter]
+	return(MIApril_1_o)
+}
 MI_JanECC <- function() {
 	MI_JanECC_o <- min(max(MICriticalCurve_input[23,2], MIAssuredRefill_input[23,2]), MIFloodCurve_Jan)
 	return(MI_JanECC_o)
@@ -359,13 +363,13 @@ MICriticalCurve <- function() { # Minimum storage to meet firm hydropower in a d
 	return(MICriticalCurve_o)
 }
 MICriticalCurveMin <- function() {
-	if (CriticalCurveSw == 1) {
+	if (MICriticalCurveSw == 1) {
 		MICriticalCurveMin_o <- MICriticalCurve_input$CRC1[week_in_year]
-	} else if (CriticalCurveSw == 2) {
+	} else if (MICriticalCurveSw == 2) {
 		MICriticalCurveMin_o <- MICriticalCurve_input$CRC2[week_in_year]
-	} else if (CriticalCurveSw == 3) {
+	} else if (MICriticalCurveSw == 3) {
 		MICriticalCurveMin_o <- MICriticalCurve_input$CRC3[week_in_year]
-	} else if (CriticalCurveSw == 4) {
+	} else if (MICriticalCurveSw == 4) {
 		MICriticalCurveMin_o <- MICriticalCurve_input$CRC4[week_in_year]
 	}
 	return(MICriticalCurveMin_o)
@@ -602,7 +606,7 @@ MIDamProtectExcess <- function() {
 
 MIRelease <- function() { # Water released from Mica after accounting for all objectives
 	#MIRelease_o <- max(min(max(MIMinReq(), MIPrelim() + MICombSup() - MIRelReducReq() + MIMinFloodRelReq()), MIRelLimit()), MIDamProtectRel())
-	MIRelease_o <- max(min(MIPrelim() + MICombSup() - MIRelReducReq(), MIRelLimit()), MIDamProtectRel())
+	MIRelease_o <- max(min(MIPrelim() + MICombSup() - MIRelReducReq(), MIRelLimit()), MIDamProtectRel(), MIAvgMin * cfsTOafw)
 	return(MIRelease_o)
 }
 MIOutflow <- function() { # Final outflow from Mica
@@ -752,8 +756,9 @@ ARMinRefill <- function() {
 	}
 	return(ARMinRefill_o)
 }
+ARAvgMin <- 5000 # FCOP 2003
 ARMinReq <- function() {
-	ARAvgMin <- 5000 # FCOP 2003
+	
 	ARMinReq_o <- min(max(Arrow() + ARIn() - max(ARMinRefill(), ARCriticalCurveMin()), ARAvgMin * cfsTOafw), ARAssuredRelease() * cfsTOafw)
 	return(ARMinReq_o)
 }
@@ -842,6 +847,10 @@ AR_JanECC <- function() {
 	AR_JanECC_o <- min(max(ARCriticalCurve_input[23,2], ARAssuredRefill_input[23,2]), ARFloodCurve_Jan)
 	return(AR_JanECC_o)
 }
+ARApril_1 <- function() {
+	ARApril_1_o <- reservoir_vol_df$ARROW[which(input_file$Week == 35)][year_counter]
+	return(ARApril_1_o)
+}
 Arrow_Jan <- function() {
 	Arrow_Jan_o <- reservoir_vol_df$ARROW[which(input_file$Week == 22)][year_counter]
 	return(Arrow_Jan_o)
@@ -882,7 +891,11 @@ ARVariableRefill <- function() {
 	if (RefillSwitch() == 1) {
 		ARRefillCurve_o <- ARAssuredRefill()
 	} else if (RefillSwitch() == 2) {
-		ARRefillCurve_o <- ARVariableRefillCurve
+		if (week_in_year < 28) {
+			ARRefillCurve_o <- ARFullPoolVol
+		} else {
+			ARRefillCurve_o <- ARVariableRefillCurve
+		}
 	}
 	return(ARRefillCurve_o)
 }
@@ -921,6 +934,8 @@ ARBONDraftLimit <- function() {
 	} else if (fish_over_refill == 0) {
 		if (week_in_year < 14) {
 			ARBONDraftLimit_o <- ARFullPoolVol
+		} else if (week_in_year < 19) {
+			ARBONDraftLimit_o <- 5E6
 		} else if (week_in_year < 23) {
 			ARBONDraftLimit_o <- 4E6
 		} else {
@@ -1117,7 +1132,7 @@ ARDamProtectExcess <- function() {
 ################### Arrow final release ###############################
  
 ARRelease <- function() { 
-	ARRelease_o <- max(min(ARPrelim() + ARCombSup_c - ARRelReducReq() + ARMinFloodRelReq() + ARCombUpProtect_c, ARRelLimit()), ARDamProtectRel())
+	ARRelease_o <- max(min(ARPrelim() + ARCombSup_c - ARRelReducReq() + ARMinFloodRelReq() + ARCombUpProtect_c, ARRelLimit()), ARDamProtectRel(), ARAvgMin * cfsTOafw)
 	return(ARRelease_o)
 }
 AROutflow <- function() {
@@ -1253,6 +1268,10 @@ DU_AprilECC <- function() {
 	DU_AprilECC_o <- min(max(DUCriticalCurve_input[36,2], DUAssuredRefill_input[36,2]), DUFloodCurve_Apr)
 	return(DU_AprilECC_o)
 }
+DUApril_1 <- function() {
+	DUApril_1_o <- reservoir_vol_df$DUNCA[which(input_file$Week == 35)][year_counter]
+	return(DUApril_1_o)
+}
 DU_April_Target <- function() {
 	if (CriticalCurveSw == 1) {
 		DU_April_Target_o <- DUCriticalCurve_input$CRC1[36]
@@ -1290,13 +1309,13 @@ DUCriticalCurve <- function() {
 	return(DUCriticalCurve_o)
 }
 DUCriticalCurveMin <- function() {
-	if (CriticalCurveSw == 1) {
+	if (DUCriticalCurveSw == 1) {
 		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC1[week_in_year]
-	} else if (CriticalCurveSw == 2) {
+	} else if (DUCriticalCurveSw == 2) {
 		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC2[week_in_year]
-	} else if (CriticalCurveSw == 3) {
+	} else if (DUCriticalCurveSw == 3) {
 		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC3[week_in_year]
-	} else if (CriticalCurveSw == 4) {
+	} else if (DUCriticalCurveSw == 4) {
 		DUCriticalCurveMin_o <- DUCriticalCurve_input$CRC4[week_in_year]
 	}
 	return(DUCriticalCurveMin_o)
@@ -1596,6 +1615,10 @@ LB_AprilECC <- function() {
 	LB_AprilECC_o <- min(max(LBCriticalCurve_input[36,2], LBAssuredRefill_input[36,2]), LBFloodCurve_Apr)
 	return(LB_AprilECC_o)
 }
+LBApril_1 <- function() {
+	LBApril_1_o <- reservoir_vol_df$LIBBY[which(input_file$Week == 35)][year_counter]
+	return(LBApril_1_o)
+}
 LB_April_Target <- function() {
 	if (CriticalCurveSw == 1) {
 		LB_April_Target_o <- LBCriticalCurve_input$CRC1[36]
@@ -1879,7 +1902,7 @@ LBDamProtectExcess <- function() {
 
 LBRelease <- function() {
 	#LBRelease_o <- max(min(LBPrelim() + LBCombSup() - LBRelReducReq() + LBMinFloodRelReq(), LBRelLimit()), LBDamProtectRel())
-	LBRelease_o <- max(min(LBPrelim() + LBCombSup_c - LBRelReducReq(), LBRelLimit()), LBDamProtectRel())
+	LBRelease_o <- max(min(LBPrelim() + LBCombSup_c - LBRelReducReq(), LBRelLimit()), LBDamProtectRel(), LBAvgMin * cfsTOafw)
 	return(LBRelease_o)
 }
 LBOutflow <- function() {
@@ -2035,6 +2058,10 @@ CLTopVol <- function() {
 CL_AprilECC <- function() {
 	CL_AprilECC_o <- min(CLCriticalCurve_input[36,2], CLFloodCurve_Apr)
 	return(CL_AprilECC_o)
+}
+CLApril_1 <- function() {
+	CLApril_1_o <- reservoir_vol_df$CORRA[which(input_file$Week == 35)][year_counter]
+	return(CLApril_1_o)	
 }
 CL_April_Target <- function() {
 	if (CriticalCurveSw == 1) {
@@ -2373,6 +2400,10 @@ HH_JanECC <- function() {
 	HH_JanECC_o <- min(max(HHCriticalCurve_input[23,2], HHAssuredRefill_input[23,2]), HHFloodCurve_Jan)
 	return(HH_JanECC_o)
 }
+HHApril_1 <- function() {
+	HHApril_1_o <- reservoir_vol_df$FLASF[which(input_file$Week == 35)][year_counter]
+	return(HHApril_1_o)
+}
 HungryHorse_Jan <- function() {
 	HungryHorse_Jan_o <- reservoir_vol_df$FLASF[which(input_file$Week == 22)][year_counter]
 	return(HungryHorse_Jan_o)
@@ -2648,7 +2679,7 @@ HHDamProtectExcess <- function() {
 
 HHRelease <- function() {
 	#HHRelease_o <- max(min(HHPrelim() + HHCombSup() - HHRelReducReq() + HHMinFloodRelReq(), HHRelLimit()), HHDamProtectRel())
-	HHRelease_o <- max(min(HHPrelim() + HHCombSup_c - HHRelReducReq(), HHRelLimit()), HHDamProtectRel())
+	HHRelease_o <- max(min(HHPrelim() + HHCombSup_c - HHRelReducReq(), HHRelLimit()), HHDamProtectRel(), HHAvgMin * cfsTOafw)
 	return(HHRelease_o)
 }
 HHOutflow <- function() {
@@ -2792,6 +2823,10 @@ KEFloodCurve <- function() {
 KE_AprilECC <- function() {
 	KE_AprilECC_o <- min(max(KECriticalCurve_input[36,2], KEAssuredRefill_input[36,2]), KEFloodCurve_Apr)
 	return(KE_AprilECC_o)
+}
+KEApril_1 <- function() {
+	KEApril_1_o <- reservoir_vol_df$FLAPO[which(input_file$Week == 35)][year_counter]
+	return(KEApril_1_o)
 }
 KE_April_Target <- function() {
 	if (CriticalCurveSw == 1) {
@@ -3216,6 +3251,10 @@ AF_AprilECC <- function() {
 	AF_AprilECC_o <- min(max(AFCriticalCurve_input[36,2], AFAssuredRefill_input[36,2]), AFFloodCurve_Apr)
 	return(AF_AprilECC_o)
 }
+AFApril_1 <- function() {
+	AFApril_1_o <- reservoir_vol_df$ALBEN[which(input_file$Week == 35)][year_counter]
+	return(AFApril_1_o)
+}
 AF_April_Target <- function() {
 	if (CriticalCurveSw == 1) {
 		AF_April_Target_o <- AFCriticalCurve_input$CRC1[36]
@@ -3567,11 +3606,22 @@ GCAvailAfter <- function() {
 
 ################## Grand Coulee rule curves ####################################
 
+AFApril_1 <- function() {
+	AFApril_1_o <- reservoir_vol_df$ALBEN[which(input_file$Week == 35)][year_counter]
+	return(AFApril_1_o)
+}
 AprilUpstreamFloodEvacGC4 <- function() {
 	AprilUpstreamFloodEvacGC_o <- (AlbeniFalls_Jan() - AF_April_Target()) + (Arrow_Jan() - AR_April_Target()) + 
 	(CorraLinn_Jan() - CL_April_Target()) + (Duncan_Jan() - DU_April_Target()) + (HungryHorse_Jan() - HH_April_Target()) + 
 	(Kerr_Jan() - KE_April_Target()) + (Libby_Jan() - LB_April_Target()) + (Mica_Jan() - MI_April_Target())
 	return(AprilUpstreamFloodEvacGC_o)
+}
+Upstream_residual_refill <- function() {
+	Upstream_residual_refill_o < (AFFullPoolVol - AFApril_1()) + (ARFullPoolVol - ARApril_1()) + 
+		(CLFullPoolVol - CLApril_1()) + (DUFullPoolVol - DUApril_1()) + (HHFullPoolVol - HHApril_1()) +
+		(KEFullPoolVol - KEApril_1()) + (LBFullPoolVol - LBApril_1()) + (MIFullPoolVol - MIApril_1()) +
+		(DWFullPoolVol - DWApril_1()) + (BRFullPoolVol - BRApril_1())
+	return(Upstream_residual_refill_o)
 }
 # 2015 flood control curve.
 GC_CurFC <- function() {
@@ -3608,9 +3658,9 @@ GCFloodEvacMult <- function() {
 }
 GCBeginRefill <- function() {
 	if (is.na(start_refill_wk_GC)) {
-		GCBeginRefill_o <- 37
+		GCBeginRefill_o <- 40
 	} else {
-		GCBeginRefill_o <- max(39, start_refill_wk_GC)
+		GCBeginRefill_o <- max(40, start_refill_wk_GC)
 	}
 	return(GCBeginRefill_o)
 }
@@ -3703,8 +3753,8 @@ GCAssuredRefill <- function() {
 }	
 GCVariableRefill <- function() {
 	if (week_in_year >= GCBeginRefill()) {
-		GCRefillCurve_o <- max(GCVariableRefillCurve, GCFloodCurve())
-		#GCRefillCurve_o <- GCVariableRefillCurve
+		#GCRefillCurve_o <- max(GCVariableRefillCurve, GCFloodCurve())
+		GCRefillCurve_o <- GCVariableRefillCurve
 	} else {
 		GCRefillCurve_o <- GCFullPoolVol
 	}
@@ -4001,6 +4051,7 @@ GCFloodSpace <- function() {
 GCFloodRelSharedWater <- function() {
 	#GCIn_o <- BDPrelim() + ARPrelim() + CLPrelim() + GCInc() + GCCombUpSup()
 	GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCPreInflow_c - GCPrelim() - GCCombSup() - GCECC())
+	#GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCPreInflow_c - GCPrelim() - GCCombSup() - GCBotVol)
 	#GCFloodRelSharedWater_o <- max(0, GrandCoulee() + GCIn_o - GCPrelim() - GCCombSup_c - GCCriticalCurve())
 	GCFloodRelSharedWater_c <<- GCFloodRelSharedWater_o	
 	return(GCFloodRelSharedWater_o)
@@ -4031,7 +4082,7 @@ GCLimitedStorage <- function() {
 	return(GCLimitedStorage_o)
 }
 GCRelease <- function() {
-	GCRelease_o <- max(min(GCPrelim() + GCCombSup_c - TotalRelReducReq_c + GCMinFloodRelReq_c + GCCombUpProtect(), GCRelLimit()), GCDamProtectRel())
+	GCRelease_o <- max(min(GCPrelim() + GCCombSup_c - TotalRelReducReq_c + GCMinFloodRelReq_c + GCCombUpProtect(), GCRelLimit()), GCDamProtectRel() + (GCInflow() - GCPreInflow()), GCMinReq())
 	#GCRelease_c <<- GCRelease_o
 	return(GCRelease_o)
 }
@@ -4100,8 +4151,12 @@ ICF_adj <- function() {
 }
 			
 ControlledFlow <- function() {
-	ControlledFlow_o <- ICF() + ICF_adj()
-	ControlledFlow_o <- ControlledFlow_o
+	if (is.na(start_refill_wk)) {
+		ControlledFlow_o <- 400000
+	} else {
+		ControlledFlow_o <- ICF() + ICF_adj()
+		ControlledFlow_o <- ControlledFlow_o
+	}
 	water_df$ControlledFlow[week_counter] <<- ControlledFlow_o
 	return(ControlledFlow_o)
 }
@@ -5828,7 +5883,15 @@ BRPrelim <- function() {
 	return(BRPrelim_o)
 }
 BRCriticalCurveMin <- function() {
-	BRCriticalCurve_o <- BRCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
+	if (CriticalCurveSw == 1) {
+		BRCriticalCurve_o <- BRCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		BRCriticalCurve_o <- BRCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		BRCriticalCurve_o <- BRCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		BRCriticalCurve_o <- BRCriticalCurve_input$CRC4[week_in_year]
+	}	
 	return(BRCriticalCurve_o)
 }
 BRCriticalCurve <- function() { # Minimum storage to meet firm hydropower in a dry year (1928-1932 critical water period)
