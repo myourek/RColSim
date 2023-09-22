@@ -110,17 +110,19 @@ if (refill_option < 3) {
 }
 PDR_lower <- read.table("~/Step_4/AssumedRelease_min.txt", header=T)
 
-PDR_80$GrandCoulee[40:44] <- PDR_80$GrandCoulee[40:44] + 0
-PDR_95$GrandCoulee[40:44] <- PDR_95$GrandCoulee[40:44] + 0
-PDR_110$GrandCoulee[40:44] <- PDR_110$GrandCoulee[40:44] + 0 
 
-PDR_80$GrandCoulee[45:48] <- PDR_80$GrandCoulee[45:48] + 20000
-PDR_95$GrandCoulee[45:48] <- PDR_95$GrandCoulee[45:48] + 80000
-PDR_110$GrandCoulee[45:48] <- PDR_110$GrandCoulee[45:48] + 90000
 
-PDR_80$GrandCoulee[49:50] <- PDR_80$GrandCoulee[49:50] + 20000
-PDR_95$GrandCoulee[49:50] <- PDR_95$GrandCoulee[49:50] + 80000
-PDR_110$GrandCoulee[49:50] <- PDR_110$GrandCoulee[49:50] + 90000
+#PDR_80$GrandCoulee[45:48] <- PDR_80$GrandCoulee[45:48] + 20000
+#PDR_95$GrandCoulee[45:48] <- PDR_95$GrandCoulee[45:48] + 80000
+#PDR_110$GrandCoulee[45:48] <- PDR_110$GrandCoulee[45:48] + 90000
+
+PDR_80$GrandCoulee[45:48] <- PDR_80$GrandCoulee[45:48] + 90000
+PDR_95$GrandCoulee[45:48] <- PDR_95$GrandCoulee[45:48] + 50000
+PDR_110$GrandCoulee[45:48] <- PDR_110$GrandCoulee[45:48] + 60000
+
+PDR_80$GrandCoulee[49:50] <- PDR_80$GrandCoulee[49:50] + 100000
+PDR_95$GrandCoulee[49:50] <- PDR_95$GrandCoulee[49:50] + 60000
+PDR_110$GrandCoulee[49:50] <- PDR_110$GrandCoulee[49:50] + 70000 ### GC refill min Jul
 
 PDR_80$Duncan[49:52] <- PDR_80$Duncan[49:52] - 2000
 PDR_95$Duncan[49:52] <- PDR_95$Duncan[49:52] - 2000
@@ -304,8 +306,9 @@ full_pool2 <- c(MICAA=MIFullPoolVol, ARROW=ARFullPoolVol, LIBBY=LBFullPoolVol, F
 min_storage2 <- c(MICAA=4.08e6, ARROW=3.6e6, LIBBY=4.98e6, FLASF=3.07e6, DUNCA=1.27e6, DWORS=2015200, BROWN=975000, GCOUL=5.19e6, FLAPO=1.22e6, CORRA=6.72e6, ALBEN=1.12e6)
 DAUpStreamStorage2 <- data.frame(matrix(nrow=N, ncol=length(ListOfDams) + 4, 0))
 DAUpStreamStorage2[1:4] <- modified_flow[1:4]
-names(DAUpStreamStorage2) = c("Week", "Month", "Day", "Year", ListOfDams)
-for (res in ListOfDams) {
+Dams <- c("MICAA", "ARROW", "LIBBY", "FLASF", "DUNCA", "DWORS" , "BROWN", "GCOUL")
+names(DAUpStreamStorage2) = c("Week", "Month", "Day", "Year", Dams)
+for (res in Dams) {
 	if (res == "GCOUL") {
 		DAUpStreamStorage2[,res] <- pmin(min_storage2[res], full_pool2[res] - FloodCurves.df$GCOUL)
 	} else {

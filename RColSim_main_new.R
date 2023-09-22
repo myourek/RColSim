@@ -117,7 +117,7 @@ NEW_SIMULATION <- TRUE
 ##################################################################################################################
 ##################################################################################################################
 I_Week <- 1
-for (I_Week in 1:51){
+for (I_Week in 1:52){
 	if(I_Week == 1) { # Model initialization
 		print(paste0("initialization"))
 		week_counter <- I_Week
@@ -139,7 +139,6 @@ for (I_Week in 1:51){
 		source("~/RColSim/initialize_model_new.R")		
 	} else {
 		# FIND THE RIGHT TIME STEP
-		rm(GCRelease_c)
 		week_counter <- I_Week
 		print(paste0("time step = ", week_counter))
 		week_in_year <- input_file$Week[week_counter]

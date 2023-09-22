@@ -49,7 +49,7 @@ ResInitFractionFull <<- 1 # Used with option 1
 
 ######## find which operation year we are in, from weekly data
 year_from_weekly <<- function() {
-	year_from_weekly_o = week_counter %/% 52 + 1  
+	year_from_weekly_o = (week_counter - 0.000001) %/% 52 + 1  
 	return(year_from_weekly_o)
 }
 ########## MOPControl
