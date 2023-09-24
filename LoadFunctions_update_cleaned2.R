@@ -77,7 +77,8 @@ MIAssuredRelease <- function() { ## target minimum release
 MITargetRelease <- function() {
 	if (week_in_year %in% 1:3) {
 		if (Arrow() >= 6772749) {
-			MITargetRelease_o <- (Mica() + MIInflow() - 19747728) / cfsTOafw
+			#MITargetRelease_o <- (Mica() + MIInflow() - 19747728) / cfsTOafw
+			MITargetRelease_o <- (Mica() + MIInflow() - MIECC()) / cfsTOafw
 		} else if (Arrow() >= 4531429) {
 			MITargetRelease_o <- 25000
 		} else if (Arrow() >= 3202504) {
@@ -87,7 +88,8 @@ MITargetRelease <- function() {
 		}
 	} else if (week_in_year %in% 4:5) {
 		if (Arrow() >= 5602502) {
-			MITargetRelease_o <- (Mica() + MIInflow() - 20075000) / cfsTOafw
+			#MITargetRelease_o <- (Mica() + MIInflow() - 20075000) / cfsTOafw
+			MITargetRelease_o <- (Mica() + MIInflow() - MIECC()) / cfsTOafw
 		} else if (Arrow() >= 4095065) {
 			MITargetRelease_o <- 25000
 		} else {
@@ -95,7 +97,8 @@ MITargetRelease <- function() {
 		}
 	} else if (week_in_year %in% 6:9) {
 		if (Arrow() >= 7228947) {
-			MITargetRelease_o <- (Mica() + MIInflow() - 20075000) / cfsTOafw
+			#MITargetRelease_o <- (Mica() + MIInflow() - 20075000) / cfsTOafw
+			MITargetRelease_o <- (Mica() + MIInflow() - MIECC()) / cfsTOafw
 		} else if (Arrow() >= 6971096) {
 			MITargetRelease_o <- 24000
 		} else if (Arrow() >= 5781014) {
@@ -105,7 +108,8 @@ MITargetRelease <- function() {
 		}
 	} else if (week_in_year %in% 10:14) {
 		if (Arrow() >= 7050435) {
-			MITargetRelease_o <- (Mica() + MIInflow() - 19875066) / cfsTOafw
+			#MITargetRelease_o <- (Mica() + MIInflow() - 19875066) / cfsTOafw
+			MITargetRelease_o <- (Mica() + MIInflow() - MIECC()) / cfsTOafw
 		} else if (Arrow() >= 5384321) {
 			MITargetRelease_o <- 19000
 		} else if (Arrow() >= 4194239) {
@@ -205,9 +209,11 @@ MITargetRelease <- function() {
 		}
 	} else if (week_in_year %in% 49:52) {
 		if (Arrow() >= 6534733) {
-			MITargetRelease_o <- (Mica() + MIInflow() - 19952025) / cfsTOafw
+			#MITargetRelease_o <- (Mica() + MIInflow() - 19952025) / cfsTOafw
+			MITargetRelease_o <- (Mica() + MIInflow() - MIECC()) / cfsTOafw
 		} else if (Arrow() >= 5523163) {
-			MITargetRelease_o <- (Mica() + MIInflow() - 19829050) / cfsTOafw
+			#MITargetRelease_o <- (Mica() + MIInflow() - 19829050) / cfsTOafw
+			MITargetRelease_o <- (Mica() + MIInflow() - MIECC()) / cfsTOafw
 		} else if (Arrow() >= 2528125) {
 			MITargetRelease_o <- 14000
 		} else {
@@ -927,7 +933,7 @@ ARBONDraftLimit <- function() {
 		if (week_in_year < 14) {
 			ARBONDraftLimit_o <- ARFullPoolVol
 		} else if (week_in_year < 19) {
-			ARBONDraftLimit_o <- 5E6
+			ARBONDraftLimit_o <- 6E6
 		} else if (week_in_year < 23) {
 			ARBONDraftLimit_o <- 4E6
 		} else {
@@ -1071,7 +1077,6 @@ ARFloodSpace <- function() {
 	return(ARFloodSpace_o)
 }
 ARFloodRelSharedWater <- function() {
-	#ARFloodRelSharedWater_o <- max(0, Arrow() + ARInflow() - ARPrelim() - ARCombSup_c - ARECC())
 	ARFloodRelSharedWater_o <- max(0, Arrow() + ARPreInflow_c - ARPrelim() - ARCombSup() - ARECC())
 	return(ARFloodRelSharedWater_o)
 }
@@ -1091,7 +1096,6 @@ ARFloodRelFrac <- function() {
 	if (TotalFloodRelSharedWater_c == 0) {
 		ARFloodRelFrac_o <- 0
 	} else {
-		#ARFloodRelFrac_o <- (MIFloodRelSharedWater() + ARFloodRelSharedWater()) / TotalFloodRelSharedWater_c
 		ARFloodRelFrac_o <- ARFloodRelSharedWater() / TotalFloodRelSharedWater_c
 	}
 	return(ARFloodRelFrac_o)
@@ -1110,7 +1114,6 @@ ARMinFloodRelReq <- function() { # Minimum release during refill period to ensur
 	return(ARMinFloodRelReq_o)
 }
 ARCombUpProtect <- function() {
-	#inflow <- ARIn() + ARCombUpSup() + MIDamProtectExcess()
 	outflow <- ARPrelim() + ARCombSup_c
 	ARCombUpProtect_o <- max(min(MIDamProtectExcess(), Arrow() + ARPreInflow() - outflow - ARECC()), 0)
 	ARCombUpProtect_c <<- ARCombUpProtect_o
@@ -3749,7 +3752,7 @@ PRIncInflow <- function() {
 }
 ## April 10 GC flood curve elevation - date to April 10 inflow + date to April 10 discharge for Vernita Bar - date to April 10 upstream flood evacuation
 GCVariableDraftLimit <- function() {
-	if (week_in_year>=28 && week_in_year<=36) {
+	if (week_in_year>=23 && week_in_year<=36) {
 		GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - GCResidualInflow() - PRIncInflow() + GCBdgtForVB())
 	} else {
 		GCVariableLimit_o <- GCFullPoolVol

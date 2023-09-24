@@ -132,10 +132,19 @@ PDR_80$Duncan[45:48] <- PDR_80$Duncan[45:48] - 1500
 PDR_95$Duncan[45:48] <- PDR_95$Duncan[45:48] - 1500
 PDR_110$Duncan[45:48] <- PDR_110$Duncan[45:48] - 1500
 
-PDR_80$Arrow[49:52] <- PDR_80$Arrow[49:52] + 0
-PDR_95$Arrow[49:52] <- PDR_95$Arrow[49:52] + 10000
-PDR_110$Arrow[49:52] <- PDR_110$Arrow[49:52] + 20000 ### MI refill end Aug
 
+PDR_80$Arrow[45:48] <- PDR_80$Arrow[45:48] + 40000
+PDR_95$Arrow[45:48] <- PDR_95$Arrow[45:48] + 30000
+PDR_110$Arrow[45:48] <- PDR_110$Arrow[45:48] + 20000 ### MI refill end Aug
+
+
+PDR_80$Mica[49:52] <- PDR_80$Mica[49:52] + 0
+PDR_95$Mica[49:52] <- PDR_95$Mica[49:52] - 20000
+PDR_110$Mica[49:52] <- PDR_110$Mica[49:52] - 20000 ### MI refill end Aug
+
+PDR_80$Mica[1:5] <- PDR_80$Mica[1:5] + 20000
+PDR_95$Mica[1:5] <- PDR_95$Mica[1:5] + 20000
+PDR_110$Mica[1:5] <- PDR_110$Mica[1:5] + 20000 ### MI refill end Aug
 
 
 
