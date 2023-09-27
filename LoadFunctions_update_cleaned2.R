@@ -9,16 +9,10 @@ MWhr_per_ftAcFt <- 1.02246e-3 # Convert head times flow rate (ft-acre-ft) to ene
 
 MIFullPoolVol <- 20075000 # Storage at 2,475 ft of elevation
 MIBotVol <- 8032200 # Storage at 2,320 ft of elevation
-InitMILink <- 20075000
-InitMI <- function() {
-	MIHistStor_input <- HistStor_input$MIHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) { # Default = 2
-		InitMI_o <- InitMILink
-	} else if (InitialConditionSwitch == 1) {
-		InitMI_o <- ResInitFractionFull * MIFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitMI_o <- MIHistStor_input
-	}
+MIAvgMin <- 3000 # Minimum project outflow from Mica (cfs), FCOP 2003
+
+InitMI <- function() { ## Initialize reservoir storage 
+	InitMI_o <- ResInitFractionFull * MIFullPoolVol
 	return(InitMI_o)
 }
 Mica <- function() { ### Storage volume in most upstream dam
@@ -29,7 +23,7 @@ Mica <- function() { ### Storage volume in most upstream dam
 	}
 	return(Mica_o)
 }
-MicaFlowData <- function() { ## Naturalized streamflow 
+MicaFlowData <- function() {
 	return(FlowMI)
 }
 MIElev_ft <- function() { # Water level in dam (ft)
@@ -50,8 +44,7 @@ MIElev_ft <- function() { # Water level in dam (ft)
 }
 MINetHead <- function() { # Depth of water in the reservoir above tailwater (ft)
 	MITailElev <- 1875 # https://www.nwd.usace.army.mil/Media/Fact-Sheets/Fact-Sheet-Article-View/Article/621046/mica-dam/
-	MILoss <- 0
-	MINetHead_o <- MIElev_ft() - MITailElev - MILoss
+	MINetHead_o <- MIElev_ft() - MITailElev
 	return(MINetHead_o)
 }
 MIPenLimit <- function() { # Maximum flow rate through turbines (AF/wk)
@@ -59,22 +52,22 @@ MIPenLimit <- function() { # Maximum flow rate through turbines (AF/wk)
 	MIPenLimit_o <- MIPenCap * cfsTOafw
 	return(MIPenLimit_o)
 }
-MIIn <- function() { # Inflow to the dam = supply - total surface water demand
+MIIn <- function() {  
 	MIIn_o = MicaFlowData()
 	return(MIIn_o)
 }
-MIInflow <- function() {
+MIInflow <- function() { # Inflow to the dam
 	MIInflow_o <- MIIn()
 	return(MIIn())
 }
 
 ################## Mica max and min releases ####################################
 
-MIAssuredRelease <- function() { ## target minimum release
-	MIAssuredRelease_o <- MIAssuredRelease_input$target[week_in_year]
-	return(MIAssuredRelease_o)
+MITargetMin <- function() { ## target minimum release, FCOP 2003
+	MITargetMin_o <- MIAssuredRelease_input$target[week_in_year]
+	return(MITargetMin_o)
 }
-MITargetRelease <- function() {
+MITargetRelease <- function() { ## target average release, FCOP 2003
 	if (week_in_year %in% 1:3) {
 		if (Arrow() >= 6772749) {
 			#MITargetRelease_o <- (Mica() + MIInflow() - 19747728) / cfsTOafw
@@ -224,7 +217,7 @@ MITargetRelease <- function() {
 }
 		
 		
-MIMinRefill <- function() {
+MIMinRefill <- function() { ## Minimum storage that will allow dam to refill and meet minimum project outflow criteria
 	if (gurantee_refill == 1) {
 		if (week_in_year < 23) {
 			MIMinRefill_o <- max(MIAssuredRefill(), MICriticalCurveMin())
@@ -236,10 +229,9 @@ MIMinRefill <- function() {
 	}
 	return(MIMinRefill_o)
 }
-MIAvgMin <- 3000 # Minimum allowable release from Mica (cfs), FCOP 2003
 MIMinReq <- function() {
-	MIMinReq_1 <- min(max(Mica() + MIIn() - max(MIMinRefill(), MICriticalCurveMin()), MIAvgMin * cfsTOafw), MIAssuredRelease() * cfsTOafw)
-	MIMinReq_2 <- min(max(Mica() + MIIn() - max(MIMinRefill(), MICriticalCurve()), MIAvgMin * cfsTOafw), MITargetRelease() * cfsTOafw)
+	MIMinReq_1 <- min(max(Mica() + MIIn() - max(MIMinRefill(), MICriticalCurveMin()), MIAvgMin * cfsTOafw), MITargetMin() * cfsTOafw)
+	MIMinReq_2 <- min(max(Mica() + MIIn() - max(MIMinRefill(), MICriticalCurve()), MIAvgMin * cfsTOafw), MITargetMin() * cfsTOafw)
 	MIMinReq_o <- max(MIMinReq_1, MIMinReq_2)
 	return(MIMinReq_o)
 }
@@ -251,22 +243,21 @@ MIRelLimit <- function() { # Max allowable release
 	MIRelLimit_o <- max(Mica() + MIInflow() - MIBotVol, 0)
 	return(MIRelLimit_o)
 }
-MIAvailAfter <- function() { # Total available volume of water to be allocated 
+MIAvailAfter <- function() { # Active storage 
 	MIAvailAfter_o <- max(0, Mica() + MIIn() - MIBotVol)
 	return(MIAvailAfter_o)
 }
 
 ################### Mica rule curves #########################
 
-# Mica Flood Control Curves are modified according to January 1995 SRDs which are showed in PALCOE Website
-# (http://www.nwd-wc.usace.army.mil/cafe/forecast/SRD/MCDBChart8.pdf) (by Se-yeun Lee, Dec.05)
-# Flood storage curve selected is based on the total run off April-August  for the variable period (anywhere from Oct -- July to Dec -- July, depending on the dam) 
-# and is fixed during the rest of the year. For some dams the decision is based on the forecast of  total inflow to dam itself.
-# For other dams the flood storage decision is based on the forecast of  total runoff anticipated at the Dalles and/or to the dam itself.  Units acre-ft.
+# Mica Flood Control Curves are modified according to January 1995 SRDs which are showed in USCOE Website
+# (http://www.nwd-wc.usace.army.mil/cafe/forecast/SRD/MCDBChart8.pdf)
+# Flood storage curve selected is based on the April -- August runoff forecast at The Dalles during the flood control evacuation period (Oct. -- Mar). Units acre-ft.
+# When The Dalles forecast is > 111 MAF, on-call storage is requested up to 8 MAF. This is in addition to the 4 MAF of treaty storage at Mica
 # Flood curve values are given in terms of the total volume of water held in the reservoir.
 
 # Mica Dam flood evacuation period is 1 October to 30 March. Refill period is 1 April to 31 July.
-MI_CurFC <- function() {
+MIFloodCurve <- function() {
 	if (DARunoffAprAug >= 111E6 && MIRunoffAprAug > 19.3E6) {
 		MI_CurFC_o <- MIFlood_input$MIFlood12[week_in_year]
 	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 18E6 || MIRunoffMayAug > 17.5E6)) {
@@ -282,7 +273,6 @@ MI_CurFC <- function() {
 	} else if (DARunoffAprAug >= 111E6 && (MIRunoffAprAug > 8E6 || MIRunoffMayAug > 7.5E6)) {
 		MI_CurFC_o <- MIFlood_input$MIFlood6[week_in_year] - (MIFlood_input$MIFlood6[week_in_year] - MIFlood_input$MIFlood7[week_in_year]) / (10E6 - 8E6) * (MIRunoffAprAug - 8E6)
 	} else if (DARunoffAprAug >= 80.0E6) {
-		#MI_CurFC_o <- MIFlood_input$MIFlood5[week_in_year] - (MIFlood_input$MIFlood5[week_in_year] - MIFlood_input$MIFlood6[week_in_year]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)
 		MI_CurFC_o <- MIFlood_input$MIFlood5[week_in_year]
 	} else if (DARunoffAprAug >= 75.0E6) {
 		MI_CurFC_o <- MIFlood_input$MIFlood4[week_in_year] - (MIFlood_input$MIFlood4[week_in_year] - MIFlood_input$MIFlood5[week_in_year]) / (80E6 - 75E6) * (DARunoffAprAug - 75E6)
@@ -297,11 +287,7 @@ MI_CurFC <- function() {
 	}
 	return(MI_CurFC_o)
 }
-MIFloodCurve <- function() {
-	MIFloodCurve_o <- MIFullPoolVol - GlobalFloodEvacMult * (MIFullPoolVol - MI_CurFC())
-	return(MIFloodCurve_o)
-}
-MITopVol <- function() { # storage volume prescribed by flood curve
+MITopVol <- function() {  ## Upper rule curve
 	if (TopRuleSw() == 0) { # Default = 0
 		MITopVol_o <- MIFloodCurve()
 	} else if (TopRuleSw() == 1) {
@@ -318,36 +304,12 @@ MITopVol <- function() { # storage volume prescribed by flood curve
 		} else if (week_in_year < start_refill_wk) {
 			MITopVol_o <- MIFloodCurve()
 		} else {
-			MITopVol_o <- MIFullPoolVol()
+			MITopVol_o <- MIFullPoolVol
 		}
 	}
 	return(MITopVol_o)
 }
-MI_AprilECC <- function() {
-	MI_AprilECC_o <- min(max(MICriticalCurve_input[36,2], MIAssuredRefill_input[36,2]), MIFloodCurve_Apr)
-	return(MI_AprilECC_o)
-}
-MIApril_1 <- function() {
-	MIApril_1_o <- reservoir_vol_df$MICAA[which(input_file$Week == 35)][year_counter]
-	return(MIApril_1_o)
-}
-Mica_Jan <- function() {
-	Mica_Jan_o <- reservoir_vol_df$MICAA[which(input_file$Week == 22)][year_counter]
-	return(Mica_Jan_o)
-}
-MI_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		MI_April_Target_o <- MICriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		MI_April_Target_o <- MICriticalCurve_input$CRC2[36]
-	} else if (CriticalCurveSw == 3) {
-		MI_April_Target_o <- MICriticalCurve_input$CRC3[36]
-	} else if (CriticalCurveSw == 4) {
-		MI_April_Target_o <- MICriticalCurve_input$CRC4[36]
-	}
-	return(MI_April_Target_o)
-}
-MIRuleReq <- function() { # required release according to flood curve
+MIRuleReq <- function() { ## Release required to meet upper rule curve (flood curve)
 	MIRuleReq_1 <- max(Mica() + MIIn() - MITopVol(), 0)
 	return(MIRuleReq_1)
 }
@@ -356,43 +318,48 @@ MIPrelim <- function() { # Preliminary release based on required minimum release
 	MIPrelim_c <<- MIpre
 	return(MIpre)
 }
-MILowerLimit <- function() {
+MILowerLimit <- function() { ## Minimum storage during the period January -- April
 	MILL_o <- lower_limit_input$Mica[week_in_year]
 	return(MILL_o)
 }
-MICriticalCurve <- function() { # Minimum storage to meet firm hydropower in a dry year (1928-1932 critical water period)
+MICriticalCurve <- function() { ## Minimum storage to meet firm hydropower in a dry year (1928-1932 critical water period)
 	MICriticalCurve_o <- MICriticalCurve_input$CRC1[week_in_year] # year 1 critical curve
 	return(MICriticalCurve_o)
 }
+## Draft limit in years when the reservoir needs to be drafted below the critical curve to meet the firm hydropower load.
+## This is discussed in "Principles and Procedures", pg. 21.
 MICriticalCurveMin <- function() {
 	if (MICriticalCurveSw == 1) {
 		MICriticalCurveMin_o <- MICriticalCurve_input$CRC1[week_in_year]
 	} else if (MICriticalCurveSw == 2) {
-		MICriticalCurveMin_o <- MICriticalCurve_input$CRC2[week_in_year]
+		MICriticalCurveMin_o <- MICriticalCurve_input$CRC2[week_in_year] # year 2 critical curve
 	} else if (MICriticalCurveSw == 3) {
-		MICriticalCurveMin_o <- MICriticalCurve_input$CRC3[week_in_year]
+		MICriticalCurveMin_o <- MICriticalCurve_input$CRC3[week_in_year] # year 3 critical curve
 	} else if (MICriticalCurveSw == 4) {
-		MICriticalCurveMin_o <- MICriticalCurve_input$CRC4[week_in_year]
+		MICriticalCurveMin_o <- MICriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
 	}
 	return(MICriticalCurveMin_o)
 }
-MIAssuredRefill <- function() { # Assured refill curve based on historical Assured refill
+MIAssuredRefill <- function() { # Assured refill curve based on 1931 historical inflows
 	MIAssuredRefill_o <- MIAssuredRefill_input[week_in_year,2]
 	return(MIAssuredRefill_o)
 }
-MIVariableRefill <- function() { # Required refill to ensure dam is full by end of year (AF)
-	if (RefillSwitch() == 1) {
+###### Variable refill
+# Refill rule curve based on Assured inflows and forecasts. The variable refill curve August -- December is equal
+# to the assured refill curve. From January through July, the refill curve depends on inflow forecasts.
+MIVariableRefill <- function() { # Required refill to ensure dam is full by end of year
+	if (RefillSwitch() == 1) { ## Default = 2
 		MIRefillCurve_o <- MIAssuredRefill()
 	} else if (RefillSwitch() == 2) {
 		MIRefillCurve_o <- MIVariableRefillCurve
 	}
 	return(MIRefillCurve_o)
 }
+# During the fixed period from August-December before the forecast, the ECC (Energy Content Curve) is the greater of the critical curve and the refill curve based on 1931 inflows (assured refill curve).
+# During the variable period from January--July, the VEEC (Variable Energy Content Curve) can be lower, but not higher than the ECC based on assured refill and critical curves.
+# This value is compared to the flood storage curve and the minimum value is selected.
+# "Principles and Procedures", pg. 19
 MIECC <- function() {
-	# During the period from August-December before the forecast, the ECC (Energy Content Curve) is the greater of the critical curve or the refill curve based on Assured inflows (assured refill curve).
-	# In the variable period the VEEC can be lower than the ECC due to revised refill curve (based on forecast).
-	# The VEEC curve, however, cannot be higher than the historical ECC curve (maximum of critical and assured refill curves).  This value is compared to the flood storage curve and the minimum value is selected.
-	# The model will always release water to evacuate flood storage, and will release to the ECC and VECC if the user selects maximum allowed non-firm releases.
 	MIECC_o <- min(max(min(max(MIAssuredRefill(), MICriticalCurve()), MIVariableRefill()), MILowerLimit(), MIMinRefill()), MIFloodCurve())
 	return(MIECC_o)
 }
@@ -400,8 +367,8 @@ MIECC <- function() {
 ##################### Mica fish flow ########################################################
 
 MIMcNaryDraftLimit <- function() { # Minumum reservoir volume after accounting for release to meet McNary fish target
-	if (fish_over_refill == 1) {
-		MIMcNaryDraftLimit_o <- if (UseAllStorForMCNLG == 1) { # Default is 0
+	if (fish_over_refill == 1) { # Default is 0 (don't sacrifice refill to meet fish flow target)
+		MIMcNaryDraftLimit_o <- if (UseAllStorForMCNLG == 1) { 
 			MIMcNaryDraftLimit_o <- MIBotVol
 		} else if (Fish_Pool_Alternative == 1) {
 			MIMcNaryDraftLimit_o <- MIFullPoolVol
@@ -419,12 +386,12 @@ MIMcNaryDraftLimit <- function() { # Minumum reservoir volume after accounting f
 	}
 	return(MIMcNaryDraftLimit_o)
 }
-MIMcNarySharedWater <- function() { # Water of water that can be drafted below flood curve elevation to meet McNary flow target
+MIMcNarySharedWater <- function() { # Volume of water that can be drafted below flood curve elevation to meet McNary flow target
 	MIMcNarySharedWater_o <- max(0, Mica() + MIIn() - MIPrelim() - MIMcNaryDraftLimit())
 	return(MIMcNarySharedWater_o)
 }
 MIMcNarySup <- function() { # Water released to meet McNary fish target (AF/wk)
-	if (TotalMcNarySharedWater_c == 0) { ## If there is no storage available for augmenting flow at McNary than McNarySup = 0 and this speeds up the code.
+	if (TotalMcNarySharedWater_c == 0) {
 		MIMcNarySup_o <- 0
 	} else {
 		MIMcNarySup_o <- min(MIMcNarySharedWater(), McNaryFlowDeficit() * MIMcNarySharedWater() / TotalMcNarySharedWater_c)
@@ -434,27 +401,27 @@ MIMcNarySup <- function() { # Water released to meet McNary fish target (AF/wk)
 
 ############################### Mica Energy #######################
 
-MIPreEnergy <- function() { # Initial estimate of energy production (MW-hr), considering only water released for flood protection
+MIPreEnergy <- function() { # Preliminary energy production (MW-hr), considering only water released for flood protection and to meet minimum flow requirement
 	MIPreEnergy_o <- MWhr_per_ftAcFt * min(MIPrelim(), MIPenLimit()) * MINetHead() * MICombEfficiency
 	return(MIPreEnergy_o)
 }
-MISharedWater <- function() { # Active storage remaining after allocating water to meet minimum release and fish target objectives
+MISharedWater <- function() { # Maximum storage (above that already allocated for fish flow and flood protection) available to meet firm energy load
 	MISharedWater_o <- max(Mica() + MIIn() - MIPrelim() - MIMcNarySup() - max(MIMinRefill(), MICriticalCurveMin()), 0) 
 	return(MISharedWater_o)
 }
-MIDownStreamHead <- function() {
+MIDownStreamHead <- function() { # Combined hydraulic head of reservoirs downstream of Mica
 	MIDownStreamHead_o <- REVNetHead() + ARNetHead() + TotalGCHead()
 	return(MIDownStreamHead_o)
 }
-MIEnergyContent <- function() { # Potential hydropower generation of water remaining after releasing water for flood control and fish flows.
+MIEnergyContent <- function() { # Hydropower that could be generated by releasing all of MISharedWater
 	MIEnergyContent_o <- MISharedWater() * (MINetHead() + MIDownStreamHead()) * Estimated_Efficiency * MWhr_per_ftAcFt
 	return(MIEnergyContent_o)
 }
-MIECCSharedWater <- function() { # After meeting flood control and fish flow objectives, the additional water that can be released to meet firm energy load.
+MIECCSharedWater <- function() { # After meeting flood control and fish flow objectives, the additional water that can be released to generate primary (firm) or secondary (non firm) energy.
 	MIECCSharedWater_o <- max(0, Mica() + MIIn() - MIMcNarySup() - MIPrelim() - MIECC())
 	return(MIECCSharedWater_o)
 }
-MIECCEnergyContent <- function() {
+MIECCEnergyContent <- function() { # Hydropower that could be generated by releasing all of MIECCSharedWater
 	MIECCEnergyContent_o <- MIECCSharedWater() * (MINetHead() + REVNetHead() + ARNetHead() + TotalGCHead()) * Estimated_Efficiency * MWhr_per_ftAcFt
 	return(MIECCEnergyContent_o)
 }
@@ -504,8 +471,10 @@ MIEnergySup <- function() { # Water released to satisfy firm and non-firm power 
 	}
 	return(MIEnergySup_o)
 }
-### bottleneck
-MICombSup <- function() { # Total water to be released to meet fish and energy objectives
+# Total water to be released to meet fish and energy objectives
+# When this function is called, it also calculates common variables that are used by many functions.
+# This greatly increases computational efficiency.
+MICombSup <- function() { 
 	if (BRIn_c == -9999) {
 		BRIn_c <<- BRIn()
 		water_df$BRIn[week_counter] <<- BRIn_c
@@ -560,17 +529,12 @@ MIMcNarySupEnergy <- function() { # Hydropower generated by releasing water to m
 
 ######################## Additional storage in case of high flow at The Dalles ############################### 
 
-MIFloodSpace <- function() { # Used in calculating storage space that can be used in case of high flow at The Dalle (AF)
+MIFloodSpace <- function() { ## Available flood space in Mica dam 
 	MIFloodSpace_o <- min(MIPrelim() + MICombSup(), max(0, MIFullPoolVol - (Mica() + MIIn() - MIPrelim() - MICombSup())))
 	MIFloodSpace_c <<- MIFloodSpace_o
 	return(MIFloodSpace_o)
 }
-MIFloodRelSharedWater <- function() {
-	MIFloodRelSharedWater_o <- max(0, Mica() + MIIn() - MIPrelim() - MICombSup_c - MIECC())
-	print(MIFloodRelSharedWater_o)
-	return(MIFloodRelSharedWater_o)
-}
-MIFloodFrac <- function() {
+MIFloodFrac <- function() { ## Flood space in Mica as a fraction of the total flood space in Mica, Arrow, Libby, Hungry Horse, and Grand Coulee reservoirs
 	if (TotalFloodSpace_c == -9999) {
 		TotalFloodSpace_c <<- TotalFloodSpace()
 		water_df$TotalFloodSpace[week_counter] <<- TotalFloodSpace_c
@@ -578,28 +542,16 @@ MIFloodFrac <- function() {
 	if (TotalFloodSpace_c == 0) {
 		MIFloodFrac_o <- 0
 	} else {
-		MIFloodFrac_o <- MIFloodMult * MIFloodSpace_c / TotalFloodSpace_c
+		MIFloodFrac_o <- MIFloodSpace_c / TotalFloodSpace_c
 	}
 	return(MIFloodFrac_o)
 }
-MIFloodRelFrac <- function() {
-	if (TotalFloodRelSharedWater_c == 0) {
-		MIFloodRelFrac_o <- 0
-	} else {
-		MIFloodRelFrac_o <- MIFloodRelSharedWater() / TotalFloodRelSharedWater_c
-	}
-	return(MIFloodRelFrac_o)
-}
-MIRelReducReq <- function() { # Water stored rather than released in case of high flow at The Dalles (AF/wk)
+MIRelReducReq <- function() { ## Reduction in project outflow to meet controlled flow at The Dalles
 	MIRelReducReq_o <- TotalRelReducReq() * MIFloodFrac()
 	MIRelReducReq_c <<- MIRelReducReq_o
 	return(MIRelReducReq_o)
 }
-MIMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
-	MIMinFloodRelReq_o <- min(MIFloodRelSharedWater(), MinFloodRelReq() * MIFloodRelFrac())
-	return(MIMinFloodRelReq_o)
-}
-MIDamProtectExcess <- function() {
+MIDamProtectExcess <- function() { ## release of water to prevent the dam from overflowing, in excess of that required to meet all other objectives.
 	MIDamProtectExcess_o <- max(0, MIDamProtectRel() - MIPrelim() - MICombSup_c)
 	return(MIDamProtectExcess_o)
 }
@@ -607,11 +559,10 @@ MIDamProtectExcess <- function() {
 ################ Mica final release #######################################################
 
 MIRelease <- function() { # Water released from Mica after accounting for all objectives
-	#MIRelease_o <- max(min(max(MIMinReq(), MIPrelim() + MICombSup() - MIRelReducReq() + MIMinFloodRelReq()), MIRelLimit()), MIDamProtectRel())
 	MIRelease_o <- max(min(MIPrelim() + MICombSup() - MIRelReducReq(), MIRelLimit()), MIDamProtectRel(), MIAvgMin * cfsTOafw)
 	return(MIRelease_o)
 }
-MIOutflow <- function() { # Final outflow from Mica
+MIOutflow <- function() { # Same as MIRelease, but called when calculating inflow to downstream dams
 	MIOutflow_o <- MIRelease_c
 	return(MIOutflow_o)
 }
@@ -632,7 +583,7 @@ REVPrelim <- function() {
 	return(REVPrelim_o)
 }
 REVPenLimit <- function() {
-	REVPenCap <- 90000 # (Walker-Larsen, 2017) changed from 56000
+	REVPenCap <- 90000 # (Walker-Larsen, 2017) 
 	REVPenLimit_o <- REVPenCap * cfsTOafw
 	return(REVPenLimit_o)
 }
@@ -659,16 +610,10 @@ REVOut <- function() {
 
 ARFullPoolVol <- 7327300 # Volume corresponding to 1444 ft of elevation.  This is normal full pool.  Units acre-ft.
 ARBotVol <- 227300 # Volume in AF, corresponding to 1377.9 ft elevation
-InitARLink <- 4886277.48
+ARAvgMin <- 5000 # FCOP 2003
+
 InitAR <- function() {
-	ARHistStor_input <- HistStor_input$ARHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) { # Default = 2
-		InitAR_o <- InitARLink
-	} else if (InitialConditionSwitch == 1) {
-		InitAR_o <- ResInitFractionFull * ARFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitAR_o <- ARHistStor_input
-	}
+	InitAR_o <- ResInitFractionFull * ARFullPoolVol
 	return(InitAR_o)
 }
 Arrow <- function() {
@@ -685,11 +630,6 @@ ArrowFlowData <- function() {
 ARInc <- function() {
 	ARInc_o <- ArrowFlowData() - RevFlowData()
 	return(ARInc_o)
-}
-ARSurfaceArea <- function() { # Surface Area of reservoir
-	ARSurfaceArea_o <- (-1.21281443E-13 * (Arrow() / 1000)^4 + 1.53692112E-09 * (Arrow() / 1000)^3 -
-		6.75961255E-06 * (Arrow() / 1000)^2 + 1.87278268E-02 * (Arrow() / 1000) + 2.30403996) * 1000
-	return(ARSurfaceArea_o)
 }
 ARElev_ft <- function() { 
 	upper_vol <- AR_elev_input$Volume[which(AR_elev_input$Volume >= Arrow())[1]]
@@ -709,8 +649,7 @@ ARElev_ft <- function() {
 }
 ARNetHead <- function() { # Depth of water in the reservoir above tailwater (ft)
 	ARTailElev <- 1367 # https://www.nwd.usace.army.mil/Media/Fact-Sheets/Fact-Sheet-Article-View/Article/621041/keenlyside-dam/
-	ARLoss <- 0
-	ARNetHead_o <- ARElev_ft() - ARTailElev - ARLoss
+	ARNetHead_o <- ARElev_ft() - ARTailElev
 	return(ARNetHead_o)
 }
 ARPenLimit <- function() { # Maximum flow rate through turbines (AF/wk)
@@ -718,33 +657,25 @@ ARPenLimit <- function() { # Maximum flow rate through turbines (AF/wk)
 	ARPenLimit_o <- ARPenCap * cfsTOafw
 	return(ARPenLimit_o)
 }
-AREvapData <- function() {
-	AREvapData_o <- 0 # Could include open-water evaporation rate, but not considered in this version
-	return(AREvapData_o)
-}
-AREvap <- function() { # Volumetric evaporation
-	AREvap_o <- (ARSurfaceArea() * AREvapData()) * 0.5042 / 12
-	return(AREvap_o)
-}
-ARIn <- function() { # Preliminary inflow to Arrow
-	ARIn_o <- REVPrelim() + ARInc() - AREvap()
+ARIn <- function() {
+	ARIn_o <- REVPrelim() + ARInc()
 	return(ARIn_o)
 }
-ARPreInflow <- function() {
+ARPreInflow <- function() { ## Inflow to Arrow before accounting for controlled flow at The Dalles
 	ARPreInflow_o <- max(min(MIPrelim() + MICombSup_c, MIRelLimit()), MIDamProtectRel()) + (ArrowFlowData() - MicaFlowData())
 	ARPreInflow_c <<- ARPreInflow_o
 	return(ARPreInflow_o)
 }
 ARInflow <- function() {
-	ARInflow_o <- REVOut() + ARInc() - AREvap()
+	ARInflow_o <- REVOut() + ARInc()
 	return(ARInflow_o)
 }
 
 ################## Arrow max and min releases #################################### 
 
-ARAssuredRelease <- function() {
-	ARAssuredRelease_o <- ARAssuredRelease_input$target[week_in_year]
-	return(ARAssuredRelease_o)
+ARTargetMin <- function() {
+	ARTargetMin_o <- ARAssuredRelease_input$target[week_in_year]
+	return(ARTargetMin_o)
 }
 ARMinRefill <- function() {
 	if (gurantee_refill == 1) {
@@ -758,19 +689,15 @@ ARMinRefill <- function() {
 	}
 	return(ARMinRefill_o)
 }
-ARAvgMin <- 5000 # FCOP 2003
 ARMinReq <- function() {
-	
-	ARMinReq_o <- min(max(Arrow() + ARIn() - max(ARMinRefill(), ARCriticalCurveMin()), ARAvgMin * cfsTOafw), ARAssuredRelease() * cfsTOafw)
+	ARMinReq_o <- min(max(Arrow() + ARIn() - max(ARMinRefill(), ARCriticalCurveMin()), ARAvgMin * cfsTOafw), ARTargetMin() * cfsTOafw)
 	return(ARMinReq_o)
 }
 ARDamProtectRel <- function() {
-	#ARDamProtectRel_o <- max(0, Arrow() + ARInflow() - ARFullPoolVol)
 	ARDamProtectRel_o <- max(0, Arrow() + ARPreInflow() - ARFullPoolVol)
 	return(ARDamProtectRel_o)
 }
 ARRelLimit <- function() {
-	#ARRelLimit_o <- max(Arrow() + ARInflow() - ARBotVol, 0)
 	ARRelLimit_o <- max(Arrow() + ARPreInflow_c - ARBotVol, 0)
 	return(ARRelLimit_o)
 }
@@ -782,13 +709,13 @@ ARAvailAfter <- function() {
 ################## Arrow rule curves ####################################
 
 # Arrow Flood Control Curves are modified according to January 1995 SRDs which are showed in 
-# 2003 Columbia River Treaty Flood Control Operating Plan (by Se-yeun Lee, Dec.05)
+# 2003 Columbia River Treaty Flood Control Operating Plan
 # Flood evacuation is 1 October to 30 March. Refill is from 1 April to 31 July.
-AR_CurFC <- function() {
-	if (DARunoffAprAug >= 111E6) {
+# Arrow has 3.6 MAF of treaty storage plus an additional 4.5 MAF of on-call storage
+ARFloodCurve <- function() {
+	if (DARunoffAprAug >= 111E6) { ## In case of on-call storage
 		AR_CurFC_o <- ARFlood_input$ARFlood6[week_in_year]
 	} else if (DARunoffAprAug >= 80E6) {
-		#AR_CurFC_o <- ARFlood_input$ARFlood5[week_in_year] - (ARFlood_input$ARFlood5[week_in_year] - ARFlood_input$ARFlood6[week_in_year]) / (111E6 - 80E6) * (DARunoffAprAug - 80E6)		
 		AR_CurFC_o <- ARFlood_input$ARFlood5[week_in_year]
 	} else if (DARunoffAprAug >= 75E6) {
 		AR_CurFC_o <- ARFlood_input$ARFlood4[week_in_year] - (ARFlood_input$ARFlood4[week_in_year] - ARFlood_input$ARFlood5[week_in_year]) / (80E6 - 75E6) * (DARunoffAprAug - 75E6)
@@ -802,10 +729,6 @@ AR_CurFC <- function() {
 		AR_CurFC_o <- ARFlood_input$ARFlood1[week_in_year]
 	}
 	return(AR_CurFC_o)
-}
-ARFloodCurve <- function() {
-	ARFloodCurve_o <- ARFullPoolVol - GlobalFloodEvacMult * (ARFullPoolVol - AR_CurFC())
-	return(ARFloodCurve_o)
 }
 ARTopVol <- function() {
 	if (TopRuleSw() == 0) {
@@ -828,30 +751,6 @@ ARTopVol <- function() {
 		}
 	}
 	return(ARTopVol_o)
-}
-AR_AprilECC <- function() {
-	AR_AprilECC_o <- min(max(ARCriticalCurve_input[36,2], ARAssuredRefill_input[36,2]), ARFloodCurve_Apr)
-	return(AR_AprilECC_o)
-}
-AR_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		AR_April_Target_o <- ARCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		AR_April_Target_o <- ARCriticalCurve_input$CRC2[36]
-	} else if (CriticalCurveSw == 3) {
-		AR_April_Target_o <- ARCriticalCurve_input$CRC3[36]
-	} else if (CriticalCurveSw == 4) {
-		AR_April_Target_o <- ARCriticalCurve_input$CRC4[36]
-	}
-	return(AR_April_Target_o)
-}
-ARApril_1 <- function() {
-	ARApril_1_o <- reservoir_vol_df$ARROW[which(input_file$Week == 35)][year_counter]
-	return(ARApril_1_o)
-}
-Arrow_Jan <- function() {
-	Arrow_Jan_o <- reservoir_vol_df$ARROW[which(input_file$Week == 22)][year_counter]
-	return(Arrow_Jan_o)
 }
 ARRuleReq <- function() {
 	ARRuleReq_o <- max(Arrow() + ARIn() - ARTopVol(), 0)
@@ -926,7 +825,7 @@ ARMcNaryDraftLimit <- function() {
 	}
 	return(ARMcNaryDraftLimit_o)
 }
-ARBONDraftLimit <- function() {
+ARBONDraftLimit <- function() { ## Draft limit to meet Bonneville chum target
 	if (fish_over_refill == 1) {
 		ARBONDraftLimit_o <- ARBotVol
 	} else if (fish_over_refill == 0) {
@@ -966,14 +865,14 @@ ARBONSup <- function() {
 	} 
 	return(ARBONSup_o)
 }
-ARFishSup <- function() {
+ARFishSup <- function() { # Additional release (above preliminary release) for meeting fish flow targets
 	ARFishSup_o <- max(ARBONSup(), ARMcNarySup())
 	return(ARFishSup_o)
 }
 
 ####################### Arrow energy ##############################################
 
-ARPreEnergy <- function() { # Initial estimate of energy production (MW-hr), considering only water released for flood protection
+ARPreEnergy <- function() {
 	ARPreEnergy_o <- min(ARPrelim(), ARPenLimit()) * ARNetHead() * ARCombEfficiency * MWhr_per_ftAcFt
 	return(ARPreEnergy_o)
 }
@@ -1023,8 +922,8 @@ ARFirmEngSupReq <- function() {
 	ARFirmEngSupReq_o <- min(ARPenLimit(), ARFirmEngSup() / (MWhr_per_ftAcFt * (ARNetHead() + TotalGCHead()) * ARCombEfficiency))
 	return(ARFirmEngSupReq_o)
 }
-ARNonFirmSupReq <- function() { # Acre-ft/wk
-	if (NonFirmEnergySw == 1) { # Default = 1
+ARNonFirmSupReq <- function() {
+	if (NonFirmEnergySw == 1) {
 		ARNonFirmSupReq_o <- min(ARPenLimit(), (ARFirmEngSup() + ARNonFirmEngSup()) / (MWhr_per_ftAcFt * TotalGCHead() * ARCombEfficiency))
 	} else {
 		ARNonFirmSupReq_o <- 0
@@ -1039,20 +938,20 @@ AREnergySup <- function() {
 	}
 	return(AREnergySup_o)
 }
-ARCombUpSup <- function() {
+ARCombUpSup <- function() { # Release of water upstream of Arrow to meet fish and energy objectives 
 	if (MICombSup_c == -9999) {
 		ARCombUpSup_1 <- MICombSup()
 	} else {
 		ARCombUpSup_1 <- MICombSup_c
 	}
-	if (refill_cat4 == 0) {
+	if (refill_cat4 == 0) { # Do not use any of the water released upstream of Arrow to refill to lower rule curve
 		ARCombUpSup_o <- ARCombUpSup_1
-	} else if (refill_cat4 == 1) {
+	} else if (refill_cat4 == 1) { # Allow some of the water to be used to refill reservoir to a minimum draft point
 		inflow <- ARIn() + ARCombUpSup_1
 		outflow <- ARPrelim() + AREnergySup() + ARFishSup()
 		min_draft <- min(max(ARMinRefill(), ARCriticalCurveMin()), ARBONDraftLimit(), ARECC())
 		ARCombUpSup_o <- min(max(0, Arrow() + inflow - outflow - min_draft), ARCombUpSup_1)
-	} else if (refill_cat4 == 2) {
+	} else if (refill_cat4 == 2) { # Allow some of the water to be used to refill reservoir to the ECC
 		inflow <- ARIn() + ARCombUpSup_1
 		outflow <- ARPrelim() + AREnergySup() + ARFishSup()
 		ARCombUpSup_o <- min(max(0, Arrow() + inflow - outflow - ARECC()), ARCombUpSup_1)	
@@ -1076,7 +975,7 @@ ARFloodSpace <- function() {
 	ARFloodSpace_c <<- ARFloodSpace_o
 	return(ARFloodSpace_o)
 }
-ARFloodRelSharedWater <- function() {
+ARFloodRelSharedWater <- function() { # Water that can be released to prevent the dam from refilling too quickly during refill period
 	ARFloodRelSharedWater_o <- max(0, Arrow() + ARPreInflow_c - ARPrelim() - ARCombSup() - ARECC())
 	return(ARFloodRelSharedWater_o)
 }
@@ -1100,12 +999,12 @@ ARFloodRelFrac <- function() {
 	}
 	return(ARFloodRelFrac_o)
 }
-ARRelReducReq <- function() { ##
+ARRelReducReq <- function() { 
 	ARRelReducReq_o <- TotalRelReducReq_c * ARFloodFrac()
 	ARRelReducReq_c <<- ARRelReducReq_o
 	return(ARRelReducReq_o)
 }
-ARMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
+ARMinFloodRelReq <- function() { ## Released during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
 	ARMinFloodRelReq_o <- min(ARFloodRelSharedWater(), MinFloodRelReq() * ARFloodRelFrac())
 	ARMinFloodRelReq_c <<- ARMinFloodRelReq_o
 	if (is.na(water_df$ARMinFloodRelReq[week_counter])) {
@@ -1113,7 +1012,7 @@ ARMinFloodRelReq <- function() { # Minimum release during refill period to ensur
 	}
 	return(ARMinFloodRelReq_o)
 }
-ARCombUpProtect <- function() {
+ARCombUpProtect <- function() { ## Release of water from upstream dams to prevent overflow
 	outflow <- ARPrelim() + ARCombSup_c
 	ARCombUpProtect_o <- max(min(MIDamProtectExcess(), Arrow() + ARPreInflow() - outflow - ARECC()), 0)
 	ARCombUpProtect_c <<- ARCombUpProtect_o
@@ -1139,18 +1038,12 @@ AROutflow <- function() {
 #-------------------- DUNCAN DAM ---------------------#
 #######################################################
 
-DUFullPoolVol <- 1424900 # storage volume at 1892 ft. pool elevation
-DUBotVol <- 25000 # storage at 1794.2 ft. pool elevation (1.4 MAF active storage)
-InitDULink <- 1424900
+DUFullPoolVol <- 1424900 # Storage volume at 1892 ft. pool elevation
+DUBotVol <- 25000 # Storage at 1794.2 ft. pool elevation (1.4 MAF active storage)
+DUAvgMin <- 100 # FCOP 2003
+
 InitDU <- function() {
-	DUHistStor <- HistStor_input$DUHistStor[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitDU_o <- InitDULink
-	} else if (InitialConditionSwitch == 1) {
-		InitDU_o <- ResInitFractionFull * DUFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitDU_o <- DUHistStor
-	}
+	InitDU_o <- ResInitFractionFull * DUFullPoolVol
 	return(InitDU_o)
 }
 Duncan <- function() {
@@ -1164,17 +1057,8 @@ Duncan <- function() {
 DuncanFlowData <- function() {
 	return(FlowDU)
 }
-DUSurfaceArea <- function() {
-	DUSurfaceArea_o <- (-1.21281443E-13 * (Duncan() / 1000)^4 + 1.53692112E-09 * (Duncan() / 1000)^3 - 6.75961255E-06 * (Duncan() / 1000)^2 + 1.87278268E-02 * (Duncan() / 1000) + 2.30403996) * 1000
-	return(DUSurfaceArea_o)
-}
-DUEvap <- function() {
-	DUEvapData <- 0
-	DUEvap_o <- DUSurfaceArea() * DUEvapData * 0.5042 / 12
-	return(DUEvap_o)
-}
 DUIn <- function() {
-	DUIn_o <- DuncanFlowData() - DUEvap()
+	DUIn_o <- DuncanFlowData()
 	return(DUIn_o)
 }
 DUInflow <- function() {
@@ -1197,7 +1081,6 @@ DUMinRefill <- function() {
 	return(DUMinRefill_o)
 }
 DUMinReq <- function() {
-	DUAvgMin <- 100 # FCOP 2003
 	DURefillMin_o <- DUAvgMin * cfsTOafw
 	return(DURefillMin_o)
 }
@@ -1217,7 +1100,7 @@ DUAvailAfter <- function() {
 ################### Duncan rule curves #########################
 
 # Flood evacuation period is 1 December to 29 February
-DU_CurFC <- function() {
+DUFloodCurve <- function() {
 	if (DARunoffAprAug > 111E6) {
 		DU_CurFC_o <- DUFlood_input$DUFlood5[week_in_year]
 	} else if (DURunoffAprAug < 1.4E6) {
@@ -1233,12 +1116,8 @@ DU_CurFC <- function() {
 	}
 	return(DU_CurFC_o)
 }
-DUFloodCurve <- function() {
-	DUFloodCurve_o <- DUFullPoolVol - GlobalFloodEvacMult * (DUFullPoolVol - DU_CurFC())
-	return(DUFloodCurve_o)
-}
 DUTopVol <- function() {
-	if (TopRuleSw() == 0) { # Default = 0
+	if (TopRuleSw() == 0) {
 		DUTopVol_o <- DUFloodCurve()
 	} else if (TopRuleSw() == 1) {
 		DUTopVol_o <- DUFullPoolVol
@@ -1258,30 +1137,6 @@ DUTopVol <- function() {
 		}
 	}
 	return(DUTopVol_o)
-}
-DU_AprilECC <- function() {
-	DU_AprilECC_o <- min(max(DUCriticalCurve_input[36,2], DUAssuredRefill_input[36,2]), DUFloodCurve_Apr)
-	return(DU_AprilECC_o)
-}
-DUApril_1 <- function() {
-	DUApril_1_o <- reservoir_vol_df$DUNCA[which(input_file$Week == 35)][year_counter]
-	return(DUApril_1_o)
-}
-DU_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		DU_April_Target_o <- DUCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		DU_April_Target_o <- DUCriticalCurve_input$CRC2[36]
-	} else if (CriticalCurveSw == 3) {
-		DU_April_Target_o <- DUCriticalCurve_input$CRC3[36]
-	} else if (CriticalCurveSw == 4) {
-		DU_April_Target_o <- DUCriticalCurve_input$CRC4[36]
-	}
-	return(DU_April_Target_o)
-}
-Duncan_Jan <- function() {
-	Duncan_Jan_o <- reservoir_vol_df$DUNCA[which(input_file$Week == 22)][year_counter]
-	return(Duncan_Jan_o)
 }
 DURuleReq <- function() {
 	DURuleReq_o <- max(Duncan() + DUIn() - DUTopVol(), 0)
@@ -1460,17 +1315,11 @@ DUOutflow <- function() {
 #######################################################
 
 LBFullPoolVol <- 5869400 # Gross storage at 2459 ft. pool elevation
-LBBotVol <- 889900 # Minimum operating limit, 2287 ft. pool elevation.
-InitLBLink <- 5654926.179
+LBBotVol <- 889900 # Minimum operating limit, 2287 ft. pool elevation
+LBAvgMin <- 4000 # FCOP, 2003
+
 InitLB <- function() {
-	LBHistStor_input <- HistStor_input$LBHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitLB_o <- InitLBLink
-	} else if (InitialConditionSwitch == 1) {
-		InitLB_o <- ResInitFractionFull * LBFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitLB_o <- LBHistStor_input
-	}
+	InitLB_o <- ResInitFractionFull * LBFullPoolVol
 	return(InitLB_o)
 }
 Libby <- function() {
@@ -1483,10 +1332,6 @@ Libby <- function() {
 }
 LibbyFlowData <- function() {
 	return(FlowLB)
-}
-LBSurfaceArea <- function() {
-	LBSurfaceArea_o <- (-1.21281443E-13 * (Libby() / 1000)^4 + 1.53692112E-09 * (Libby() / 1000)^3 - 6.75961255E-06 * (Libby() / 1000)^2 + 1.87278268E-02 * (Libby() / 1000) + 2.30403996) * 1000
-	return(LBSurfaceArea_o)
 }
 LBElev_ft <- function() {
 	upper_vol <- LB_elev_input$Volume[which(LB_elev_input$Volume >= Libby())[1]]
@@ -1506,22 +1351,13 @@ LBElev_ft <- function() {
 }
 LBNetHead <- function() {
 	LBTailElev <- 2121 # Libby Dam Master Plan 1997
-	LBLoss <- 0
-	LBNetHead_o <- LBElev_ft() - LBTailElev - LBLoss
+	LBNetHead_o <- LBElev_ft() - LBTailElev
 	return(LBNetHead_o)
 }
 LBPenLimit <- function() {
 	LBGenPenCap <- 24100 # https://www.nwd.usace.army.mil/CRSO/Project-Locations/Libby/#top
 	LBPenLimit_o <- LBGenPenCap * cfsTOafw
 	return(LBPenLimit_o)
-}
-LibbyEvapData <- function() {
-	LibbyEvapData_o <- 0
-	return(LibbyEvapData_o)
-}
-LBEvap <- function() {
-	LBEvap_o <- (LBSurfaceArea() * LibbyEvapData()) * 0.5042 / 12
-	return(LBEvap_o)
 }
 LBIn <- function() {
 	LBIn_o <- LibbyFlowData()
@@ -1546,7 +1382,6 @@ LBMinRefill <- function() {
 	}
 	return(LBMinRefill_o)
 }
-LBAvgMin <- 4000 # FCOP, 2003
 LBMinReq <- function() {
 	LBMinReq_1 <- max(LB_trout_flow(), LB_sturgeon_flow(), LBAvgMin) * cfsTOafw
 	if (fish_over_refill == 1) {
@@ -1572,7 +1407,7 @@ LBAvailAfter <- function() {
 ########### Libby rule curves ##############
 
 ## 1998 Revised flood control storage curve ("The effects of VARQ at Libby and Hungry Horse on Columbia River System Flood Control". U.S.A.C.E. 1998, Fig. 3).
-LB_CurFC <- function() {
+LBFloodCurve <- function() {
 	if (LBRunoffAprAug < 4.5E6) {
 		LB_CurFC_o <- LBFlood_input$LBFlood1[week_in_year]
 	} else if (LBRunoffAprAug < 5.5E6) {
@@ -1588,10 +1423,6 @@ LB_CurFC <- function() {
 	}
 	return(LB_CurFC_o)
 }
-LBFloodCurve <- function() {
-	LibbyFloodCurve_o <- LBFullPoolVol - GlobalFloodEvacMult * (LBFullPoolVol - LB_CurFC())
-	return(LibbyFloodCurve_o)
-}
 LBTopVol <- function() {
 	if (TopRuleSw() == 0) {
 		LBTopVol_o <- min(LibbyBiOpDraftLimit(), LBFloodCurve())
@@ -1601,30 +1432,6 @@ LBTopVol <- function() {
 		LBTopVol_o <- LBFlood_input$LBFlood_1[week_in_year]
 	}
 	return(LBTopVol_o)
-}
-LB_AprilECC <- function() {
-	LB_AprilECC_o <- min(max(LBCriticalCurve_input[36,2], LBAssuredRefill_input[36,2]), LBFloodCurve_Apr)
-	return(LB_AprilECC_o)
-}
-LBApril_1 <- function() {
-	LBApril_1_o <- reservoir_vol_df$LIBBY[which(input_file$Week == 35)][year_counter]
-	return(LBApril_1_o)
-}
-LB_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		LB_April_Target_o <- LBCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		LB_April_Target_o <- LBCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 3) {
-		LB_April_Target_o <- LBCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 4) {
-		LB_April_Target_o <- LBCriticalCurve_input$CRC1[36]
-	}
-	return(LB_April_Target_o)
-}
-Libby_Jan <- function() {
-	Libby_Jan_o <- reservoir_vol_df$LIBBY[which(input_file$Week == 22)][year_counter]
-	return(Libby_Jan_o)
 }
 LBRuleReq <- function() {
 	LBRuleReq_o <- max(Libby() + LBIn() - LBTopVol(), 0)
@@ -1689,7 +1496,7 @@ LB_trout_flow <- function() {# 2022 water management plan
 	}
 	return(LB_bull_trout_o)
 }
-LB_sturgeon_flow <- function() { # 2006 PALFWS Libby BiOp
+LB_sturgeon_flow <- function() { # 2006 USFWS Libby BiOp
 	if (week_in_year %in% 42:52) {
 		if (LBRunoffAprAug < 4.8e6) {
 			tier_volume <- 0
@@ -1852,10 +1659,6 @@ LBFloodSpace <- function() {
 	LBFloodSpace_c <<- LBFloodSpace_o
 	return(LBFloodSpace_o)
 }
-LBFloodRelSharedWater <- function() {
-	LBFloodRelSharedWater_o <- max(0, Libby() + LBIn() - LBPrelim() - LBCombSup_c - LBECC())
-	return(LBFloodRelSharedWater_o)
-}
 LBFloodFrac <- function() {
 	if (TotalFloodSpace_c == 0) {
 		LBFloodFrac_o <- 0
@@ -1864,21 +1667,9 @@ LBFloodFrac <- function() {
 	}	
 	return(LBFloodFrac_o)
 }
-LBFloodRelFrac <- function() {
-	if (TotalFloodRelSharedWater_c == 0) {
-		LBFloodRelFrac_o <- 0
-	} else {
-		LBFloodRelFrac_o <- LBFloodRelSharedWater() / TotalFloodRelSharedWater_c
-	}
-	return(LBFloodRelFrac_o)
-}
 LBRelReducReq <- function() {
 	LBRelReducReq_o <- TotalRelReducReq_c * LBFloodFrac()
 	return(LBRelReducReq_o)
-}
-LBMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
-	LBMinFloodRelReq_o <- min(LBFloodRelSharedWater(), MinFloodRelReq_c * LBFloodRelFrac())
-	return(LBMinFloodRelReq_o)
 }
 LBDamProtectExcess <- function() {
 	LBDamProtectExcess_o <- max(0, LBDamProtectRel() - LBPrelim() - LBCombSup_c)
@@ -1888,7 +1679,6 @@ LBDamProtectExcess <- function() {
 ############# Libby final release ############################
 
 LBRelease <- function() {
-	#LBRelease_o <- max(min(LBPrelim() + LBCombSup() - LBRelReducReq() + LBMinFloodRelReq(), LBRelLimit()), LBDamProtectRel())
 	LBRelease_o <- max(min(LBPrelim() + LBCombSup_c - LBRelReducReq(), LBRelLimit()), LBDamProtectRel(), LBAvgMin * cfsTOafw)
 	return(LBRelease_o)
 }
@@ -1923,16 +1713,10 @@ BONFOut <- function() {
 
 CLFullPoolVol <- 817000 # Volume corresponding to 1745.3 ft. pool elevation. 
 CLBotVol <- 145200 # Volume corresponding to 1739.1 ft. pool elevation.
-InitCLLink <- 310978.75
+CLAvgMin <- 5000
+
 InitCL <- function() {
-	CLHistStor_input <- HistStor_input$CLHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitCL_o <- InitCLLink
-	} else if (InitialConditionSwitch == 1) {
-		InitCL_o <- ResInitFractionFull * CLFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitCL_o <- CLHistStor_input
-	}
+	InitCL_o <- ResInitFractionFull * CLFullPoolVol
 	return(InitCL_o)
 }
 CorraLinn <- function() {
@@ -1949,11 +1733,6 @@ CorraLinnFlowData <- function() {
 CLInc <- function() {
 	CLInc_o <- CorraLinnFlowData() - DuncanFlowData() - BonnersFerryFlowData()
 	return(CLInc_o)
-}
-CLSurfaceArea <- function() {
-	CLSurfaceArea_o <- (-1.21281443E-13 * (CorraLinn() / 1000)^4 + 1.53692112E-09 * (CorraLinn() / 1000)^3 -
-		6.75961255E-06 * (CorraLinn() / 1000)^2 + 1.87278268E-02 * (CorraLinn() / 1000) + 2.30403996) * 1000
-	return(CLSurfaceArea_o)
 }
 CLElev_ft <- function() {
 	upper_vol <- CL_elev_input$Volume[which(CL_elev_input$Volume >= CorraLinn())[1]]
@@ -1981,13 +1760,8 @@ CLPenLimit <- function() {
 	CLPenLimit_o <- CLPenCap * cfsTOafw
 	return(CLPenLimit_o)
 }
-CLEvap <- function() {
-	CLEvapData <- 0
-	CLEvap_o <- (CLSurfaceArea() * CLEvapData) * 0.5042 / 12
-	return(CLEvap_o)
-}
 CLIn <- function() {
-	CLIn_o <- DUPrelim() + LBPrelim() + (CorraLinnFlowData() - DuncanFlowData() - LibbyFlowData()) - CLEvap()
+	CLIn_o <- DUPrelim() + LBPrelim() + (CorraLinnFlowData() - DuncanFlowData() - LibbyFlowData())
 	return(CLIn_o)
 }
 CLPreInflow <- function() {
@@ -1997,15 +1771,14 @@ CLPreInflow <- function() {
 	return(CLPreInflow_o)
 }
 CLInflow <- function() {
-	CLInflow_o <- DURelease_c + BONFOut() + CLInc() - CLEvap()
+	CLInflow_o <- DURelease_c + BONFOut() + CLInc()
 	return(CLInflow_o)
 }
 
 ################# Corra Linn max and min releases ####################################
 
 CLMinReq <- function() {
-	CLMin <- 5000 # FCOP 2003
-	CLMinReq_o <- CLMin * cfsTOafw
+	CLMinReq_o <- CLAvgMin * cfsTOafw
 	return(CLMinReq_o)
 }
 CLDamProtectRel <- function() {
@@ -2041,30 +1814,6 @@ CLTopVol <- function() {
 		CLTopVol_o <- CLFullPoolVol
 	}
 	return(CLTopVol_o)
-}
-CL_AprilECC <- function() {
-	CL_AprilECC_o <- min(CLCriticalCurve_input[36,2], CLFloodCurve_Apr)
-	return(CL_AprilECC_o)
-}
-CLApril_1 <- function() {
-	CLApril_1_o <- reservoir_vol_df$CORRA[which(input_file$Week == 35)][year_counter]
-	return(CLApril_1_o)	
-}
-CL_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		CL_April_Target_o <- CLCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		CL_April_Target_o <- CLCriticalCurve_input$CRC2[36]
-	} else if (CriticalCurveSw == 3) {
-		CL_April_Target_o <- CLCriticalCurve_input$CRC3[36]
-	} else if (CriticalCurveSw == 4) {
-		CL_April_Target_o <- CLCriticalCurve_input$CRC4[36]
-	}
-	return(CL_April_Target_o)
-}
-CorraLinn_Jan <- function() {
-	CorraLinn_Jan_o <- reservoir_vol_df$CORRA[which(input_file$Week == 22)][year_counter]
-	return(CorraLinn_Jan_o)
 }
 CLRuleReq <- function() {
 	CLRuleReq_o <- max(CorraLinn() + CLIn() - CLTopVol(), 0)
@@ -2181,7 +1930,6 @@ CLCombSup <- function() {
 	return(CLCombSup_o)
 }
 CLCombUpProtect <- function() {
-	#inflow <- CLIn() + CLCombUpSup() + DUDamProtectExcess() + LBDamProtectExcess() 
 	outflow <- CLPrelim() + CLCombSup_c
 	CLCombUpProtect_o <- max(min(DUDamProtectExcess() + LBDamProtectExcess(), 
 		CorraLinn() + CLPreInflow() - outflow - CLECC()), 0)
@@ -2211,16 +1959,10 @@ CLOutflow <- function() {
 
 HHFullPoolVol <- 3071500 # Storage corresponding with 3560 ft. pool elevation
 HHBotVol <- 0 # Storage at 3336 ft. pool elevation 
-InitHHLink <- 3071500 
+HHAvgMin <- 400 # FCOP, 2003
+
 InitHH <- function() {
-	HHHistStor_input <- HistStor_input$HHHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitHH_o <- InitHHLink
-	} else if (InitialConditionSwitch == 1) {
-		InitHH_o <- ResInitFractionFull * HHFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitHH_o <- HHHistStor_input
-	}
+	InitHH_o <- ResInitFractionFull * HHFullPoolVol
 	return(InitHH_o)
 }
 HungryHorse <- function() {
@@ -2233,11 +1975,6 @@ HungryHorse <- function() {
 }
 HungryHorseFlowData <- function() {
 	return(FlowHH)
-}
-HHSurfaceArea <- function() {
-	HHSurfaceArea_o <- (-1.21281443E-13 * (HungryHorse() / 1000)^4 + 1.53692112E-09 * (HungryHorse() / 1000)^3 -
-		6.75961255E-06 * (HungryHorse() / 1000)^2 + 1.87278268E-02 * (HungryHorse() / 1000) + 2.30403996) * 1000
-	return(HHSurfaceArea_o)
 }
 HHElev_ft <- function() {
 	upper_vol <- HH_elev_input$Volume[which(HH_elev_input$Volume >= HungryHorse())[1]]
@@ -2257,8 +1994,7 @@ HHElev_ft <- function() {
 }
 HHNetHead <- function() {
 	HHTailElev <- 3077 # Changed from 3082.6 on 5/25/23, average from 1/1/1980 to 1/1/2023. https://www.nwd-wc.usace.army.mil/dd/common/dataquery/www/?k=hungry%20horse 
-	HHLoss <- 0
-	HHNetHead_o <- HHElev_ft() - HHTailElev - HHLoss
+	HHNetHead_o <- HHElev_ft() - HHTailElev
 	return(HHNetHead_o)
 }
 HHPenLimit <- function() {
@@ -2266,13 +2002,8 @@ HHPenLimit <- function() {
 	HHPenLimit_o <- HHpen * cfsTOafw
 	return(HHPenLimit_o)
 }
-HHEvap <- function() {
-	HHEvapData <- 0
-	HHEvap_o <- HHSurfaceArea() * HHEvapData * 0.5042 / 12
-	return(HHEvap_o)
-}
 HHIn <- function() {
-	HHIn_o <- HungryHorseFlowData() - HHEvap()
+	HHIn_o <- HungryHorseFlowData()
 	return(HHIn_o)
 }
 HHInflow <- function() {
@@ -2294,7 +2025,6 @@ HHMinRefill <- function() {
 	}
 	return(HHMinRefill_o)
 }
-HHAvgMin <- 400 # FCOP, 2003
 HHMinReq <- function() {
 	HHMinReq_1 <- max(HHFishMin() * cfsTOafw, HHRelForColFalls())
 	if (fish_over_refill == 1) {
@@ -2305,12 +2035,11 @@ HHMinReq <- function() {
 	return(HHMinReq_o)
 }
 HHDamProtectRel <- function() {
-	LBDamProtectRel_o <- max(0, HungryHorse() + HHInflow() - HHFullPoolVol)
-	return(LBDamProtectRel_o)
+	HHDamProtectRel_o <- max(0, HungryHorse() + HHInflow() - HHFullPoolVol)
+	return(HHDamProtectRel_o)
 }
+# Maximum flow at Columbia Falls, stipulated for Oct - Dec.
 ColFallsMaxFlow <- function() {
-	# Maximum flow at Columbia Falls, stipulated for Oct - Dec.
-	#ColFallsMaxFlow_o <- ColFallsMaxFlow_input[month_in_year, 2]
 	ColFallsMaxFlow_o <- 51000 # Flood stage at Columbia Falls is about 14 ft. or 51000 cfs (2009 Water Management Plan)
 	return(ColFallsMaxFlow_o)
 }
@@ -2331,7 +2060,7 @@ HHAvailAfter <- function() {
 
 ## 1998 VARQ flood curve (current as of 5/30/2023)
 # Oct - Apr flood evacuation; May - Jun 30 refill
-HH_CurFC <- function() {
+HHFloodCurve <- function() {
 	if (HHRunoffMaySep < 1.0E6) {
 		HH_CurFC_o <- HHFlood_input$HHFlood1[week_in_year]
 	} else if (HHRunoffMaySep < 1.4E6) {
@@ -2353,10 +2082,6 @@ HH_CurFC <- function() {
 	}
 	return(HH_CurFC_o)
 }
-HHFloodCurve <- function() {
-	HHFloodCurve_o <- HHFullPoolVol - GlobalFloodEvacMult * (HHFullPoolVol - (HH_CurFC()))
-	return(HHFloodCurve_o)
-}
 HHTopVol <- function() {
 	if (TopRuleSw() == 0) {
 		HHTopVol_o <- min(HHBiOpDraftLimit(), HHFloodCurve())
@@ -2366,30 +2091,6 @@ HHTopVol <- function() {
 		HHTopVol_o <- HHFlood$HHFlood1[week_in_year]
 	} 
 	return(HHTopVol_o)
-}
-HH_AprilECC <- function() {
-	HH_AprilECC_o <- min(max(HHCriticalCurve_input[36,2], HHAssuredRefill_input[36,2]), HHFloodCurve_Apr)
-	return(HH_AprilECC_o)
-}
-HH_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		HH_April_Target_o <- HHCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		HH_April_Target_o <- HHCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 3) {
-		HH_April_Target_o <- HHCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 4) {
-		HH_April_Target_o <- HHCriticalCurve_input$CRC1[36]
-	}
-	return(HH_April_Target_o)
-}
-HHApril_1 <- function() {
-	HHApril_1_o <- reservoir_vol_df$FLASF[which(input_file$Week == 35)][year_counter]
-	return(HHApril_1_o)
-}
-HungryHorse_Jan <- function() {
-	HungryHorse_Jan_o <- reservoir_vol_df$FLASF[which(input_file$Week == 22)][year_counter]
-	return(HungryHorse_Jan_o)
 }
 HHRuleReq <- function() {
 	HHRuleReq_o <- max(HungryHorse() + HHIn() - HHTopVol(), 0)
@@ -2423,11 +2124,6 @@ HHAssuredRefill <- function() {
 	HHAssuredRefill_o <- HHAssuredRefill_input[week_in_year, 2]
 	return(HHAssuredRefill_o)
 }
-###### Variable refill
-# Refill rule curve based on Assured inflows and forecasts.  If the refill switch is set to the status quo rules,
-# the model selects the Assured based refill curve August-December and then selects the forecast refill curve for the remainder of the year.
-# If the refill switch is set to alternate rules, the forecast refill curve is used for the entire year.
-# The second option may allow more non-firm energy releases Aug-December than the status quo rules. Units af.
 HHVariableRefill <- function() {
 	if (RefillSwitch() == 1) {
 		HHRefillCurve_o <- HHAssuredRefill()
@@ -2437,11 +2133,6 @@ HHVariableRefill <- function() {
 	return(HHRefillCurve_o)
 }
 HHECC <- function() {
-  # During the fixed period from August-December before the forecast, the ECC is the greater of the critical curve or the refill curve based on Assured inflows.
-  # In the variable period from January-July the VEEC can be lower than the ECC due to REVised refill curve (based on forecast).
-  # The VEEC curve, however, cannot be higher than the original ECC curve.
-  # The value is compared to the flood storage curve and the minimum value is selected.
-  # The model will always release water to evacuate flood storage, and will release to the ECC and VECC if the user selects maximum allowed non-firm releases.
 	HHECC_o <- min(max(min(max(HHAssuredRefill(), HHCriticalCurve()), HHVariableRefill()), HHLowerLimit(), HHMinRefill()), HHFloodCurve(), HHBiOpDraftLimit())
 	return(HHECC_o)
 }
@@ -2464,9 +2155,9 @@ HHFishMin <- function() {
 }
 #### ColFallsTarget from 2000 PALFWS BiOp Section 3.A.1 Page 7
 # Columbia falls obligation to Columbia Falls Flow Target is based upon forecasted inflows from April through August.  The target is as follows (units cfs)
-# Forecast - target
-# Above 1790 taf - 3500 cfs
-# Below 1190 taf - 3200 cfs
+# Forecast       -- target
+# Above 1790 taf -- 3500 cfs
+# Below 1190 taf -- 3200 cfs
 # between two values is a linear interpolation.
 ColFallsTarget <- function() {
 	if (HHRunoffAprAug / 1000 < 1190) {
@@ -2574,9 +2265,6 @@ HHNFEnergyContent <- function() {
 	return(HHNFEnergyContent_o)
 }
 HHNonFirmEngSup <- function() {
-	#if (NonFirmEnergyDeficit_c == -9999) {
-	#	NonFirmEnergyDeficit_c <- NonFirmEnergyDeficit()
-	#}
 	if (TotalNFEnergyContent_c == 0) {
 		HHNonFirmEngSup_o <- 0
 	} else {
@@ -2625,10 +2313,6 @@ HHFloodSpace <- function() {
 	HHFloodSpace_c <<- HHFloodSpace_o
 	return(HHFloodSpace_o)
 }
-HHFloodRelSharedWater <- function() {
-	HHFloodRelSharedWater_o <- max(0, HungryHorse() + HHIn() - HHPrelim() - HHCombSup_c - HHECC())
-	return(HHFloodRelSharedWater_o)
-}
 HHFloodFrac <- function() {
 	if (TotalFloodSpace_c == 0) {
 		HHFloodFrac_o <- 0
@@ -2637,21 +2321,9 @@ HHFloodFrac <- function() {
 	}	
 	return(HHFloodFrac_o)
 }
-HHFloodRelFrac <- function() {
-	if (TotalFloodRelSharedWater_c == 0) {
-		HHFloodRelFrac_o <- 0
-	} else {
-		HHFloodRelFrac_o <- HHFloodRelSharedWater() / TotalFloodRelSharedWater_c
-	}
-	return(HHFloodRelFrac_o)
-}
 HHRelReducReq <- function() {
 	HHRelReducReq_o <- TotalRelReducReq_c * HHFloodFrac()
 	return(HHRelReducReq_o)
-}
-HHMinFloodRelReq <- function() { 
-	HHMinFloodRelReq_o <- min(HHFloodRelSharedWater(), MinFloodRelReq_c * HHFloodFrac())
-	return(HHMinFloodRelReq_o)
 }
 HHDamProtectExcess <- function() {
 	HHDamProtectExcess_o <- max(0, HHDamProtectRel() - HHPrelim() - HHCombSup_c)
@@ -2661,7 +2333,6 @@ HHDamProtectExcess <- function() {
 ############# Hungry Horse final release ############################
 
 HHRelease <- function() {
-	#HHRelease_o <- max(min(HHPrelim() + HHCombSup() - HHRelReducReq() + HHMinFloodRelReq(), HHRelLimit()), HHDamProtectRel())
 	HHRelease_o <- max(min(HHPrelim() + HHCombSup_c - HHRelReducReq(), HHRelLimit()), HHDamProtectRel(), HHAvgMin * cfsTOafw)
 	return(HHRelease_o)
 }
@@ -2696,16 +2367,10 @@ COLOut <- function() {
 
 KEFullPoolVol <- 1792000 # Storage at 2893 ft. of pool elevation
 KEBotVol <- 572800 # Storage at 2883 ft. of pool elevation
-InitKELink <- 1150000
+KEAvgMin <- 3000
+
 InitKE <- function() {
-	KEHistStor_input <- HistStor_input$KEHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) { # Default = 2
-		InitKE_o <- InitKELink
-	} else if (InitialConditionSwitch == 1) {
-		InitKE_o <- ResInitFractionFull * KEFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitKE_o <- KEHistStor_input
-	}
+	InitKE_o <- ResInitFractionFull * KEFullPoolVol
 	return(InitKE_o)
 }
 Kerr <- function() {
@@ -2741,8 +2406,7 @@ KerrElev_ft <- function() {
 }
 KENetHead <- function() {
 	KETailElev <- 2706 # Average tailwater elevation.  Units ft.
-	KELoss <- 0 # Piping head losses.  Units ft.
-	KENetHead_o <- KerrElev_ft() - KETailElev - KELoss
+	KENetHead_o <- KerrElev_ft() - KETailElev
 	return(KENetHead_o)
 }
 KEPenLimit <- function() {
@@ -2779,7 +2443,6 @@ KEMinRefill <- function() {
 	return(KEMinRefill_o)
 }
 KEMinReq <- function() {
-	KEAvgMin <- 3000
 	KEMinReq_1 <- Article_56() * cfsTOafw
 	KEMinReq_o <- min(max(Kerr() + KEIn() - KEMinRefill(), KEAvgMin * cfsTOafw), KEMinReq_1)
 	return(KEMinReq_o)
@@ -2802,26 +2465,6 @@ KEAvailAfter <- function() {
 KEFloodCurve <- function() {
 	KEFlood_o <- KEFlood_input[week_in_year, 2] # 1965 Memorandum of Understanding between Montana Power Company and U.S.A.C.E. (Montana Power Co., 35 F.P.C. 250 (1966)) 
 	return(KEFlood_o)
-}
-KE_AprilECC <- function() {
-	KE_AprilECC_o <- min(max(KECriticalCurve_input[36,2], KEAssuredRefill_input[36,2]), KEFloodCurve_Apr)
-	return(KE_AprilECC_o)
-}
-KEApril_1 <- function() {
-	KEApril_1_o <- reservoir_vol_df$FLAPO[which(input_file$Week == 35)][year_counter]
-	return(KEApril_1_o)
-}
-KE_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		KE_April_Target_o <- KECriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		KE_April_Target_o <- KECriticalCurve_input$CRC2[36]
-	} else if (CriticalCurveSw == 3) {
-		KE_April_Target_o <- KECriticalCurve_input$CRC3[36]
-	} else if (CriticalCurveSw == 4) {
-		KE_April_Target_o <- KECriticalCurve_input$CRC4[36]
-	}
-	return(KE_April_Target_o)
 }
 KETopVol <- function() {
 	if (KerrTopVolSw == 0) {
@@ -2868,7 +2511,7 @@ KerrECC <- function() {
 
 ######  Article_56
 # License Requirement for Kerr - FERC License No. 5, Article 56
-# Min Flows for fish (cfs)
+
 Article_56 <- function() {
 	Article_56_o <- Article_56_input[week_in_year, 2]
 	return(Article_56_o)
@@ -2964,7 +2607,6 @@ KECombSup <- function() {
 	return(KECombSup_o)
 }
 KECombUpProtect <- function() {
-	#inflow <- KEIn() + KECombUpSup() + HHDamProtectExcess()
 	outflow <- KEPrelim() + KECombSup_c
 	KECombUpProtect_o <- max(min(Kerr() + KEPreInflow() - outflow - KerrECC()), 0)
 	KECombUpProtect_c <<- KECombUpProtect_o
@@ -3104,16 +2746,10 @@ CBOut <- function() {
 
 AFFullPoolVol <- 1540000 # Volume corresponding to 2062.5 ft of elevation.  Normal full pool.  Units acre-ft.
 AFBotVol <- 384800 # Volume corresponding to 2049.7 ft elevation.
-InitAFLink <- 1000000
+AFAvgMin <- 4000 # Minimum project outflow, cfs
+
 InitAF <- function() {
-	AFHistStor_input <- HistStor_input$AFHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) { # Default = 2
-		InitAF_o <- InitAFLink
-	} else if (InitialConditionSwitch == 1) {
-		InitAF_o <- ResInitFractionFull * AFFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitAF_o <- AFHistStor_input
-	}
+	InitAF_o <- ResInitFractionFull * AFFullPoolVol
 	return(InitAF_o)
 }
 AlbeniFalls <- function() {
@@ -3130,11 +2766,6 @@ AlbeniFallsFlowData <- function() {
 AFInc <- function() {
 	AFInc_o <- AlbeniFallsFlowData() - CabinetFlowData()
 	return(AFInc_o)
-}
-AFSurfaceArea <- function() {
-	AFSurfaceArea_o <- (-1.21281443E-13 * (AlbeniFalls() / 1000)^4 + 1.53692112E-09 * (AlbeniFalls() / 1000)^3 -
-		6.75961255E-06 * (AlbeniFalls() / 1000)^2 + 1.87278268E-02 * (AlbeniFalls() / 1000) + 2.30403996) * 1000
-	return(AFSurfaceArea_o)
 }
 AFElev_ft <- function() {
 	upper_vol <- AF_elev_input$Volume[which(AF_elev_input$Volume >= AlbeniFalls())[1]]
@@ -3154,8 +2785,7 @@ AFElev_ft <- function() {
 }
 AFNetHead <- function() {
 	AFTailElev <- 2036 # https://pweb.crohms.org/dd/common/dataquery/www/?k=albeni%20fals. Changed from 2042.2 on 5/25/23
-	AFLoss <- 0
-	AFNetHead_o <- AFElev_ft() - AFTailElev - AFLoss
+	AFNetHead_o <- AFElev_ft() - AFTailElev
 	return(AFNetHead_o)
 }
 AFPenLimit <- function() {
@@ -3163,13 +2793,8 @@ AFPenLimit <- function() {
 	AFPenLimit_o <- AFPenCap * cfsTOafw
 	return(AFPenLimit_o)
 }
-AFEvap <- function() {
-	AFEvapData <- 0
-	AFEvap_o <- AFSurfaceArea() * AFEvapData * 0.5042 / 12
-	return(AFEvap_o)
-}
 AFIn <- function() {
-	AFIn_o <- CBPrelim() + AFInc() - AFEvap()
+	AFIn_o <- CBPrelim() + AFInc()
 	return(AFIn_o)
 }
 AFPreInflow <- function() {
@@ -3178,7 +2803,7 @@ AFPreInflow <- function() {
 	return(AFPreInflow_o)
 }
 AFInflow <- function() {
-	AFInflow_o <- CBOut() + AFInc() - AFEvap()
+	AFInflow_o <- CBOut() + AFInc()
 	return(AFInflow_o)
 }
 
@@ -3197,7 +2822,6 @@ AFMinRefill <- function() {
 	return(AFMinRefill_o)
 }
 AFMinReq <- function() {
-	AFAvgMin <- 4000 # cfs
 	AFMinReq_o <- AFAvgMin * cfsTOafw
 	return(AFMinReq_o)
 }
@@ -3229,30 +2853,6 @@ AFTopVol <- function() {
 		AFTopVol_o <- AFFlood_input$Max[week_in_year]
 	}
 	return(AFTopVol_o)
-}
-AF_AprilECC <- function() {
-	AF_AprilECC_o <- min(max(AFCriticalCurve_input[36,2], AFAssuredRefill_input[36,2]), AFFloodCurve_Apr)
-	return(AF_AprilECC_o)
-}
-AFApril_1 <- function() {
-	AFApril_1_o <- reservoir_vol_df$ALBEN[which(input_file$Week == 35)][year_counter]
-	return(AFApril_1_o)
-}
-AF_April_Target <- function() {
-	if (CriticalCurveSw == 1) {
-		AF_April_Target_o <- AFCriticalCurve_input$CRC1[36]
-	} else if (CriticalCurveSw == 2) {
-		AF_April_Target_o <- AFCriticalCurve_input$CRC2[36]
-	} else if (CriticalCurveSw == 3) {
-		AF_April_Target_o <- AFCriticalCurve_input$CRC3[36]
-	} else if (CriticalCurveSw == 4) {
-		AF_April_Target_o <- AFCriticalCurve_input$CRC4[36]
-	}
-	return(AF_April_Target_o)
-}
-AlbeniFalls_Jan <- function() {
-	AlbeniFalls_Jan_o <- reservoir_vol_df$ALBEN[which(input_file$Week == 22)][year_counter]
-	return(AlbeniFalls_Jan_o)
 }
 AFRuleReq <- function() {
 	AFRuleReq_o <- max(AlbeniFalls() + AFIn() - AFTopVol(), 0)
@@ -3374,7 +2974,6 @@ AFCombSup <- function() {
 	return(AFCombSup_o)
 }
 AFCombUpProtect <- function() {
-	#inflow <- AFIn() + AFCombUpSup() + KEDamProtectExcess() + KECombUpProtect_c
 	outflow <- AFPrelim() + AFCombSup_c
 	AFCombUpProtect_o <- max(min(AlbeniFalls() + AFPreInflow() - outflow - AFECC(), KEDamProtectExcess()), 0)
 	AFCombUpProtect_c <<- AFCombUpProtect_o
@@ -3476,16 +3075,10 @@ BDOut <- function() {
 
 GCFullPoolVol <- 9107400 ## Volume at 1290 ft.
 GCBotVol <- 3921900 ## Volume at 1208 ft.
-InitGCLink <- 9107400
+GCAvgMin <- 30000 # Reported in Assured Operating Plans (AOPs)
+
 InitGC <- function() {
-	GCHistStor_input <- HistStor_input$GCHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitGC_o <- InitGCLink
-	} else if (InitialConditionSwitch == 1) {
-		InitGC_o <- ResInitFractionFull * GCFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitGC_o <- GCHistStor_input
-	}
+	InitGC_o <- ResInitFractionFull * GCFullPoolVol
 	return(InitGC_o)
 }
 GrandCoulee <- function() {
@@ -3502,16 +3095,6 @@ GrandCouleeFlowData <- function() {
 GCInc <- function() {
 	GCInc_o <- GrandCouleeFlowData() - BoundaryFlowData() - ArrowFlowData() - CorraLinnFlowData()
 	return(GCInc_o)
-}
-GCSurfaceArea <- function() {
-	GCSurfaceArea_o <- (-1.21281443E-13 * (GrandCoulee() / 1000)^4 + 1.53692112E-09 * (GrandCoulee() / 1000)^3 -
-		6.75961255E-06 * (GrandCoulee() / 1000)^2 + 1.87278268E-02 * (GrandCoulee() / 1000) + 2.30403996) * 1000
-	return(GCSurfaceArea_o)
-}
-GCEvap <- function() {
-	GCEvapData <- 0
-	GCEvap_o <- GCSurfaceArea() * GCEvapData * 0.5042 / 12
-	return(GCEvap_o)
 }
 GCElev_ft <- function() {
 	upper_vol <- GC_elev_input$Volume[which(GC_elev_input$Volume >= GrandCoulee())[1]]
@@ -3531,8 +3114,7 @@ GCElev_ft <- function() {
 }
 GCNetHead <- function() {
 	GCTailElev <- 961 # Changed 5/25/23 from 947. Source: https://www.nwd-wc.usace.army.mil/dd/common/dataquery/www/?k=grand%20coulee
-	GCLoss <- 0
-	GCNetHead_o <- GCElev_ft() - GCTailElev - GCLoss
+	GCNetHead_o <- GCElev_ft() - GCTailElev
 	return(GCNetHead_o)
 }
 GCPenLimit <- function() {
@@ -3541,7 +3123,7 @@ GCPenLimit <- function() {
 	return(GCPenLimit_o)
 }
 GCIn <- function() { # We do not calculate Prelim() for the immediately upstream dam, Boundary, so we need to subtract the Boundary demands
-	GCIn_o <- BDPrelim() + ARPrelim() + CLPrelim() + GCInc() - GCEvap()
+	GCIn_o <- BDPrelim() + ARPrelim() + CLPrelim() + GCInc()
 	return(GCIn_o)
 }
 GCPreInflow <- function() {
@@ -3551,7 +3133,7 @@ GCPreInflow <- function() {
 	return(GCPreInflow_o)
 }
 GCInflow <- function() {
-	GCInflow_o <- BDOut() + AROutflow() + CLRelease_c + GCInc() - GCEvap()
+	GCInflow_o <- BDOut() + AROutflow() + CLRelease_c + GCInc()
 	return(GCInflow_o)
 }
 
@@ -3570,7 +3152,6 @@ GCMinRefill <- function() {
 	return(GCMinRefill_o)
 }
 GCMinReq <- function() {
-	GCAvgMin <- 30000 # Reported in Assured Operating Plans (AOPs)
 	GCMinReq_o <- GCAvgMin * cfsTOafw
 	return(GCMinReq_o)
 }
@@ -3589,19 +3170,9 @@ GCAvailAfter <- function() {
 
 ################## Grand Coulee rule curves ####################################
 
-AFApril_1 <- function() {
-	AFApril_1_o <- reservoir_vol_df$ALBEN[which(input_file$Week == 35)][year_counter]
-	return(AFApril_1_o)
-}
-Upstream_residual_refill <- function() {
-	Upstream_residual_refill_o < (AFFullPoolVol - AFApril_1()) + (ARFullPoolVol - ARApril_1()) + 
-		(CLFullPoolVol - CLApril_1()) + (DUFullPoolVol - DUApril_1()) + (HHFullPoolVol - HHApril_1()) +
-		(KEFullPoolVol - KEApril_1()) + (LBFullPoolVol - LBApril_1()) + (MIFullPoolVol - MIApril_1()) +
-		(DWFullPoolVol - DWApril_1()) + (BRFullPoolVol - BRApril_1())
-	return(Upstream_residual_refill_o)
-}
-# 2015 flood control curve.
-GC_CurFC <- function() {
+# 2015 flood control curve. The Grand Coulee flood curve depends forecasted inflow at The Dalles, 
+# corrected for upstream refill
+GCFloodCurve <- function() {
 	if (CorrectedDARunoffAprAug < 57E6) {
 		GC_CurFC_o <- GCFlood_input$GCFlood1[week_in_year]
 	} else if (CorrectedDARunoffAprAug < 60E6) {
@@ -3629,21 +3200,13 @@ GC_CurFC <- function() {
 	}
 	return(GC_CurFC_o)
 }
-GCFloodEvacMult <- function() { 
-	GCFloodEvacMult_o <- 1 
-	return(GCFloodEvacMult_o)
-}
-GCBeginRefill <- function() {
+GCBeginRefill <- function() { # the beginning of the flood control refill period, (2022 Draft Water Management, pg. 32)
 	if (is.na(start_refill_wk_GC)) {
 		GCBeginRefill_o <- 40
 	} else {
 		GCBeginRefill_o <- max(40, start_refill_wk_GC)
 	}
 	return(GCBeginRefill_o)
-}
-GCFloodCurve <- function() {
-	GCFloodCurve_o <- GCFullPoolVol - GCFloodEvacMult() * GlobalFloodEvacMult * (GCFullPoolVol - (GC_CurFC()))
-	return(GCFloodCurve_o)
 }
 GCTopVol <- function() {
 	if (TopRuleSw() == 0) {
@@ -3685,9 +3248,6 @@ GC_April_Target <- function() {
 	} else {
 		GC_AprilFC_o <- GCFlood_input$GCFlood10[36]
 	}
-	#GCAssuredRefill_o <- GCAssuredRefill_input$GrandCoulee[36]
-	#GCCriticalCurve_o <- GCCriticalCurve_input$CRC1[36]
-	#GC_April_Target_o <- min(max(GCAssuredRefill_o, GCCriticalCurve_o), GC_AprilFC_o)
 	GC_April_Target_o <- GC_AprilFC_o
 	return(GC_April_Target_o)
 }
@@ -3725,51 +3285,53 @@ GCAssuredRefill <- function() {
 }	
 GCVariableRefill <- function() {
 	if (week_in_year >= GCBeginRefill()) {
-		#GCRefillCurve_o <- max(GCVariableRefillCurve, GCFloodCurve())
 		GCRefillCurve_o <- GCVariableRefillCurve
 	} else {
 		GCRefillCurve_o <- GCFullPoolVol
 	}
 	return(GCRefillCurve_o)
 }
+
+# The Gifford-Inchelium ferry cannot operate if the reservoir is below 1232 ft of elevation
+# This storage is used as a lower bound for the ECC and VECC curve (https://www.scenicwa.com/poi/inchelium-gifford-ferry).  Units acre-ft.
 GCFerryLimit <- function() {
-	# The Gifford-Inchelium ferry cannot operate if the reservoir is below 1232 ft of elevation
-	# This storage is used as a lower bound for the ECC and VECC curve (https://www.scenicwa.com/poi/inchelium-gifford-ferry).  Units acre-ft.
 	GCFerryLimit_o <- GC_elev_input$Volume[GC_elev_input$Elevation == 1232] # Storage at 1232 ft.
 	return(GCFerryLimit_o)
 }
-GC_VDL_LowerLimit <- function() {
-	GCLowerLimit_o <- GC_VDLL_input[week_in_year,2]
-	return(GCLowerLimit_o)
-}
-GCResidualInflow <- function() {
+GCResidualInflow <- function() { # 85% exceedence flow for reguluated inflow to Grand Coulee
 	GCResidualInflow_o <- GCResidualInflow_input[week_in_year,2]
 	return(GCResidualInflow_o)
 }
-PRIncInflow <- function() {
+PRIncInflow <- function() { # 75% exceedence incremental flow between Priest Rapids and Grand Coulee
 	PRIncInflow_o <- PRInc_inflow_input[week_in_year,2]
 	return(PRIncInflow_o)
 }
-## April 10 GC flood curve elevation - date to April 10 inflow + date to April 10 discharge for Vernita Bar - date to April 10 upstream flood evacuation
+
+## The variable draft limit is the lower rule curve for the period 1 Jan to 10 April. It is the minimum storage 
+## required to meet the April 10 flood target. It for the regulated inflow and discharge to meet the Vernita Bar flow target.
+## Described in 2022 Draft Water Management Plan, Section 7.4
 GCVariableDraftLimit <- function() {
 	if (week_in_year>=23 && week_in_year<=36) {
 		GCVariableLimit_o <- min(GCFloodCurve(), GC_April_Target() - GCResidualInflow() - PRIncInflow() + GCBdgtForVB())
 	} else {
-		GCVariableLimit_o <- GCFullPoolVol
+		GCVariableLimit_o <- GCFullPoolVol ## The variable draft limit does not apply after April 10
 	}
 	return(GCVariableLimit_o)
 }
-GC_VDL <- function() {
+
+## The variable draft limit cannot fall below the lower limit unless required for flood control
+GC_VDL <- function() {  
 	GC_VDL_o <- min(max(GCVariableDraftLimit(), GCLowerLimit()), GCFloodCurve())
 	if (is.na(GC_VDL_df$GCOUL[week_counter])) {
 		GC_VDL_df$GCOUL[week_counter] <<- GC_VDL_o
 	}
 	return(GC_VDL_o)
 }
+
+## Recreation requirements at Grand Coulee require that the ECC and VECC are limited to 1280 ft of elevation (storage=8.712e6 acre ft) from June 30 to Labor Day.
+## This model uses end-of-month storage targets to drive the model
+## calculations so the draft limit is in essence a lower bound for the end of month ECC and VECC for June, July, and August. Units acre-ft.
 GCRecLimit <- function() {
-	#Recreation requirements at Grand Coulee require that the ECC and VECC are limited to 1280 ft of elevation (storage=8.712e6 acre ft) from June 30 to Labor Day.
-	#This model uses end-of-month storage targets to drive the model
-	#calculations so the draft limit is in essence a lower bound for the end of month ECC and VECC for June, July, and August. Units acre-ft.
 	if (week_in_year %in% c(49:52, 1:6)) {
 		GCRecLimit_o <- GC_elev_input$Volume[GC_elev_input$Elevation == 1280] # https://www.lrf.org/lake-roosevelt/operations/recreation
 	} else {
@@ -3779,7 +3341,6 @@ GCRecLimit <- function() {
 }
 GCECC <- function() {
 	GCECC_o <- min(max(min(max(GCAssuredRefill(), GCCriticalCurve()), GCVariableRefill()), GCLowerLimit(), GCRecLimit(), GCFerryLimit()), GCSummerDraftLimit(), GC_VDL())
-	#GCECC_o <- min(max(GCAssuredRefill(), GCCriticalCurve(), GCLowerLimit(), GCRecLimit(), GCFerryLimit()), GCSummerDraftLimit(), GC_VDL())
 	return(GCECC_o)
 }
 
@@ -3787,7 +3348,6 @@ GCECC <- function() {
 
 ## Grand Coulee is drafted in July and August to support salmon migration. If The Dalles runoff forecast is >= 92 MAF, the target elevation of 
 ## Lake Roosevelt is 1280 ft, otherwise it is 1278 ft (2009 Water Management Plan)
-
 GCSummerDraftLimit <- function() {
 	if (DARunoffAprAug >= 92.0E6) {
 		GCSummerDraft_o <- GCSummerDraft_input$Draft1[week_in_year]
@@ -3795,7 +3355,8 @@ GCSummerDraftLimit <- function() {
 		GCSummerDraft_o <- GCSummerDraft_input$Draft2[week_in_year]
 	}
 	return(GCSummerDraft_o)
-}	
+}
+	
 ## The Vernita Bar Agreement sets minimum flow during spawning of fall Chinook (approximately August through November) of 70 kcfs. The required flow
 ## is 50 kcsf during hatching and emergence (December through March). The Spring flow BiOp at Priest rapids is 135 kcfs from April 10 to June 30
 ## VernitaBarFlowTarget combines 135 kcfs spring flow objectives at Priest Rapids (1998 NMFS Supplemental Opinion, see 2000 FCRPS BiOp) and the Vernita Bar Agreement ("Hanford Reach Fall Chinook Protection Program")
@@ -4006,7 +3567,7 @@ GCFloodRelSharedWater <- function() {
 	GCFloodRelSharedWater_c <<- GCFloodRelSharedWater_o	
 	return(GCFloodRelSharedWater_o)
 }
-GCMinFloodRelReq <- function() { # Minimum release during refill period to ensure the reservoir does not refill too quickly, based on initial controlled flow
+GCMinFloodRelReq <- function() { 
 	GCMinFloodRelReq_o <- min(GCFloodRelSharedWater(), MinFloodRelReq())
 	GCMinFloodRelReq_c <<- GCMinFloodRelReq_o
 	water_df$GCMinFloodRelReq[week_counter] <<- GCMinFloodRelReq_c
@@ -4026,10 +3587,6 @@ GCDamProtectExcess <- function() {
 
 ##################### Grand Coulee final release ###################################
 
-GCLimitedStorage <- function() {
-	GCLimitedStorage_o <- max(0, GrandCoulee() - GC_VDL())
-	return(GCLimitedStorage_o)
-}
 GCRelease <- function() {
 	GCRelease_o <- max(min(GCPrelim() + GCCombSup_c - TotalRelReducReq_c + GCMinFloodRelReq_c + GCCombUpProtect(), GCRelLimit()), GCDamProtectRel() + (GCInflow() - GCPreInflow()), GCMinReq())
 	return(GCRelease_o)
@@ -4038,6 +3595,12 @@ GCOutflow <- function() {
 	GCOutflow_o <- GCRelease_c
 	return(GCOutflow_o)
 }	
+
+#################### Controlled flow at The Dalles ###################################
+
+
+## The initial controlled flow guides refill during the flood control refill period, which begins 3 weeks before the 
+## unregulated flow at The Dalles is forecasted to exceed 450 cfs (FCOP, 2003). 
 ICF <- function() {
 	if (week_in_year == 1 || is.na(start_refill_wk)) {
 		InitialControlledFlow_previous <<- 1e10
@@ -4053,6 +3616,8 @@ ICF <- function() {
 	}
 	return(ICF_o)
 }
+
+## The controlled flow is adusted based on the fraction of storage space that has been refilled in the category 4 reservoirs
 Cat4FilledStorPerc <- function() {
 	if (control_wk == -9999 || control_wk == week_counter) {
 		storage_o <- 0
@@ -4062,7 +3627,9 @@ Cat4FilledStorPerc <- function() {
 	}
 	return(storage_o)
 }
-DACorrectedResidualInflow <- function() {
+
+## Residual inflow calculation made at the start of flood control refill period
+DACorrectedResidualInflow <- function() { 
 	if (week_in_year == 1 || is.na(start_refill_wk)) {
 		DACorrectedResidualInflow_previous <<- DACorrectedResidualInflowAprAug
 		DACorrectedResidualInflow_o <- DACorrectedResidualInflow_previous
@@ -4074,7 +3641,7 @@ DACorrectedResidualInflow <- function() {
 	} 
 	return(DACorrectedResidualInflow_o)
 }
-ICF_adj <- function() {
+ICF_adj <- function() { ## Adjustment to initial controlled flow 
 	if (DACorrectedResidualInflow() < 40e6) {
 		colnum <- 2
 	} else if (DACorrectedResidualInflow() < 50e6) {
@@ -4097,10 +3664,9 @@ ICF_adj <- function() {
 	}
 	return(ICF_adj_o)
 }
-			
 ControlledFlow <- function() {
-	if (is.na(start_refill_wk)) {
-		ControlledFlow_o <- 400000
+	if (is.na(start_refill_wk)) { ## For years in which the unregulated flow is never forecasted to exceed 450 kcfs
+		ControlledFlow_o <- 350000
 	} else {
 		ControlledFlow_o <- ICF() + ICF_adj()
 		ControlledFlow_o <- ControlledFlow_o
@@ -4169,16 +3735,9 @@ CJOut <- function() {
 
 CHFullPoolVol <- 1676000
 CHBotVol <- 998600
-InitCHLink <- 1000000
+
 InitCH <- function() {
-	CHHistStor_input <- HistStor_input$CHHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitCH_o <- InitCHLink
-	} else if (InitialConditionSwitch == 1) {
-		InitCH_o <- ResInitFractionFull * CHFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitCH_o <- CHHistStor_input
-	}
+	InitCH_o <- ResInitFractionFull * CHFullPoolVol
 	return(InitCH_o)
 }	
 Chelan <- function() {
@@ -4582,16 +4141,10 @@ PROut <- function() {
 
 JLFullPoolVol <- 850000
 JLBotVol <- 0
-InitJLLink <- 800000
+JLAvgMin <- 100 # minimum monthly average gauge flow
+
 InitJL <- function() {
-	JLHistStor_input <- HistStor_input$JLHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitJL_o <- InitJLLink
-	} else if (InitialConditionSwitch == 1) {
-		InitJL_o <- ResInitFractionFull * JLFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitJL_o <- JLHistStor_input
-	}
+	InitJL_o <- ResInitFractionFull * JLFullPoolVol
 	return(InitJL_o)
 }
 Jackson <- function() {
@@ -4635,8 +4188,8 @@ JLFloodCurve <- function() {
 	}
 	return(JLFloodCurve_o)
 }
-UpSnakeAgReq <- function() {
-	CLUpSnake <- 1.25
+UpSnakeAgReq <- function() { ## Total irrigation withdrawals upstream of American Falls Dam
+	CLUpSnake <- 1
 	IrrigationDemand <- DemUpSnake
 	UpSnakeAgReq_o = IrrigationDemand * CLUpSnake  
 	return(UpSnakeAgReq_o)
@@ -4660,7 +4213,6 @@ JLTopVol <- function() {
 	return(JLTopVol_o)
 }
 JLMinReq <- function() {
-	JLAvgMin <- 100 # minimum monthly average gauge flow
 	JLMinReq_o <- max(JLAgReq(), JLAvgMin * cfsTOafw)
 	return(JLMinReq_o)
 }
@@ -4703,16 +4255,10 @@ JLOutflow <- function() {
 
 PALFullPoolVol <- 1401000
 PALBotVol <- 201000
-InitPALLink <- 1000000
+PALAvgMin <- 700 # minimum average monthly flow at Neely, ID gauge near American Falls from historical data
+
 InitPAL <- function() {
-	PALHistStor_input <- HistStor_input$PALHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitPAL_o <- InitPALLink
-	} else if (InitialConditionSwitch == 1) {
-		InitPAL_o <- ResInitFractionFull * PALFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitPAL_o <- PALHistStor_input
-	}
+	InitPAL_o <- ResInitFractionFull * PALFullPoolVol
 	return(InitPAL_o)
 }	
 Palisades <- function() {
@@ -4738,9 +4284,6 @@ PALInflow <- function() {
 	PALInflow_o <- JLRelease() + PALInc()
 	return(PALInflow_o)
 }
-# The Upper Snake flood rule curve is based on the storage reservation diagram for Palisades and Jackson Lake reservoirs. The curve is multiplied by the ratio of total Upper Snake storage (4135695 AF) 
-# to Palidades and Jackson Lake storage (2050000)
-
 PALFloodCurve <- function() {
 	if (HeiseResidualInflowJanJul <= 1.0E6) {
 		PALFloodCurve_o <- PALFlood_input$PALFlood1[week_in_year] + (HeiseResidualInflowJanJul - 0) / (1.0E6 - 0) * (PALFlood_input$PALFlood2[week_in_year] - PALFlood_input$PALFlood1[week_in_year])
@@ -4782,7 +4325,6 @@ PALTopVol <- function() {
 	return(PALTopVol_o)
 }
 PALMinReq <- function() {
-	PALAvgMin <- 700 # minimum average monthly flow at Neely, ID gauge near American Falls from historical data
 	PALMinReq_o <- max(PALAgReq(), PALAvgMin * cfsTOafw)
 	return(PALMinReq_o)
 }
@@ -4832,16 +4374,10 @@ PALOutflow <- function() {
 
 IPFullPoolVol <- 135205
 IPBotVol <- 0
-InitIPLink <- 100000
+IPAvgMin <- 30
+
 InitIP <- function() {
-	IPHistStor_input <- HistStor_input$IPHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitIP_o <- InitIPLink
-	} else if (InitialConditionSwitch == 1) {
-		InitIP_o <- ResInitFractionFull * IPFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitIP_o <- IPHistStor_input
-	}
+	InitIP_o <- ResInitFractionFull * IPFullPoolVol
 	return(InitIP_o)
 }	
 IslandPark <- function() {
@@ -4900,7 +4436,6 @@ IPTopVol <- function() {
 	return(IPTopVol_o)
 }
 IPMinReq <- function() {
-	IPAvgMin <- 30
 	IPMinReq_o <- max(IPAgReq(), IPAvgMin * cfsTOafw)
 	return(IPMinReq_o)
 }
@@ -4943,16 +4478,9 @@ IPOutflow <- function() {
 
 RIRFullPoolVol <- 100500
 RIRBotVol <- 19960
-InitRIRLink <- 80000
+
 InitRIR <- function() {
-	RIRHistStor_input <- HistStor_input$RIRHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitRIR_o <- InitRIRLink
-	} else if (InitialConditionSwitch == 1) {
-		InitRIR_o <- ResInitFractionFull * RIRFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitRIR_o <- RIRHistStor_input
-	}
+	InitRIR_o <- ResInitFractionFull * RIRFullPoolVol
 	return(InitRIR_o)
 }	
 Ririe <- function() {
@@ -5056,16 +4584,10 @@ RIROutflow <- function() {
 
 AMFullPoolVol <- 1672590
 AMBotVol <- 0
-InitAMLink <- 1000000
+AMAvgMin <- 300 # minimum monthly average gauge flow, cfs
+
 InitAM <- function() {
-	AMHistStor_input <- HistStor_input$AMHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitAM_o <- InitAMLink
-	} else if (InitialConditionSwitch == 1) {
-		InitAM_o <- ResInitFractionFull * AMFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitAM_o <- AMHistStor_input
-	}
+	InitAM_o <- ResInitFractionFull * AMFullPoolVol
 	return(InitAM_o)
 }	
 AmericanFalls <- function() {
@@ -5091,8 +4613,8 @@ AMInflow <- function() {
 	AMInflow_o <- IPRelease() + PALRelease() + RIRRelease() + AMInc()
 	return(AMInflow_o)
 }
-MinidokaAgReq <- function() {
-	ConveyanceLossMID <- 1.2
+MinidokaAgReq <- function() { ## Total withdrawals for Minidoka Irrigation Project
+	ConveyanceLossMID <- 1
 	IrrigationDemand <- DemMinidoka 
 	MinidokaAgReq_o <- IrrigationDemand * ConveyanceLossMID
 	return(MinidokaAgReq_o)
@@ -5106,7 +4628,6 @@ AMAgReq <- function() {
 	return(AMAgReq_o)
 }
 AMMinReq <- function() {
-	AMAvgMin <- 300 # minimum monthly average gauge flow
 	AMMinReq_o <- max(AMAgReq(), AMAvgMin * cfsTOafw)
 	return(AMMinReq_o)
 }
@@ -5150,16 +4671,10 @@ AMOutflow <- function() {
 
 MINFullPoolVol <- 95180
 MINBotVol <- 0
-InitMINLink <- 70000
+MINAvgMin <- 300 # minimum average monthly flow at Neely, ID gauge near American Falls from historical data
+
 InitMIN <- function() {
-	MINHistStor_input <- HistStor_input$MINHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitMIN_o <- InitMINLink
-	} else if (InitialConditionSwitch == 1) {
-		InitMIN_o <- ResInitFractionFull * MINFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitMIN_o <- MINHistStor_input
-	}
+	InitMIN_o <- ResInitFractionFull * MINFullPoolVol
 	return(InitMIN_o)
 }	
 Minidoka <- function() {
@@ -5190,7 +4705,6 @@ MINAgReq <- function() {
 	return(MINAgReq_o)
 }
 MINMinReq <- function() {
-	MINAvgMin <- 300 # minimum average monthly flow at Neely, ID gauge near American Falls from historical data
 	MINMinReq_o <- max(MINAgReq(), MINAvgMin * cfsTOafw)
 	return(MINMinReq_o)
 }
@@ -5261,16 +4775,9 @@ MILOut <- function() {
 
 BoiseFullPoolVol <- 1011000
 BoiseBotVol <- 61300
-InitBoiseLink <- 750000
+
 InitBoise <- function() {
-	BoiseHistStor_input <- HistStor_input$BoiseHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitBoise_o <- InitBoiseLink
-	} else if (InitialConditionSwitch == 1) {
-		InitBoise_o <- ResInitFractionFull * BoiseFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitBoise_o <- BoiseHistStor_input
-	}
+	InitBoise_o <- ResInitFractionFull * BoiseFullPoolVol
 	return(InitBoise_o)
 }	
 Boise <- function() {
@@ -5310,9 +4817,9 @@ BoiseFloodCurve <- function() {
 	}
 	return(BoiseFloodCurve_o)
 }
-BoiseAgReq <- function() {
+BoiseAgReq <- function() { # Total withdrawals for Boise irrigation project
 	IrrigationDemand <- DemBoiseSys
-	ConveyanceLossBoise <- 1.25
+	ConveyanceLossBoise <- 1
 	if (week_in_year %in% c(50:52,1:14)) {
 		BoiseAgReq_o <- BoiseInflow() + IrrigationDemand * ConveyanceLossBoise
 	} else {
@@ -5375,16 +4882,10 @@ BoiseOutflow <- function() {
 
 PayetteFullPoolVol <- 847192
 PayetteBotVol <- 46740
-InitPayetteLink <- 750000
+PayetteAvgMin <- 700
+
 InitPayette <- function() {
-	PayetteHistStor_input <- HistStor_input$PayetteHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitPayette_o <- InitPayetteLink
-	} else if (InitialConditionSwitch == 1) {
-		InitPayette_o <- ResInitFractionFull * PayetteFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitPayette_o <- PayetteHistStor_input
-	}
+	InitPayette_o <- ResInitFractionFull * PayetteFullPoolVol
 	return(InitPayette_o)
 }	
 Payette <- function() {
@@ -5422,9 +4923,9 @@ PayetteFloodCurve <- function() {
 	}
 	return(PayetteFloodCurve_o)
 }
-PayetteAgReq <- function() {
+PayetteAgReq <- function() { ## Total irrigation withdrawals for Payette system
 	IrrigationDemand <- DemPayette
-	ConveyanceLossPayette <- 1.25
+	ConveyanceLossPayette <- 1
 	if (week_in_year %in% c(47:52, 1:14)) {
 		PayetteAgReq_o <- PayetteInflow() + IrrigationDemand * ConveyanceLossPayette
 	} else {
@@ -5443,7 +4944,6 @@ PayetteTopVol <- function() {
 	return(PayetteTopVol_o)
 }
 PayetteMinReq <- function() {
-	PayetteAvgMin <- 700
 	PayetteMinReq_o <- max(PayetteAgReq(), PayetteAvgMin * cfsTOafw)
 	return(PayetteMinReq_o)
 }
@@ -5486,16 +4986,9 @@ PayetteOutflow <- function() {
 
 OWYFullPoolVol <- 1120000
 OWYBotVol <- 405000
-InitOWYLink <- 750000
+
 InitOWY <- function() {
-	OWYHistStor_input <- HistStor_input$OWYHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitOWY_o <- InitOWYLink
-	} else if (InitialConditionSwitch == 1) {
-		InitOWY_o <- ResInitFractionFull * OWYFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitOWY_o <- OWYHistStor_input
-	}
+	InitOWY_o <- ResInitFractionFull * OWYFullPoolVol
 	return(InitOWY_o)
 }	
 Owyhee <- function() {
@@ -5531,9 +5024,9 @@ OWYFloodCurve <- function() {
 	}
 	return(OWYFloodCurve_o)
 }
-OWYAgReq <- function() {
+OWYAgReq <- function() { ## Total withdrawals by Owyhee Irrigation District
 	IrrigationDemand <- DemOwyhee
-	ConveyanceLossOWY <- 1.25
+	ConveyanceLossOWY <- 1
 	if (week_in_year %in% c(45:52, 1:14)) {
 		OWYAgReq_o <- OWYInflow() + IrrigationDemand * ConveyanceLossOWY
 	} else {
@@ -5595,16 +5088,10 @@ OWYOutflow <- function() {
 
 BRFullPoolVol <- 1420000 # Volume corresponding to 2077 ft of elevation.  Normal full pool.  Units acre-ft.
 BRBotVol <- 444700 # Volume cooresponding to the bottom of conservation pool elevation of 1976 ft.  Units acre-ft.
-InitBRLink_o <- 1295477
+BRAvgMin <- 5850 # 2016-2017 assured operating plan
+
 InitBR <- function() {
-	BRHistStor_input <- HistStor_input$BRHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitBR_o <- InitBRLink()
-	} else if (InitialConditionSwitch == 1) {
-		InitBR_o <- ResInitFractionFull * BRFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitBR_o <- BRHistStor_input
-	}
+	InitBR_o <- ResInitFractionFull * BRFullPoolVol
 	return(InitBR_o)
 }
 Brownlee <- function() {
@@ -5638,19 +5125,9 @@ BRElev_ft <- function() {
 	}
 	return(BRElev_ft_o)
 }
-BREvap <- function() {
-	BREvapData <- 0
-	BREvap_o <- BRSurfaceArea() * BREvapData * 0.5042 / 12
-	return(BREvap_o)
-}
-BRSurfaceArea <- function() {
-	BRSurfaceArea_o <- Brownlee() * 0
-	return(BRSurfaceArea_o)
-}
 BRNetHead <- function() {
 	BRTailElev <- 1805 # https://storymaps.arcgis.com/stories/eae485d9d4244bd4bf93c537bd449ae7
-	BRLoss <- 0 # Piping head losses.  Units ft.
-	BRNetHead_o <- BRElev_ft() - BRTailElev - BRLoss
+	BRNetHead_o <- BRElev_ft() - BRTailElev
 	return(BRNetHead_o)
 }
 BRPenLimit <- function() {
@@ -5659,11 +5136,11 @@ BRPenLimit <- function() {
 	return(BRPenLimit_o)
 }
 BRIn <- function() {
-	BRIn_o <- PayettePrelim() + OWYPrelim() + BoisePrelim() + MILPrelim() + BRInc() - BREvap()
+	BRIn_o <- PayettePrelim() + OWYPrelim() + BoisePrelim() + MILPrelim() + BRInc()
 	return(BRIn_o)
 }
 BRInflow <- function() {
-	BRInflow_o <- PayetteRelease() + OWYRelease() + BoiseRelease() + MILOut() + BRInc() - BREvap()
+	BRInflow_o <- PayetteRelease() + OWYRelease() + BoiseRelease() + MILOut() + BRInc()
 	return(BRInflow_o)
 }
 
@@ -5682,7 +5159,6 @@ BRMinRefill <- function() {
 	return(BRMinRefill_o)
 }
 BRMinReq <- function() {
-	BRAvgMin <<- 5850 # 2016-2017 assured operating plan
 	BRMinReq_1 <- max(BRRelForJBandLP(), BRAvgMin * cfsTOafw)
 	if (fish_over_refill == 1) {
 		BRMinReq_o <- BRMinReq_1
@@ -5708,7 +5184,7 @@ BRAvailAfter <- function() {
 
 ### Flood curve for Browlee reservoir is based on the April--August forecast at The Dalles and the April--July forecast at Brownlee 
 ### (Hells Canyon Complex FERC No. 1971 License Application)
-BRCurFC <- function() { 
+BRFloodCurve <- function() { 
 	if (DARunoffAprAug <= 75E6) {
 		if (BRRunoffAprJul <= 3E6) {
 			BRFlood_o <- BRFlood_input$BR75_3[week_in_year]
@@ -5807,10 +5283,6 @@ BRCurFC <- function() {
 		}
 	}
 	return(BRFlood_o)
-}
-BRFloodCurve <- function() {
-	BRFloodVolume_o <- BRFullPoolVol - GlobalFloodEvacMult * (BRFullPoolVol - BRCurFC())
-	return(BRFloodVolume_o)
 }
 BRTopVol <- function() {
 	if (TopRuleSw() == 0) {
@@ -5919,7 +5391,7 @@ BRLGSup <- function() { # Release of water from Brownlee to meet Lower Granite f
 # Brownlee must generally make sufficient average releases to support these flows on a monthly time frame.
 # The model assumes that Brownlee supplies all supplements to natural inflow required to meet the targets.
 JohnsonBarFlowTarget <- function() {
-	JohnsonBarFlowTarget_o <- 5000
+	JohnsonBarFlowTarget_o <- 5000 # cfs
 	return(JohnsonBarFlowTarget_o)
 }
 LimePointFlowTarget <- function() {
@@ -6115,9 +5587,9 @@ HCInc <- function() {
 	return(HCInc_o)
 }
 HCPenLimit <- function() {
-	OXPenCap <- 9000 # FERC No. 1971 Licese Application
-	OXPenLimit_o <- OXPenCap * cfsTOafw
-	return(OXPenLimit_o)
+	HCPenCap <- 9000 # FERC No. 1971 Licese Application
+	HCPenLimit_o <- HCPenCap * cfsTOafw
+	return(HCPenLimit_o)
 }
 HCNetHead <- function() {
 	HCNetHead_o <- 210 # FERC No. 1971 Licese Application
@@ -6146,16 +5618,10 @@ HCOut <- function() {
 
 DWFullPoolVol <- 3468000 # Storage at pool elevation of 1600 ft.
 DWBotVol <- 1452800 # Volume cooresponding to the bottom of conservation pool elevation of 1445 ft.  Units acre-ft.
-InitDWLink <- 2776338.073
+DWAvgMin <- 1300 
+
 InitDW <- function() {
-	DWHistStor_input <- HistStor_input$DWHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitDW_o <- InitDWLink
-	} else if (InitialConditionSwitch == 1) {
-		InitDW_o <- ResInitFractionFull * DWFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitDW_o <- DWHistStor_input
-	}
+	InitDW_o <- ResInitFractionFull * DWFullPoolVol
 	return(InitDW_o)
 }
 Dworshak <- function() {
@@ -6168,11 +5634,6 @@ Dworshak <- function() {
 }
 DworshakFlowData <- function() {
 	return(FlowDW)
-}
-DWSurfaceArea <- function() {
-	DWSurfaceArea_o <- (-1.21281443E-13 * (Dworshak() / 1000)^4 + 1.53692112E-09 * (Dworshak() / 1000)^3 -
-		6.75961255E-06 * (Dworshak() / 1000)^2 + 1.87278268E-02 * (Dworshak() / 1000) + 2.30403996) * 1000
-	return(DWSurfaceArea_o)
 }
 DWElev_ft <- function() {
 	upper_vol <- DW_elev_input$Volume[which(DW_elev_input$Volume >= Dworshak())[1]]
@@ -6192,8 +5653,7 @@ DWElev_ft <- function() {
 }
 DWNetHead <- function() {
 	DWTailElev <- 975 # https://www.nwd-wc.usace.army.mil/dd/common/dataquery/www/?k=dworshak; changed from 980 5/25/23
-	DWLoss <- 0
-	DWNetHead_o <- DWElev_ft() - DWTailElev - DWLoss
+	DWNetHead_o <- DWElev_ft() - DWTailElev
 	return(DWNetHead_o)
 }
 DWPenLimit <- function() {
@@ -6201,13 +5661,8 @@ DWPenLimit <- function() {
 	DWPenLimit_o <- DWGenPenCap * cfsTOafw
 	return(DWPenLimit_o)
 }
-DWEvap <- function() {
-	DWEvapData <- 0
-	DWEvap_o <- DWSurfaceArea() * DWEvapData * 0.5042 / 12
-	return(DWEvap_o)
-}
 DWIn <- function() {
-	DWIn_o <- DworshakFlowData() - DWEvap()
+	DWIn_o <- DworshakFlowData()
 	return(DWIn_o)
 }
 DWInflow <- function() {
@@ -6230,7 +5685,6 @@ DWMinRefill <- function() {
 	return(DWMinRefill_o)
 }
 DWMinReq <- function() {
-	DWAvgMin <- 1300 
 	DWMinReq_o <- DWAvgMin * cfsTOafw
 	return(DWMinReq_o)
 }
@@ -6250,7 +5704,7 @@ DWAvailAfter <- function() {
 ################### Dworshak rule curves ##################################
 
 # 1992 Local flood control curve
-DW_CurFC <- function() {
+DWFloodCurve <- function() {
 	if (DWRunoffAprJul < 1.2E6) {
 		DW_CurFC_o <- DWFlood_input$DWFlood1[week_in_year]
 	} else if (DWRunoffAprJul < 1.4E6) {
@@ -6276,11 +5730,6 @@ DW_CurFC <- function() {
 	} 
 	return(DW_CurFC_o)
 }
-
-DWFloodCurve <- function() {
-	DWFloodCurve_o <- DWFullPoolVol - DWFloodEvacMult * GlobalFloodEvacMult * (DWFullPoolVol - DW_CurFC())
-	return(DWFloodCurve_o)
-}
 DWTopVol <- function() {
 	if (TopRuleSw() == 0) {
 		DWTopVol_o <- min(DWBiOpDraftLimit(), DWFloodCurve())
@@ -6304,14 +5753,22 @@ DWLowerLimit <- function() {
 	return(DWLL_o)
 }
 DWCriticalCurveMin <- function() {
-	DWCriticalCurve_o <- DWCriticalCurve_input$CRC4[week_in_year] # year 4 critical curve
+	if (CriticalCurveSw == 1) {
+		DWCriticalCurve_o <- DWCriticalCurve_input$CRC1[week_in_year]
+	} else if (CriticalCurveSw == 2) {
+		DWCriticalCurve_o <- DWCriticalCurve_input$CRC2[week_in_year]
+	} else if (CriticalCurveSw == 3) {
+		DWCriticalCurve_o <- DWCriticalCurve_input$CRC3[week_in_year]
+	} else if (CriticalCurveSw == 4) {
+		DWCriticalCurve_o <- DWCriticalCurve_input$CRC4[week_in_year]
+	}
 	return(DWCriticalCurve_o)
 }
 DWCriticalCurve <- function() {
 	DWCriticalCurve_o <- DWCriticalCurve_input$CRC1[week_in_year]
 	return(DWCriticalCurve_o)
 }
-DWAssuredRefill <- function() { # Assured refill curve
+DWAssuredRefill <- function() {
 	DWAssuredRefill_o <- DWAssuredRefill_input[week_in_year, 2]
 	return(DWAssuredRefill_o)
 }
@@ -6330,24 +5787,6 @@ DWECC <- function() {
 
 ##################### Dworshak fish flows ##############################
 
-# The 2000 BiOp sets a flow objective between 85-100 kcfs from April 2 to June 20 and 50-55 kcfs from June 21 to August 31
-# The target varies based on April-July runoff forecast at Lower Granite
-LowerGraniteFlowTarget <- function() {
-	if (LGRunoffAprJul < 16e6) {
-		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$Low[week_in_year]
-	} else if (LGRunoffAprJul <= 20e6 && week_in_year %in% 36:47) { # spring
-		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$Low[week_in_year] + (LGRunoffAprJul - 16e6) / (20e6 - 16e6) * (LowerGraniteFlowTarget_input$High[week_in_year] - LowerGraniteFlowTarget_input$Low[week_in_year])
-	} else if (LGRunoffAprJul > 20e6 && week_in_year %in% 36:47) {
-		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$High[week_in_year]	
-	} else if (LGRunoffAprJul <= 28e6 && week_in_year %in% c(48:52, 1:5)) { # summer
-		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$Low[week_in_year] + (LGRunoffAprJul - 16e6) / (28e6 - 16e6) * (LowerGraniteFlowTarget_input$High[week_in_year] - LowerGraniteFlowTarget_input$Low[week_in_year])
-	} else if (LGRunoffAprJul > 28e6) {
-		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$High[week_in_year]
-	} else {
-		LowerGraniteFlowTarget_o <- 0
-	}	
-	return(LowerGraniteFlowTarget_o)
-}
 DWDraftLimit <- function() {
 	if (fish_over_refill == 1) {
 		if (UseAllStorForMCNLG == 1) {
@@ -6360,6 +5799,7 @@ DWDraftLimit <- function() {
 	}
 	return(DWDraftLimit_o)
 }
+
 ## According to 2008 BiOp, Dworshak is to be drafted to elevation 1535 ft by end of Aug and 1520 ft by end of September.
 DWBiOpDraftLimit <- function() { 
 	DWBiOpDraftLimit_o <- DWBiOpDraftLimit_input[week_in_year, 2]
@@ -6385,7 +5825,6 @@ DWLGSup <- function() { # Release from Dworshak for meeting Lower Graninte fish 
 
 ##################### Dworshak energy ########################################
 
-DWCombEfficiency <- 0.8
 DWPreEnergy <- function() {
 	DWPreEnergy_o <- MWhr_per_ftAcFt * min(DWPrelim(), DWPenLimit()) * DWNetHead() * DWCombEfficiency
 	return(DWPreEnergy_o)
@@ -6688,32 +6127,6 @@ MCNOut <- function() {
 	MCNOut_o <- MCNIn()
 	return(MCNOut_o)
 }
-# Biological Opinions ------------------------------------------------------
-# The Corps designates Libby, and the PALBR designates Grand Coulee and Hungry Horse to contribute to the Federal Columbia River Power System (FCRPS)
-# goal of meeting the following BiOp flow objectives:
-# Spring (4/10 - 6/30)     #Priest Rapids (135 kcfs) (1998 FCRPS BiOp)
-# Spring (4/20 - 6/30)**   #McNary Dam (220-260 kcfs) (1995 FCRPS BiOp)
-# Summer (7/1 - 8/31)      #McNary Dam (200 kcfs) (1995 FCRPS BiOp)
-# Interpolation between 220 and 260 kcfs is based upon Corps of Engineers data submittal, which bases targets on forecasts of Jan-July flow at The Dalles.
-
-##### McNary Flow target
-# Variable minimum flow for McNary based upon forecasted inflow to the Dalles, for the period of April 20 to June 30.
-# Flow varies linearly between 220 and 260 kcfs based on inflows of 85 to 105 MAF at the Dalles
-
-McNaryFlowTarget <- function() {
-	if (DARunoffJanJul <= 85e6) {
-		McNaryFlowTarget_o <- McNaryFlowTarget_input$Low[week_in_year]
-	} else if (DARunoffJanJul <= 105e6) {
-		McNaryFlowTarget_o <- McNaryFlowTarget_input$Low[week_in_year] + (DARunoffJanJul - 85e6) / (105e6 - 85e6) * (McNaryFlowTarget_input$High[week_in_year] - McNaryFlowTarget_input$Low[week_in_year])
-	} else {
-		McNaryFlowTarget_o <- McNaryFlowTarget_input$High[week_in_year]
-	}
-	return(McNaryFlowTarget_o)
-}
-McNaryFlowDeficit <- function() {
-	McNaryFlowDeficit_o <- max(0, McNaryFlowTarget() * cfsTOafw - MCNPrelim())
-	return(McNaryFlowDeficit_o)
-}
 
 #######################################################
 #------------------ JOHN DAY DAM ---------------------#
@@ -6779,16 +6192,9 @@ JDOut <- function() {
 
 PELFullPoolVol <- 558270
 PELBotVol <- 249700
-InitPELLink <- 500000
+
 InitPEL <- function() {
-	PELHistStor_input <- HistStor_input$PELHistStor_input[week_counter]
-	if (InitialConditionSwitch == 0) {
-		InitPEL_o <- InitPELLink
-	} else if (InitialConditionSwitch == 1) {
-		InitPEL_o <- ResInitFractionFull * PELFullPoolVol
-	} else if (InitialConditionSwitch == 2) {
-		InitPEL_o <- PELHistStor_input
-	}
+	InitPEL_o <- ResInitFractionFull * PELFullPoolVol
 	return(InitPEL_o)
 }
 Pelton <- function() {
@@ -6868,8 +6274,8 @@ PELPrelim <- function() {
 ############ Pelton Round Butte energy ######################
 
 PELPreEnergy <- function() {
-	KEPreEnergy_o <- MWhr_per_ftAcFt * min(KEPrelim(), KEPenLimit()) * KENetHead() * KECombEfficiency
-	return(KEPreEnergy_o)
+	PELPreEnergy_o <- MWhr_per_ftAcFt * min(PELPrelim(), PELPenLimit()) * PELNetHead() * PELCombEfficiency
+	return(PELPreEnergy_o)
 } 
  
 ################## Pelton Round Butte final release ###################
@@ -6979,9 +6385,36 @@ BONOut <- function() {
 
 ########################### Flow targets #######################
 
+# Biological Opinions ------------------------------------------------------
+# The Corps designates Libby, and the PALBR designates Grand Coulee and Hungry Horse to contribute to the Federal Columbia River Power System (FCRPS)
+# goal of meeting the following BiOp flow objectives:
+# Spring (4/10 - 6/30)     Priest Rapids (135 kcfs) (1998 FCRPS BiOp)
+# Spring (4/20 - 6/30)**   McNary Dam (220-260 kcfs) (1995 FCRPS BiOp)
+# Summer (7/1 - 8/31)      McNary Dam (200 kcfs) (1995 FCRPS BiOp)
+# Interpolation between 220 and 260 kcfs is based upon Corps of Engineers data submittal, which bases targets on forecasts of Jan-July flow at The Dalles.
+
+##### McNary Flow target
+# Variable minimum flow for McNary based upon forecasted inflow to the Dalles, for the period of April 20 to June 30.
+# Flow varies linearly between 220 and 260 kcfs based on inflows of 85 to 105 MAF at the Dalles
+
+McNaryFlowTarget <- function() {
+	if (DARunoffJanJul <= 85e6) {
+		McNaryFlowTarget_o <- McNaryFlowTarget_input$Low[week_in_year]
+	} else if (DARunoffJanJul <= 105e6) {
+		McNaryFlowTarget_o <- McNaryFlowTarget_input$Low[week_in_year] + (DARunoffJanJul - 85e6) / (105e6 - 85e6) * (McNaryFlowTarget_input$High[week_in_year] - McNaryFlowTarget_input$Low[week_in_year])
+	} else {
+		McNaryFlowTarget_o <- McNaryFlowTarget_input$High[week_in_year]
+	}
+	return(McNaryFlowTarget_o)
+}
+McNaryFlowDeficit <- function() {
+	McNaryFlowDeficit_o <- max(0, McNaryFlowTarget() * cfsTOafw - MCNPrelim())
+	return(McNaryFlowDeficit_o)
+}
+
+# Grand Coulee is designated to meet the BiOP chum flow requirement at Bonneville Dam of 125-160 kcfs from November 1 to April 10 (2020 NMFS BiOp)
+# The variable target is based on water volume forecasts
 BonnevilleFlowTarget <- function() {
-	# Grand Coulee is designated to meet the BiOP chum flow requirement at Bonneville Dam of 125-160 kcfs from November 1 to April 10 (2020 NMFS BiOp)
-	# The variable target is based on water volume forecasts
 	if (DARunoffJanJul <= 85e6) {
 		BonnevilleFlowTarget_o <- BonnevilleFlowTarget_input$Low[week_in_year]
 	} else if (DARunoffJanJul <= 105e6) {
@@ -7000,10 +6433,32 @@ BONFlowDeficit <- function() {
 	BONFlowDeficit_c <<- BONFlowDeficit_o
 	return(BONFlowDeficit_o)
 }
+
+# The 2000 BiOp sets a flow objective between 85-100 kcfs from April 2 to June 20 and 50-55 kcfs from June 21 to August 31
+# The target varies based on April-July runoff forecast at Lower Granite
+LowerGraniteFlowTarget <- function() {
+	if (LGRunoffAprJul < 16e6) {
+		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$Low[week_in_year]
+	} else if (LGRunoffAprJul <= 20e6 && week_in_year %in% 36:47) { # spring
+		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$Low[week_in_year] + (LGRunoffAprJul - 16e6) / (20e6 - 16e6) * (LowerGraniteFlowTarget_input$High[week_in_year] - LowerGraniteFlowTarget_input$Low[week_in_year])
+	} else if (LGRunoffAprJul > 20e6 && week_in_year %in% 36:47) {
+		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$High[week_in_year]	
+	} else if (LGRunoffAprJul <= 28e6 && week_in_year %in% c(48:52, 1:5)) { # summer
+		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$Low[week_in_year] + (LGRunoffAprJul - 16e6) / (28e6 - 16e6) * (LowerGraniteFlowTarget_input$High[week_in_year] - LowerGraniteFlowTarget_input$Low[week_in_year])
+	} else if (LGRunoffAprJul > 28e6) {
+		LowerGraniteFlowTarget_o <- LowerGraniteFlowTarget_input$High[week_in_year]
+	} else {
+		LowerGraniteFlowTarget_o <- 0
+	}	
+	return(LowerGraniteFlowTarget_o)
+}
 TotalRelForLowerGranite <- function() { 
 	TotalRelForLowerGranite_o <- max(0, LowerGraniteFlowTarget() * cfsTOafw - LGPrelim())
 	return(TotalRelForLowerGranite_o)
 }
+
+################################################################################################
+
 TotalMcNarySharedWater <- function() {
 	TotalMcNarySharedWater_o <- MIMcNarySharedWater() + DUMcNarySharedWater() + ARMcNarySharedWater() + GCMcNarySharedWater() + HHMcNarySharedWater() + LBMcNarySharedWater()
 	return(TotalMcNarySharedWater_o)
@@ -7124,6 +6579,7 @@ AvgFirmLoad <- function() { # Average firm energy requirement
 	AvgFirmLoad_o <- 1984816 # MW-hr/wk, Step1 studies
 	return(AvgFirmLoad_o)
 }
+
 # Average firm energy target. This value is multiplied by the seasonal fraction to yield the firm energy target for each month.  Units MW-hr/week.
 FirmEnergyTarget <- function() {
 	FirmEnergyTarget_o <- AvgFirmLoad() * (Deviation__From_Normal_Curve * FirmFraction() + 1)
@@ -7132,7 +6588,6 @@ FirmEnergyTarget <- function() {
 
 FirmEnergyDeficit <- function() { # Basin-wide deficit in firm energy production 
 	FirmEnergyDeficit_o <- max(0, EnergyAllocSafeFactor * FirmEnergyTarget() - TotalCoordPreEnergy_c)
-	#FirmEnergyDeficit_o <- 0
 	return(FirmEnergyDeficit_o)
 }
 
@@ -7154,23 +6609,11 @@ AltNonFirmLoad <- function() {
 	AltNonFirmLoad_o <- AltNonFirmLoad_input[week_in_year, 2]
 	return(AltNonFirmLoad_o)
 }
-AvgNonFirmLoad <- function() {
-	# Yearly average non-firm energy load.  Units MWhr.
-	# Status quo average non-firm load.
-	# Use this control when UseAlternateNonFirmTarget is set to a value of 0.
-	#AvgNonFirmLoad_o <- 0.2617 * AvgFirmLoad()
-	# for some reason the output of this function is different in the original ColSim the value is always
-	# 2.9 * 10^6
-	#AvgNonFirmLoad_o <- 2.9 * 10^6
-	AvgNonFirmLoad_o <- 1.06e6  ## Capacity of PNW-PSW intertie * 0.8
+AvgNonFirmLoad <- function() { # Yearly average non-firm energy load.  Units MWhr.
+	AvgNonFirmLoad_o <- 1.06e6  ## Capacity of PNW-PSW intertie * 0.8 (Peak/average load)
 	return(AvgNonFirmLoad_o)
 }
 NonFirmEnergyTarget <- function() {
-	# Non-firm energy target by month.  Units MW-hr/month.
-	# IF UseAlternateNonFirmTarget = 0 THEN NonFirmFraction*ClimateForecastEnergyMult
-	# ELSE
-	# IF month<=6 THEN ClimateForecastEnergyMult*AltAvgNonFirmLoad*AltNonFirmFraction
-	# ELSE NonFirmFraction*AvgNonFirmLoad
 	if (UseAlternateNonFirmTarget == 0) {
 		NonFirmEnergyTarget_o <- AvgNonFirmLoad() * (NonFirmFraction() + 1)
 	} else {

@@ -81,35 +81,35 @@ get_columns <- function(dam, flow_map) {
 
 get_rule_curves <- function(res) {
 	if (res == "MICAA") {
-		flood_o <- MI_CurFC()
+		flood_o <- MIFloodCurve()
 		critical_o <- MICriticalCurve()
 		assured_o <- MIAssuredRefill()
 		lower_o <- MILowerLimit()
 		variable_o <- VariableRefillCurve$MICAA[row_num]
 		BiOp_o <- MIFullPoolVol
 	} else if (res == "ARROW") {
-		flood_o <- AR_CurFC()
+		flood_o <- ARFloodCurve()
 		critical_o <- ARCriticalCurve()
 		assured_o <- ARAssuredRefill()
 		lower_o <- ARLowerLimit()
 		variable_o <- VariableRefillCurve$ARROW[row_num]
 		BiOp_o <- ARFullPoolVol		
 	} else if (res == "DUNCA") {
-		flood_o <- DU_CurFC()
+		flood_o <- DUFloodCurve()
 		critical_o <- DUCriticalCurve()
 		assured_o <- DUAssuredRefill()
 		lower_o <- DULowerLimit()
 		variable_o <- VariableRefillCurve$DUNCA[row_num]
 		BiOp_o <- DUFullPoolVol	
 	} else if (res == "LIBBY") {
-		flood_o <- LB_CurFC()
+		flood_o <- LBFloodCurve()
 		critical_o <- LBCriticalCurve()
 		assured_o <- LBAssuredRefill()
 		lower_o <- LBLowerLimit()
 		variable_o <- VariableRefillCurve$LIBBY[row_num]
 		BiOp_o <- LibbyBiOpDraftLimit()
 	} else if (res == "FLASF") {
-		flood_o <- HH_CurFC()
+		flood_o <- HHFloodCurve()
 		critical_o <- HHCriticalCurve()
 		assured_o <- HHAssuredRefill()
 		lower_o <- HHLowerLimit()
@@ -137,21 +137,21 @@ get_rule_curves <- function(res) {
 		variable_o <- AFFullPoolVol
 		BiOp_o <- AFFullPoolVol		
 	} else if (res == "BROWN") {
-		flood_o <- BRCurFC()
+		flood_o <- BRFloodCurve()
 		critical_o <- BRCriticalCurve()
 		assured_o <- BRAssuredRefill()
 		lower_o <- 0
 		variable_o <- BRFullPoolVol
 		BiOp_o <- BRFullPoolVol
 	} else if (res == "DWORS") {
-		flood_o <- DW_CurFC()
+		flood_o <- DWFloodCurve()
 		critical_o <- DWCriticalCurve()
 		assured_o <- DWAssuredRefill()
 		lower_o <- DWLowerLimit()
 		variable_o <- VariableRefillCurve$DWORS[row_num]
 		BiOp_o <- DWBiOpDraftLimit()
 	} else if (res == "GCOUL") {
-		flood_o <- GC_CurFC()
+		flood_o <- GCFloodCurve()
 		critical_o <- GCCriticalCurve()
 		assured_o <- GCAssuredRefill()
 		lower_o <- GCLowerLimit()
@@ -203,7 +203,7 @@ calc_refill_curve <- function(type) {
 					}
 				}
 				if (type == "regular") {
-					refill <- RefillCurve[row_num1,dname] - modified_flow[row_num1,dname] * (1 - forecast_error[row_num2,dname]) + weekly_assumedRelease[row_num2,dname] * cfsTOafw 
+					refill <- RefillCurve[row_num1,dname] - modified_flow[row_num1,dname] + forecast_error[row_num2,dname] + weekly_assumedRelease[row_num2,dname] * cfsTOafw 
 				} else if (type == "minimum") {
 					refill <- RefillCurve[row_num1,dname] - modified_flow[row_num1,dname] + weekly_assumedRelease[row_num2,dname] * cfsTOafw
 				}
@@ -273,7 +273,7 @@ calc_refill_with_upstream_storage <- function(type, res) {
 				}
 			}
 			if (type == "regular") {
-				refill <- RefillCurve[row_num1] - modified_flow[row_num1,res] * (1 - forecast_error[row_num2,res]) + weekly_assumedRelease[row_num2,res] * cfsTOafw + upstream_refill[row_num1-1]  
+				refill <- RefillCurve[row_num1] - modified_flow[row_num1,res] + forecast_error[row_num2,res] + weekly_assumedRelease[row_num2,res] * cfsTOafw + upstream_refill[row_num1-1]  
 			} else if (type == "minimum") {
 				refill <- RefillCurve[row_num1] - modified_flow[row_num1,res] + weekly_assumedRelease[row_num2,res] * cfsTOafw + upstream_refill[row_num1-1]
 			}
